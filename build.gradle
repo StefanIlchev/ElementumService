@@ -1,0 +1,308 @@
+import groovy.xml.MarkupBuilder
+import groovy.xml.XmlSlurper
+
+buildscript {
+
+	repositories {
+		google()
+		mavenCentral()
+	}
+
+	dependencies {
+		classpath 'com.android.tools.build:gradle:7.0.3'
+		classpath 'org.codehaus.groovy:groovy-xml:3.0.9'
+	}
+}
+
+allprojects {
+
+	repositories {
+		google()
+		mavenCentral()
+	}
+}
+
+apply {
+	plugin 'com.android.application'
+}
+
+def addonId = 'plugin.video.elementum'
+def assetsDir = '.kodi'
+def addonAssetsDir = "addons/$addonId"
+def remotePort = 65221
+def localHost = '127.0.0.1'
+def localPort = 65220
+
+def srcGen = "$buildDir.path/src"
+def srcMainGen = "$srcGen/main"
+def srcMainAssetsGen = "$srcMainGen/assets"
+def srcMainJniLibsGen = "$srcMainGen/jniLibs"
+
+android {
+	compileSdkVersion 31
+
+	compileOptions {
+		sourceCompatibility JavaVersion.VERSION_11
+		targetCompatibility JavaVersion.VERSION_11
+	}
+
+	defaultConfig {
+		minSdkVersion 26
+		targetSdkVersion 31
+		versionCode 1
+		versionName "0.1.$versionCode"
+		applicationId 'service.elementum.android'
+		buildConfigField 'String', 'ADDON_ID', "\"$addonId\""
+		buildConfigField 'String', 'ASSETS_DIR', "\"$assetsDir\""
+		buildConfigField 'String', 'ADDON_ASSETS_DIR', "\"$addonAssetsDir\""
+		buildConfigField 'java.util.List<String>', 'SUBPROCESS_CMD', """java.util.Arrays.asList(
+				|    \"./libelementum.so\",
+				|    \"-remotePort=$remotePort\",
+				|    \"-localHost=$localHost\",
+				|    \"-localPort=$localPort\"
+				|)""".stripMargin()
+		buildConfigField 'java.util.Map<String, String>', 'SUBPROCESS_ENV', """
+				|java.util.Collections.singletonMap(\"GODEBUG\", \"madvdontneed=1\")""".stripMargin()
+	}
+
+	applicationVariants.all { variant ->
+		variant.outputs.each {
+			def fileName = it.outputFileName
+			def name = fileName - ~/\.[^.]+$/
+			it.outputFileName = "$name-${variant.versionName}${fileName.substring(name.length())}"
+		}
+	}
+
+	signingConfigs {
+
+		debug {
+			storeFile file('debug.keystore')
+			storePassword 'android'
+			keyAlias 'androiddebugkey'
+			keyPassword 'android'
+		}
+	}
+
+	buildTypes {
+
+		release {
+			minifyEnabled true
+			shrinkResources true
+			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+			signingConfig signingConfigs.debug
+		}
+	}
+
+	sourceSets {
+
+		main {
+
+			assets {
+				srcDir srcMainAssetsGen
+			}
+
+			jniLibs {
+				srcDir srcMainJniLibsGen
+			}
+		}
+	}
+
+	splits {
+
+		abi {
+			enable true
+			universalApk true
+		}
+	}
+
+	packagingOptions {
+
+		jniLibs {
+			useLegacyPackaging true
+		}
+	}
+}
+
+def addonZip = System.getProperty('addonZip')
+if (addonZip != null) {
+	def addonDir = "$buildDir.path/${file(addonZip).name - ~/\.[^.]+$/}"
+	def addonIdDir = "$addonDir/$addonId"
+	def repoAddonName = 'Elementum Repository'
+	def repoAddonId = 'repository.elementum'
+	def repoAddonIdDir = "$addonIdDir/$repoAddonId"
+	def repoAddonDataDir = "http://$localHost:$localPort/repository/elgatito/"
+	def repoAddonInfo = "${repoAddonDataDir}plugin.video.elementum/addons.xml"
+
+	task patchAddon() {
+
+		doFirst {
+			delete addonDir
+		}
+
+		doLast {
+			def applicationId = android.defaultConfig.applicationId
+			def pathPattern = '/org\\.xbmc\\.kodi/files/\\.kodi/'
+			def pathReplace = "/$applicationId/files/$assetsDir/"
+			def startLine = '                proc = start_elementumd(stdout=subprocess.PIPE, stderr=subprocess.STDOUT)'
+			def startLinePatched = """                srcRepoDir = os.path.join(ADDON_PATH, '$repoAddonId')
+					|                dstRepoDir = os.path.join(ADDON_PATH, '..', '$repoAddonId')
+					|                srcRepoAddon = os.path.join(srcRepoDir, 'addon.xml')
+					|                dstRepoAddon = os.path.join(dstRepoDir, 'addon.xml')
+					|                if os.path.isfile(srcRepoAddon):
+					|                    isRepoAddonEqual = False
+					|                    try:
+					|                        isRepoAddonEqual = filecmp.cmp(srcRepoAddon, dstRepoAddon, shallow=False)
+					|                    except Exception:
+					|                        pass
+					|                    if not isRepoAddonEqual:
+					|                        try:
+					|                            os.makedirs(dstRepoDir)
+					|                        except Exception:
+					|                            pass
+					|                        try:
+					|                            shutil.rmtree(dstRepoDir)
+					|                        except Exception:
+					|                            pass
+					|                        try:
+					|                            shutil.copytree(srcRepoDir, dstRepoDir)
+					|                        except Exception:
+					|                            pass
+					|                xbmc.executebuiltin('StartAndroidActivity($applicationId)')""".stripMargin()
+			def pathLine = "        info['path'] = ADDON_PATH"
+			def pathLinePatched = """        pathPattern = '$pathPattern'
+					|        pathReplace = '$pathReplace'
+					|        info['path'] = re.sub(pathPattern, pathReplace, ADDON_PATH, 1)
+					|        info['fanart'] = re.sub(pathPattern, pathReplace, info['fanart'], 1)
+					|        info['icon'] = re.sub(pathPattern, pathReplace, info['icon'], 1)""".stripMargin()
+			def translateLine = '        return translatePath(*args, **kwargs)'
+			def translateLinePatched = """        pathPattern = '$pathPattern'
+					|        pathReplace = '$pathReplace'
+					|        result = translatePath(*args, **kwargs)
+					|        return re.sub(pathPattern, pathReplace, result, 1)""".stripMargin()
+			def patches = [
+					(file("$addonIdDir/resources/site-packages/elementum/daemon.py")): [
+							[startLine, startLinePatched]
+					],
+					(file("$addonIdDir/resources/site-packages/elementum/rpc.py"))   : [
+							[pathLine, pathLinePatched],
+							[translateLine, translateLinePatched]
+					]
+			]
+			def renames = new HashSet<>(patches.keySet())
+			copy {
+				from zipTree(addonZip)
+				into addonDir
+				rename { renames.removeIf { f -> f.name == it } ? "${it}.tmp" : it }
+			}
+			if (!renames.isEmpty()) {
+				def missing = renames.collect { "$it.path\n" }
+				throw new GradleException("missing:\n$missing")
+			}
+			patches.forEach { f, patch ->
+				def tmp = file("${f.parent}/${f.name}.tmp")
+				copy {
+					from f.parent
+					into f.parent
+					include tmp.name
+					rename { f.name }
+					filter {
+						def pair = patch.find { pair -> pair[0] == it }
+						patch.remove(pair) ? pair[1] : it
+					}
+				}
+				if (!patch.isEmpty()) {
+					def missing = patch.collect { it.join '\n\n' } join '\n\n\n\n'
+					throw new GradleException("${f.path} missing:\n$missing")
+				}
+				delete tmp
+			}
+
+			copy {
+				from addonIdDir
+				into repoAddonIdDir
+				include 'fanart.png', 'icon.png'
+			}
+			def addon = new XmlSlurper().parse(file("$addonIdDir/addon.xml"))
+			def repoAddonWriter = new FileWriter(file("$repoAddonIdDir/addon.xml"))
+			new MarkupBuilder(repoAddonWriter).addon(
+					'name': repoAddonName,
+					'id': repoAddonId,
+					'provider-name': addon.@'provider-name',
+					'version': addon.@'version') {
+
+				extension('name': repoAddonName, 'point': 'xbmc.addon.repository') {
+
+					checksum("${repoAddonInfo}.md5")
+
+					datadir('zip': 'true', repoAddonDataDir)
+
+					info('compressed': 'false', repoAddonInfo)
+				}
+
+				extension('point': 'xbmc.addon.metadata') {
+
+					platform('all')
+
+					summary('lang': 'en', 'GitHub repository for Elementum updates')
+				}
+
+				requires {}
+			}
+			repoAddonWriter.close()
+		}
+	}
+
+	task genMainAssets(dependsOn: [patchAddon]) {
+
+		doFirst {
+			delete srcMainAssetsGen
+		}
+
+		doLast {
+
+			copy {
+				from addonDir
+				into srcMainAssetsGen
+				exclude '**/.*', "$addonId/resources/bin", "$addonId/$repoAddonId"
+			}
+		}
+	}
+
+	task genMainJniLibs(dependsOn: [patchAddon]) {
+
+		doFirst {
+			delete srcMainJniLibsGen
+		}
+
+		doLast {
+			[
+					'arm64-v8a'  : 'android_arm64',
+					'armeabi-v7a': 'android_arm',
+					'x86'        : 'android_x86',
+					'x86_64'     : 'android_x64'
+			].forEach { abi, bin ->
+				copy {
+					from "$addonIdDir/resources/bin/$bin"
+					into "$srcMainJniLibsGen/$abi"
+					rename { it ==~ /^lib.*\.so$/ ? it : "lib${it}.so" }
+				}
+			}
+		}
+	}
+
+	tasks.withType(JavaCompile) {
+		it.dependsOn genMainAssets
+		it.dependsOn genMainJniLibs
+	}
+
+	task zipAndroidClient(type: Zip, dependsOn: [patchAddon]) {
+		from addonDir
+		destinationDirectory = file(addonDir).parentFile
+		archiveFileName = "${file(addonDir).name}.android_client.zip"
+		exclude '**/.*', "$addonId/resources/bin"
+
+		doFirst {
+			delete "$addonDir-patched.zip"
+		}
+	}
+}
