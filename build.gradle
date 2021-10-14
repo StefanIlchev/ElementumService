@@ -49,8 +49,8 @@ android {
 	defaultConfig {
 		minSdkVersion 26
 		targetSdkVersion 31
-		versionCode 1
-		versionName "0.1.$versionCode"
+		versionCode System.getProperty('versionCode') as Integer ?: 1
+		versionName System.getProperty('versionName') ?: "0.1.$versionCode"
 		applicationId 'service.elementum.android'
 		buildConfigField 'String', 'ADDON_ID', "\"$addonId\""
 		buildConfigField 'String', 'ASSETS_DIR', "\"$assetsDir\""
