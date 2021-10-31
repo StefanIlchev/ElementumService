@@ -14,16 +14,16 @@ buildscript {
 	}
 }
 
+apply {
+	plugin 'com.android.application'
+}
+
 allprojects {
 
 	repositories {
 		google()
 		mavenCentral()
 	}
-}
-
-apply {
-	plugin 'com.android.application'
 }
 
 def addonId = 'plugin.video.elementum'
@@ -223,32 +223,32 @@ if (addonZip != null) {
 				include 'fanart.png', 'icon.png'
 			}
 			def addon = new XmlSlurper().parse(file("$addonIdDir/addon.xml"))
-			def repoAddonWriter = new FileWriter(file("$repoAddonIdDir/addon.xml"))
-			new MarkupBuilder(repoAddonWriter).addon(
-					'name': repoAddonName,
-					'id': repoAddonId,
-					'provider-name': addon.@'provider-name',
-					'version': addon.@'version') {
+			try (def writer = new FileWriter(file("$repoAddonIdDir/addon.xml"))) {
+				new MarkupBuilder(writer).addon(
+						'name': repoAddonName,
+						'id': repoAddonId,
+						'provider-name': addon.@'provider-name',
+						'version': addon.@'version') {
 
-				extension('name': repoAddonName, 'point': 'xbmc.addon.repository') {
+					extension('name': repoAddonName, 'point': 'xbmc.addon.repository') {
 
-					checksum("${repoAddonInfo}.md5")
+						checksum("${repoAddonInfo}.md5")
 
-					datadir('zip': 'true', repoAddonDataDir)
+						datadir('zip': 'true', repoAddonDataDir)
 
-					info('compressed': 'false', repoAddonInfo)
+						info('compressed': 'false', repoAddonInfo)
+					}
+
+					extension('point': 'xbmc.addon.metadata') {
+
+						platform('all')
+
+						summary('lang': 'en', 'GitHub repository for Elementum updates')
+					}
+
+					requires {}
 				}
-
-				extension('point': 'xbmc.addon.metadata') {
-
-					platform('all')
-
-					summary('lang': 'en', 'GitHub repository for Elementum updates')
-				}
-
-				requires {}
 			}
-			repoAddonWriter.close()
 		}
 	}
 
@@ -302,7 +302,7 @@ if (addonZip != null) {
 		exclude '**/.*', "$addonId/resources/bin"
 
 		doFirst {
-			delete "$addonDir-patched.zip"
+			delete "${addonDir}.android_client.zip"
 		}
 	}
 }
