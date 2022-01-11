@@ -49,7 +49,7 @@ android {
 	defaultConfig {
 		minSdkVersion 28
 		targetSdkVersion 31
-		versionCode System.getProperty('versionCode') as Integer ?: 2
+		versionCode System.getProperty('versionCode') as Integer ?: 3
 		versionName System.getProperty('versionName') ?: "0.1.$versionCode"
 		applicationId 'service.elementum.android'
 		buildConfigField 'String', 'ADDON_ID', "\"$addonId\""
