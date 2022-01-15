@@ -21,7 +21,7 @@ public class ForegroundService extends Service {
 
 	private static final Executor EXECUTOR = Executors.newSingleThreadExecutor();
 
-	private static final Handler HANDLER = new Handler(Looper.getMainLooper());
+	public static final Handler HANDLER = new Handler(Looper.getMainLooper());
 
 	private DaemonRunnable daemonRunnable = null;
 

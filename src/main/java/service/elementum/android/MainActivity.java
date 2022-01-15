@@ -26,6 +26,8 @@ public class MainActivity extends Activity {
 
 	private static final String TAG = "MainActivity";
 
+	private static final long MANAGE_EXTERNAL_STORAGE_CHECK_DELAY_MILLIS = 100L;
+
 	@SuppressLint("InlinedApi")
 	private static final String MANAGE_EXTERNAL_STORAGE =
 			Manifest.permission.MANAGE_EXTERNAL_STORAGE;
@@ -48,18 +50,35 @@ public class MainActivity extends Activity {
 		return Build.VERSION.SDK_INT < Build.VERSION_CODES.R || Environment.isExternalStorageManager();
 	}
 
-	private String[] requestManageExternalStorage(String packageName) {
-		var uri = Uri.fromParts("package", packageName, null);
+	private void showAllowManageExternalStorageCmd() {
+		var cmd = "adb shell appops set --uid " + getPackageName() + " MANAGE_EXTERNAL_STORAGE allow";
+		new AlertDialog.Builder(this)
+				.setTitle(R.string.app_name)
+				.setMessage(cmd)
+				.setCancelable(false)
+				.show();
+		var runnable = new Runnable() {
+
+			@Override
+			public void run() {
+				if (isDestroyed() || isFinishing()) {
+					return;
+				}
+				if (isExternalStorageManager()) {
+					requestRequestedPermissionsOrTryStartForegroundServiceAndFinish();
+				} else {
+					ForegroundService.HANDLER.postDelayed(this, MANAGE_EXTERNAL_STORAGE_CHECK_DELAY_MILLIS);
+				}
+			}
+		};
+		ForegroundService.HANDLER.postDelayed(runnable, MANAGE_EXTERNAL_STORAGE_CHECK_DELAY_MILLIS);
+	}
+
+	private String[] requestManageExternalStorage() {
+		var uri = Uri.fromParts("package", getPackageName(), null);
 		var intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri);
 		if (getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).isEmpty()) {
-			var cmd = "adb shell appops set --uid " + packageName + " MANAGE_EXTERNAL_STORAGE allow";
-			new AlertDialog.Builder(this)
-					.setTitle(R.string.app_name)
-					.setMessage(cmd)
-					.setPositiveButton(android.R.string.ok, null)
-					.setOnDismissListener(dialog ->
-							onActivityResult(RequestCode.MANAGE_EXTERNAL_STORAGE.ordinal(), 0, null))
-					.show();
+			showAllowManageExternalStorageCmd();
 		} else {
 			startActivityForResult(intent, RequestCode.MANAGE_EXTERNAL_STORAGE.ordinal());
 		}
@@ -67,15 +86,14 @@ public class MainActivity extends Activity {
 	}
 
 	private String[] requestRequestedPermissions() {
-		var packageName = getPackageName();
 		try {
 			var requestedPermissions = getPackageManager()
-					.getPackageInfo(packageName, PackageManager.GET_PERMISSIONS)
+					.getPackageInfo(getPackageName(), PackageManager.GET_PERMISSIONS)
 					.requestedPermissions;
 			if (requestedPermissions != null && requestedPermissions.length > 0) {
 				var list = new ArrayList<>(Arrays.asList(requestedPermissions));
 				if (list.remove(MANAGE_EXTERNAL_STORAGE) && !isExternalStorageManager()) {
-					return requestManageExternalStorage(packageName);
+					return requestManageExternalStorage();
 				}
 				if (!list.isEmpty()) {
 					var permissions = list.toArray(new String[]{});
