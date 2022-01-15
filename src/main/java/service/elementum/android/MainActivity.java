@@ -59,7 +59,6 @@ public class MainActivity extends Activity {
 					.setPositiveButton(android.R.string.ok, null)
 					.setOnDismissListener(dialog ->
 							onActivityResult(RequestCode.MANAGE_EXTERNAL_STORAGE.ordinal(), 0, null))
-					.create()
 					.show();
 		} else {
 			startActivityForResult(intent, RequestCode.MANAGE_EXTERNAL_STORAGE.ordinal());

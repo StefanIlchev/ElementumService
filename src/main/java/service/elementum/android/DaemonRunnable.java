@@ -34,8 +34,9 @@ public class DaemonRunnable implements Runnable {
 		bin = new File(context.getApplicationInfo().nativeLibraryDir);
 		assetsMarker = new File(context.getCodeCacheDir(), context.getPackageName());
 		assetManager = context.getAssets();
-		assets = addonAssetsDir == null ? Collections.emptyMap()
-				: Collections.singletonMap(BuildConfig.ADDON_ID, addonAssetsDir);
+		assets = addonAssetsDir == null ? Collections.emptyMap() : Collections.singletonMap(
+				BuildConfig.ADDON_ID, addonAssetsDir
+		);
 	}
 
 	public boolean isDestroyed() {
