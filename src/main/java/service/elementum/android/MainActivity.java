@@ -3,6 +3,7 @@ package service.elementum.android;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -10,9 +11,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class MainActivity extends Activity {
 
@@ -20,6 +23,8 @@ public class MainActivity extends Activity {
 		REQUESTED_PERMISSIONS,
 		MANAGE_EXTERNAL_STORAGE
 	}
+
+	private static final String TAG = "MainActivity";
 
 	@SuppressLint("InlinedApi")
 	private static final String MANAGE_EXTERNAL_STORAGE =
@@ -29,8 +34,37 @@ public class MainActivity extends Activity {
 	private static final String ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION =
 			Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION;
 
+	private static List<String> listPermissions(String[] permissions, int[] grantResults, int grantResult) {
+		var result = new ArrayList<String>();
+		for (var i = 0; i < grantResults.length; ++i) {
+			if (grantResults[i] == grantResult) {
+				result.add(permissions[i]);
+			}
+		}
+		return result;
+	}
+
 	private static boolean isExternalStorageManager() {
 		return Build.VERSION.SDK_INT < Build.VERSION_CODES.R || Environment.isExternalStorageManager();
+	}
+
+	private String[] requestManageExternalStorage(String packageName) {
+		var uri = Uri.fromParts("package", packageName, null);
+		var intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri);
+		if (getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).isEmpty()) {
+			var cmd = "adb shell appops set --uid " + packageName + " MANAGE_EXTERNAL_STORAGE allow";
+			new AlertDialog.Builder(this)
+					.setTitle(R.string.app_name)
+					.setMessage(cmd)
+					.setPositiveButton(android.R.string.ok, null)
+					.setOnDismissListener(dialog ->
+							onActivityResult(RequestCode.MANAGE_EXTERNAL_STORAGE.ordinal(), 0, null))
+					.create()
+					.show();
+		} else {
+			startActivityForResult(intent, RequestCode.MANAGE_EXTERNAL_STORAGE.ordinal());
+		}
+		return new String[]{MANAGE_EXTERNAL_STORAGE};
 	}
 
 	private String[] requestRequestedPermissions() {
@@ -42,10 +76,7 @@ public class MainActivity extends Activity {
 			if (requestedPermissions != null && requestedPermissions.length > 0) {
 				var list = new ArrayList<>(Arrays.asList(requestedPermissions));
 				if (list.remove(MANAGE_EXTERNAL_STORAGE) && !isExternalStorageManager()) {
-					var uri = Uri.fromParts("package", packageName, null);
-					var intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri);
-					startActivityForResult(intent, RequestCode.MANAGE_EXTERNAL_STORAGE.ordinal());
-					return new String[]{MANAGE_EXTERNAL_STORAGE};
+					return requestManageExternalStorage(packageName);
 				}
 				if (!list.isEmpty()) {
 					var permissions = list.toArray(new String[]{});
@@ -53,7 +84,8 @@ public class MainActivity extends Activity {
 					return permissions;
 				}
 			}
-		} catch (Throwable ignore) {
+		} catch (Throwable t) {
+			Log.w(TAG, t);
 		}
 		return null;
 	}
@@ -62,7 +94,8 @@ public class MainActivity extends Activity {
 		var intent = new Intent(this, ForegroundService.class);
 		try {
 			startForegroundService(intent);
-		} catch (Throwable ignore) {
+		} catch (Throwable t) {
+			Log.w(TAG, t);
 		}
 	}
 
@@ -82,8 +115,11 @@ public class MainActivity extends Activity {
 	@Override
 	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
 		if (requestCode == RequestCode.REQUESTED_PERMISSIONS.ordinal()) {
-			if (Arrays.stream(grantResults).allMatch(value -> value == PackageManager.PERMISSION_GRANTED)) {
+			var deniedPermissions = listPermissions(permissions, grantResults, PackageManager.PERMISSION_DENIED);
+			if (deniedPermissions.isEmpty()) {
 				tryStartForegroundService();
+			} else {
+				Log.v(TAG, "deniedPermissions = [" + String.join(", ", deniedPermissions) + "]");
 			}
 			finish();
 		}
@@ -95,6 +131,7 @@ public class MainActivity extends Activity {
 			if (isExternalStorageManager()) {
 				requestRequestedPermissionsOrTryStartForegroundServiceAndFinish();
 			} else {
+				Log.v(TAG, "deniedPermissions = [" + MANAGE_EXTERNAL_STORAGE + "]");
 				finish();
 			}
 		}

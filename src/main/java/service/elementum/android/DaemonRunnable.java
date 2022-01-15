@@ -1,5 +1,6 @@
 package service.elementum.android;
 
+import android.content.Context;
 import android.content.res.AssetManager;
 import android.util.Log;
 
@@ -11,7 +12,6 @@ import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -27,11 +27,15 @@ public class DaemonRunnable implements Runnable {
 
 	private volatile boolean isDestroyed = false;
 
-	public DaemonRunnable(File bin, File assetsMarker, AssetManager assetManager, Map<String, File> assets) {
-		this.bin = bin;
-		this.assetsMarker = assetsMarker;
-		this.assetManager = assetManager;
-		this.assets = assets != null ? new HashMap<>(assets) : Collections.emptyMap();
+	public DaemonRunnable(Context context) {
+		var externalFilesDir = context.getExternalFilesDir(null);
+		var assetsDir = externalFilesDir != null ? new File(externalFilesDir, BuildConfig.ASSETS_DIR) : null;
+		var addonAssetsDir = assetsDir != null ? new File(assetsDir, BuildConfig.ADDON_ASSETS_DIR) : null;
+		bin = new File(context.getApplicationInfo().nativeLibraryDir);
+		assetsMarker = new File(context.getCodeCacheDir(), context.getPackageName());
+		assetManager = context.getAssets();
+		assets = addonAssetsDir == null ? Collections.emptyMap()
+				: Collections.singletonMap(BuildConfig.ADDON_ID, addonAssetsDir);
 	}
 
 	public boolean isDestroyed() {

@@ -8,15 +8,14 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.util.Log;
 
-import java.io.File;
-import java.util.Collections;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class ForegroundService extends Service {
 
-	private static final String CHANNEL_ID = "ForegroundService";
+	private static final String TAG = "ForegroundService";
 
 	private static final int NOTIFICATION_ID = 1;
 
@@ -28,13 +27,13 @@ public class ForegroundService extends Service {
 
 	private void startForeground() {
 		var appName = getString(R.string.app_name);
-		var notification = new Notification.Builder(this, CHANNEL_ID)
+		var notification = new Notification.Builder(this, TAG)
 				.setContentTitle(appName)
 				.setSmallIcon(R.mipmap.ic_launcher)
 				.build();
 		var notificationManager = getSystemService(NotificationManager.class);
 		if (notificationManager != null) {
-			var notificationChannel = new NotificationChannel(CHANNEL_ID, appName, NotificationManager.IMPORTANCE_LOW);
+			var notificationChannel = new NotificationChannel(TAG, appName, NotificationManager.IMPORTANCE_LOW);
 			notificationManager.createNotificationChannel(notificationChannel);
 		}
 		startForeground(NOTIFICATION_ID, notification);
@@ -46,13 +45,7 @@ public class ForegroundService extends Service {
 	}
 
 	private void startDaemon() {
-		var bin = new File(getApplicationInfo().nativeLibraryDir);
-		var assetsMarker = new File(getCodeCacheDir(), getPackageName());
-		var externalFilesDir = getExternalFilesDir(null);
-		var assetsDir = externalFilesDir != null ? new File(externalFilesDir, BuildConfig.ASSETS_DIR) : null;
-		var addonAssetsDir = assetsDir != null ? new File(assetsDir, BuildConfig.ADDON_ASSETS_DIR) : null;
-		var assets = addonAssetsDir != null ? Collections.singletonMap(BuildConfig.ADDON_ID, addonAssetsDir) : null;
-		var daemonRunnable = new DaemonRunnable(bin, assetsMarker, getAssets(), assets);
+		var daemonRunnable = new DaemonRunnable(this);
 		this.daemonRunnable = daemonRunnable;
 		EXECUTOR.execute(() -> {
 			daemonRunnable.run();
@@ -77,10 +70,12 @@ public class ForegroundService extends Service {
 			startForeground();
 			try {
 				startDaemon();
-			} catch (Throwable ignore) {
+			} catch (Throwable t) {
 				stopForeground();
+				throw t;
 			}
-		} catch (Throwable ignore) {
+		} catch (Throwable t) {
+			Log.w(TAG, t);
 		}
 	}
 

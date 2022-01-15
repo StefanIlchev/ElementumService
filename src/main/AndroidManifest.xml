@@ -26,6 +26,8 @@
 			android:exported="false" />
 	</application>
 
+	<queries />
+
 	<uses-permission-sdk-23 android:name="android.permission.FOREGROUND_SERVICE" />
 
 	<uses-permission-sdk-23 android:name="android.permission.INTERNET" />
