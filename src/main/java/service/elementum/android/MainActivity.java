@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,15 +47,29 @@ public class MainActivity extends Activity {
 		return result;
 	}
 
-	private static boolean isExternalStorageManager() {
-		return Build.VERSION.SDK_INT < Build.VERSION_CODES.R || Environment.isExternalStorageManager();
+	private boolean isExternalStorageManager() {
+		return Build.VERSION.SDK_INT < Build.VERSION_CODES.R || Environment.isExternalStorageManager() ||
+				getSharedPreferences(TAG, MODE_PRIVATE).getBoolean(MANAGE_EXTERNAL_STORAGE, false);
+	}
+
+	private void setExternalStorageManager(boolean value) {
+		getSharedPreferences(TAG, MODE_PRIVATE)
+				.edit()
+				.putBoolean(MANAGE_EXTERNAL_STORAGE, value)
+				.apply();
 	}
 
 	private void showAllowManageExternalStorageCmd() {
 		var cmd = "adb shell appops set --uid " + getPackageName() + " MANAGE_EXTERNAL_STORAGE allow";
-		new AlertDialog.Builder(this)
+		var alertDialog = new AlertDialog.Builder(this)
 				.setTitle(R.string.app_name)
 				.setMessage(cmd)
+				.setPositiveButton(R.string.manage_external_storage_allow, (dialog, which) ->
+						Toast.makeText(this, R.string.manage_external_storage_allow_message, Toast.LENGTH_LONG).show())
+				.setNegativeButton(R.string.manage_external_storage_deny, (dialog, which) ->
+						setExternalStorageManager(true))
+				.setNeutralButton(R.string.close_app, (dialog, which) ->
+						finish())
 				.setCancelable(false)
 				.show();
 		var runnable = new Runnable() {
@@ -66,8 +81,10 @@ public class MainActivity extends Activity {
 				}
 				if (isExternalStorageManager()) {
 					requestRequestedPermissionsOrTryStartForegroundServiceAndFinish();
-				} else {
+				} else if (alertDialog.isShowing()) {
 					ForegroundService.HANDLER.postDelayed(this, MANAGE_EXTERNAL_STORAGE_CHECK_DELAY_MILLIS);
+				} else {
+					finish();
 				}
 			}
 		};
