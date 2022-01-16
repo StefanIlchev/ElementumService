@@ -61,11 +61,11 @@ public class MainActivity extends Activity {
 
 	private void showAllowManageExternalStorageCmd() {
 		var cmd = "adb shell appops set --uid " + getPackageName() + " MANAGE_EXTERNAL_STORAGE allow";
-		var alertDialog = new AlertDialog.Builder(this)
+		var cmdDialog = new AlertDialog.Builder(this)
 				.setTitle(R.string.app_name)
 				.setMessage(cmd)
 				.setPositiveButton(R.string.manage_external_storage_allow, (dialog, which) ->
-						Toast.makeText(this, R.string.manage_external_storage_allow_message, Toast.LENGTH_LONG).show())
+						Toast.makeText(this, R.string.manage_external_storage_allow_message, Toast.LENGTH_SHORT).show())
 				.setNegativeButton(R.string.manage_external_storage_deny, (dialog, which) ->
 						setExternalStorageManager(true))
 				.setNeutralButton(R.string.close_app, (dialog, which) ->
@@ -79,12 +79,10 @@ public class MainActivity extends Activity {
 				if (isDestroyed() || isFinishing()) {
 					return;
 				}
-				if (isExternalStorageManager()) {
+				if (isExternalStorageManager() || !cmdDialog.isShowing()) {
 					requestRequestedPermissionsOrTryStartForegroundServiceAndFinish();
-				} else if (alertDialog.isShowing()) {
-					ForegroundService.HANDLER.postDelayed(this, MANAGE_EXTERNAL_STORAGE_CHECK_DELAY_MILLIS);
 				} else {
-					finish();
+					ForegroundService.HANDLER.postDelayed(this, MANAGE_EXTERNAL_STORAGE_CHECK_DELAY_MILLIS);
 				}
 			}
 		};
