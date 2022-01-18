@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-	<style name="Theme.DeviceDefault.DayNight.Transparent" parent="android:Theme.DeviceDefault.DayNight">
+	<style name="BaseAppTheme" parent="android:Theme.DeviceDefault" />
+
+	<style name="AppTheme" parent="BaseAppTheme">
 		<item name="android:backgroundDimEnabled">false</item>
 		<item name="android:windowBackground">#000</item>
 		<item name="android:windowContentOverlay">@null</item>

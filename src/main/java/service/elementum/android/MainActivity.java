@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 public class MainActivity extends Activity {
@@ -36,6 +37,10 @@ public class MainActivity extends Activity {
 	@SuppressLint("InlinedApi")
 	private static final String ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION =
 			Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION;
+
+	@SuppressLint("InlinedApi")
+	private static final String FOREGROUND_SERVICE =
+			Manifest.permission.FOREGROUND_SERVICE;
 
 	private static List<String> listPermissions(String[] permissions, int[] grantResults, int grantResult) {
 		var result = new ArrayList<String>();
@@ -107,12 +112,15 @@ public class MainActivity extends Activity {
 					.getPackageInfo(getPackageName(), PackageManager.GET_PERMISSIONS)
 					.requestedPermissions;
 			if (requestedPermissions != null && requestedPermissions.length > 0) {
-				var list = new ArrayList<>(Arrays.asList(requestedPermissions));
-				if (list.remove(MANAGE_EXTERNAL_STORAGE) && !isExternalStorageManager()) {
+				var set = new HashSet<>(Arrays.asList(requestedPermissions));
+				if (set.remove(MANAGE_EXTERNAL_STORAGE) && !isExternalStorageManager()) {
 					return requestManageExternalStorage();
 				}
-				if (!list.isEmpty()) {
-					var permissions = list.toArray(new String[]{});
+				if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+					set.remove(FOREGROUND_SERVICE);
+				}
+				if (!set.isEmpty()) {
+					var permissions = set.toArray(new String[]{});
 					requestPermissions(permissions, RequestCode.REQUESTED_PERMISSIONS.ordinal());
 					return permissions;
 				}
