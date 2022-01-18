@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="manage_external_storage_allow">"अनुमती द्या"</string>
+	<string name="manage_external_storage_deny">"नकार द्या"</string>
+	<string name="close_app">"अ‍ॅप बंद करा"</string>
+</resources>

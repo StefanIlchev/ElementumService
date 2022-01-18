@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="manage_external_storage_allow">"අවසර දෙන්න"</string>
+	<string name="manage_external_storage_deny">"ප්‍රතික්ෂේප කරන්න"</string>
+	<string name="close_app">"යෙදුම වසන්න"</string>
+</resources>

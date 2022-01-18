@@ -63,6 +63,7 @@ public class MainActivity extends Activity {
 		var cmd = "adb shell appops set --uid " + getPackageName() + " MANAGE_EXTERNAL_STORAGE allow";
 		var cmdDialog = new AlertDialog.Builder(this)
 				.setTitle(R.string.app_name)
+				.setIcon(R.mipmap.ic_launcher)
 				.setMessage(cmd)
 				.setPositiveButton(R.string.manage_external_storage_allow, (dialog, which) ->
 						Toast.makeText(this, R.string.manage_external_storage_allow_message, Toast.LENGTH_SHORT).show())
@@ -72,7 +73,7 @@ public class MainActivity extends Activity {
 						finish())
 				.setCancelable(false)
 				.show();
-		var runnable = new Runnable() {
+		var check = new Runnable() {
 
 			@Override
 			public void run() {
@@ -86,16 +87,16 @@ public class MainActivity extends Activity {
 				}
 			}
 		};
-		ForegroundService.HANDLER.postDelayed(runnable, MANAGE_EXTERNAL_STORAGE_CHECK_DELAY_MILLIS);
+		ForegroundService.HANDLER.postDelayed(check, MANAGE_EXTERNAL_STORAGE_CHECK_DELAY_MILLIS);
 	}
 
 	private String[] requestManageExternalStorage() {
 		var uri = Uri.fromParts("package", getPackageName(), null);
 		var intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri);
-		if (getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).isEmpty()) {
-			showAllowManageExternalStorageCmd();
-		} else {
+		if (intent.resolveActivity(getPackageManager()) != null) {
 			startActivityForResult(intent, RequestCode.MANAGE_EXTERNAL_STORAGE.ordinal());
+		} else {
+			showAllowManageExternalStorageCmd();
 		}
 		return new String[]{MANAGE_EXTERNAL_STORAGE};
 	}

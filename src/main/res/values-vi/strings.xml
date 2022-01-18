@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="manage_external_storage_allow">"Cho phép"</string>
+	<string name="manage_external_storage_deny">"Từ chối"</string>
+	<string name="close_app">"Đóng ứng dụng"</string>
+</resources>

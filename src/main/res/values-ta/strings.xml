@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="manage_external_storage_allow">"அனுமதி"</string>
+	<string name="manage_external_storage_deny">"நிராகரி"</string>
+	<string name="close_app">"ஆப்ஸை மூடு"</string>
+</resources>

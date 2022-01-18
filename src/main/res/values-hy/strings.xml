@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="manage_external_storage_allow">"Թույլատրել"</string>
+	<string name="manage_external_storage_deny">"Մերժել"</string>
+	<string name="close_app">"Փակել հավելվածը"</string>
+</resources>

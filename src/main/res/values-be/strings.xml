@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="manage_external_storage_allow">"Дазволіць"</string>
+	<string name="manage_external_storage_deny">"Адмовіць"</string>
+	<string name="close_app">"Закрыць праграму"</string>
+</resources>

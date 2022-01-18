@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="manage_external_storage_allow">"ອະນຸຍາດ"</string>
+	<string name="manage_external_storage_deny">"ປະ​ຕິ​ເສດ"</string>
+	<string name="close_app">"ປິດແອັບ"</string>
+</resources>

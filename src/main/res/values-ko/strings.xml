@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="manage_external_storage_allow">"허용"</string>
+	<string name="manage_external_storage_deny">"거부"</string>
+	<string name="close_app">"앱 닫기"</string>
+</resources>

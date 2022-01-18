@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="manage_external_storage_allow">"ಅನುಮತಿಸಿ"</string>
+	<string name="manage_external_storage_deny">"ನಿರಾಕರಿಸಿ"</string>
+	<string name="close_app">"ಅಪ್ಲಿಕೇಶನ್ ಅನ್ನು ಮುಚ್ಚಿ"</string>
+</resources>

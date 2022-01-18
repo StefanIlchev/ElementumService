@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="manage_external_storage_allow">"Povoliť"</string>
+	<string name="manage_external_storage_deny">"Zamietnuť"</string>
+	<string name="close_app">"Zavrieť aplikáciu"</string>
+</resources>

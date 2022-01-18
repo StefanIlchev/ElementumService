@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="manage_external_storage_allow">"অনুমতি দিন"</string>
+	<string name="manage_external_storage_deny">"অস্বীকার করুন"</string>
+	<string name="close_app">"অ্যাপ্লিকেশান বন্ধ করুন"</string>
+</resources>

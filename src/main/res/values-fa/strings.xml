@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="manage_external_storage_allow">"ارزیابی‌شده"</string>
+	<string name="manage_external_storage_deny">"مجاز نبودن"</string>
+	<string name="close_app">"بستن برنامه"</string>
+</resources>

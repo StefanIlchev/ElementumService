@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="manage_external_storage_allow">"Benarkan"</string>
+	<string name="manage_external_storage_deny">"Nafi"</string>
+	<string name="close_app">"Tutup apl"</string>
+</resources>
