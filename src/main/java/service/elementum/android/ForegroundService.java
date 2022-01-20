@@ -44,9 +44,17 @@ public class ForegroundService extends Service {
 		stopSelf();
 	}
 
+	private void stopDaemon() {
+		var daemonRunnable = this.daemonRunnable;
+		if (daemonRunnable != null) {
+			this.daemonRunnable = null;
+			daemonRunnable.destroy();
+		}
+	}
+
 	private void startDaemon() {
+		stopDaemon();
 		var daemonRunnable = new DaemonRunnable(this);
-		this.daemonRunnable = daemonRunnable;
 		EXECUTOR.execute(() -> {
 			daemonRunnable.run();
 			HANDLER.post(() -> {
@@ -55,13 +63,7 @@ public class ForegroundService extends Service {
 				}
 			});
 		});
-	}
-
-	private void stopDaemon() {
-		var daemonRunnable = this.daemonRunnable;
-		if (daemonRunnable != null) {
-			daemonRunnable.destroy();
-		}
+		this.daemonRunnable = daemonRunnable;
 	}
 
 	@Override

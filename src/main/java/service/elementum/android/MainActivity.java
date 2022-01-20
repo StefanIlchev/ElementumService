@@ -4,11 +4,11 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
 import android.util.Log;
@@ -27,8 +27,6 @@ public class MainActivity extends Activity {
 	}
 
 	private static final String TAG = "MainActivity";
-
-	private static final long MANAGE_EXTERNAL_STORAGE_CHECK_DELAY_MILLIS = 100L;
 
 	@SuppressLint("InlinedApi")
 	private static final String MANAGE_EXTERNAL_STORAGE =
@@ -52,6 +50,10 @@ public class MainActivity extends Activity {
 		return result;
 	}
 
+	private Runnable manageExternalStorageAllowCmdRunnable = null;
+
+	private Dialog manageExternalStorageAllowCmdDialog = null;
+
 	private boolean isExternalStorageManager() {
 		return Build.VERSION.SDK_INT < Build.VERSION_CODES.R || Environment.isExternalStorageManager() ||
 				getSharedPreferences(TAG, MODE_PRIVATE).getBoolean(MANAGE_EXTERNAL_STORAGE, false);
@@ -64,12 +66,25 @@ public class MainActivity extends Activity {
 				.apply();
 	}
 
-	private void showAllowManageExternalStorageCmd() {
-		var cmd = "adb shell appops set --uid " + getPackageName() + " MANAGE_EXTERNAL_STORAGE allow";
-		var cmdDialog = new AlertDialog.Builder(this)
+	private void hideManageExternalStorageAllowCmd() {
+		var manageExternalStorageAllowCmdRunnable = this.manageExternalStorageAllowCmdRunnable;
+		if (manageExternalStorageAllowCmdRunnable != null) {
+			this.manageExternalStorageAllowCmdRunnable = null;
+			ForegroundService.HANDLER.removeCallbacks(manageExternalStorageAllowCmdRunnable);
+		}
+		var manageExternalStorageAllowCmdDialog = this.manageExternalStorageAllowCmdDialog;
+		if (manageExternalStorageAllowCmdDialog != null) {
+			this.manageExternalStorageAllowCmdDialog = null;
+			manageExternalStorageAllowCmdDialog.dismiss();
+		}
+	}
+
+	private void showManageExternalStorageAllowCmd() {
+		hideManageExternalStorageAllowCmd();
+		var manageExternalStorageAllowCmdDialog = new AlertDialog.Builder(this)
 				.setTitle(R.string.app_name)
 				.setIcon(R.mipmap.ic_launcher)
-				.setMessage(cmd)
+				.setMessage("adb shell appops set --uid " + getPackageName() + " MANAGE_EXTERNAL_STORAGE allow")
 				.setPositiveButton(R.string.manage_external_storage_allow, (dialog, which) ->
 						Toast.makeText(this, R.string.manage_external_storage_allow_message, Toast.LENGTH_SHORT).show())
 				.setNegativeButton(R.string.manage_external_storage_deny, (dialog, which) ->
@@ -78,21 +93,20 @@ public class MainActivity extends Activity {
 						finish())
 				.setCancelable(false)
 				.show();
-		var check = new Runnable() {
+		this.manageExternalStorageAllowCmdDialog = manageExternalStorageAllowCmdDialog;
+		var manageExternalStorageAllowCmdRunnable = new Runnable() {
 
 			@Override
 			public void run() {
-				if (isDestroyed() || isFinishing()) {
-					return;
-				}
-				if (isExternalStorageManager() || !cmdDialog.isShowing()) {
+				if (isExternalStorageManager() || !manageExternalStorageAllowCmdDialog.isShowing()) {
 					requestRequestedPermissionsOrTryStartForegroundServiceAndFinish();
 				} else {
-					ForegroundService.HANDLER.postDelayed(this, MANAGE_EXTERNAL_STORAGE_CHECK_DELAY_MILLIS);
+					ForegroundService.HANDLER.postDelayed(this, 100L);
 				}
 			}
 		};
-		ForegroundService.HANDLER.postDelayed(check, MANAGE_EXTERNAL_STORAGE_CHECK_DELAY_MILLIS);
+		ForegroundService.HANDLER.post(manageExternalStorageAllowCmdRunnable);
+		this.manageExternalStorageAllowCmdRunnable = manageExternalStorageAllowCmdRunnable;
 	}
 
 	private String[] requestManageExternalStorage() {
@@ -101,7 +115,7 @@ public class MainActivity extends Activity {
 		if (intent.resolveActivity(getPackageManager()) != null) {
 			startActivityForResult(intent, RequestCode.MANAGE_EXTERNAL_STORAGE.ordinal());
 		} else {
-			showAllowManageExternalStorageCmd();
+			showManageExternalStorageAllowCmd();
 		}
 		return new String[]{MANAGE_EXTERNAL_STORAGE};
 	}
@@ -148,16 +162,22 @@ public class MainActivity extends Activity {
 	}
 
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
+	protected void onResume() {
+		super.onResume();
 		requestRequestedPermissionsOrTryStartForegroundServiceAndFinish();
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		hideManageExternalStorageAllowCmd();
 	}
 
 	@Override
 	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
 		if (requestCode == RequestCode.REQUESTED_PERMISSIONS.ordinal()) {
 			var deniedPermissions = listPermissions(permissions, grantResults, PackageManager.PERMISSION_DENIED);
-			if (deniedPermissions.isEmpty()) {
+			if (deniedPermissions.isEmpty() && grantResults.length > 0) {
 				tryStartForegroundService();
 			} else {
 				Log.v(TAG, "deniedPermissions = [" + String.join(", ", deniedPermissions) + "]");
@@ -168,13 +188,9 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (requestCode == RequestCode.MANAGE_EXTERNAL_STORAGE.ordinal()) {
-			if (isExternalStorageManager()) {
-				requestRequestedPermissionsOrTryStartForegroundServiceAndFinish();
-			} else {
-				Log.v(TAG, "deniedPermissions = [" + MANAGE_EXTERNAL_STORAGE + "]");
-				finish();
-			}
+		if (requestCode == RequestCode.MANAGE_EXTERNAL_STORAGE.ordinal() && !isExternalStorageManager()) {
+			Log.v(TAG, "deniedPermissions = [" + MANAGE_EXTERNAL_STORAGE + "]");
+			finish();
 		}
 	}
 }
