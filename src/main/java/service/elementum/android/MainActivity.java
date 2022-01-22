@@ -58,7 +58,7 @@ public class MainActivity extends Activity {
 		var manageExternalStorageAllowCmdRunnable = this.manageExternalStorageAllowCmdRunnable;
 		if (manageExternalStorageAllowCmdRunnable != null) {
 			this.manageExternalStorageAllowCmdRunnable = null;
-			ForegroundService.HANDLER.removeCallbacks(manageExternalStorageAllowCmdRunnable);
+			ForegroundService.MAIN_HANDLER.removeCallbacks(manageExternalStorageAllowCmdRunnable);
 		}
 		var manageExternalStorageAllowCmdDialog = this.manageExternalStorageAllowCmdDialog;
 		if (manageExternalStorageAllowCmdDialog != null) {
@@ -90,13 +90,13 @@ public class MainActivity extends Activity {
 			@Override
 			public void run() {
 				if (manageExternalStorageAllowCmdDialog.isShowing() && !isExternalStorageManager()) {
-					ForegroundService.HANDLER.postDelayed(this, 100L);
+					ForegroundService.MAIN_HANDLER.postDelayed(this, 100L);
 				} else if (requestRequestedPermissions() == null) {
 					startForegroundServiceAndFinish();
 				}
 			}
 		};
-		ForegroundService.HANDLER.post(manageExternalStorageAllowCmdRunnable);
+		ForegroundService.MAIN_HANDLER.post(manageExternalStorageAllowCmdRunnable);
 		this.manageExternalStorageAllowCmdRunnable = manageExternalStorageAllowCmdRunnable;
 	}
 

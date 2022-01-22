@@ -19,9 +19,9 @@ public class ForegroundService extends Service {
 
 	private static final int NOTIFICATION_ID = 1;
 
-	private static final Executor EXECUTOR = Executors.newSingleThreadExecutor();
+	private static final Executor WORK_EXECUTOR = Executors.newSingleThreadExecutor();
 
-	public static final Handler HANDLER = new Handler(Looper.getMainLooper());
+	public static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
 
 	private DaemonRunnable daemonRunnable = null;
 
@@ -55,9 +55,9 @@ public class ForegroundService extends Service {
 	private void startDaemon() {
 		stopDaemon();
 		var daemonRunnable = new DaemonRunnable(this);
-		EXECUTOR.execute(() -> {
+		WORK_EXECUTOR.execute(() -> {
 			daemonRunnable.run();
-			HANDLER.post(() -> {
+			MAIN_HANDLER.post(() -> {
 				if (!daemonRunnable.isDestroyed()) {
 					stopForeground();
 				}
