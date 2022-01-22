@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="manage_external_storage_allow">"Tillad"</string>
+	<string name="manage_external_storage_allow_message">"Du skal gøre dette manuelt"</string>
 	<string name="manage_external_storage_deny">"Afvis"</string>
 	<string name="close_app">"Luk app"</string>
 </resources>

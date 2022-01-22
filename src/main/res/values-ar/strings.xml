@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="manage_external_storage_allow">"السماح"</string>
+	<string name="manage_external_storage_allow_message">"عليك عمل هذا يدويا"</string>
 	<string name="manage_external_storage_deny">"رفض"</string>
 	<string name="close_app">"إغلاق التطبيق"</string>
 </resources>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="manage_external_storage_allow">"Зөвшөөрөх"</string>
+	<string name="manage_external_storage_allow_message">"Та үүнийг гараар хийх хэрэгтэй"</string>
 	<string name="manage_external_storage_deny">"Татгалзах"</string>
 	<string name="close_app">"Аппыг хаах"</string>
 </resources>

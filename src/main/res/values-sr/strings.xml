@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="manage_external_storage_allow">"Дозволи"</string>
+	<string name="manage_external_storage_allow_message">"Мораш то да урадиш ручно"</string>
 	<string name="manage_external_storage_deny">"Одбиј"</string>
 	<string name="close_app">"Затвори апликацију"</string>
 </resources>

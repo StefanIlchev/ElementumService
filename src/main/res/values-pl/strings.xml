@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="manage_external_storage_allow">"Zezwól"</string>
+	<string name="manage_external_storage_allow_message">"Musisz to zrobić ręcznie"</string>
 	<string name="manage_external_storage_deny">"Odmów"</string>
 	<string name="close_app">"Zamknij aplikację"</string>
 </resources>

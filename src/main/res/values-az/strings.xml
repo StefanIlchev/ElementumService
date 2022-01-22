@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="manage_external_storage_allow">"İcazə verin"</string>
+	<string name="manage_external_storage_allow_message">"Bunu əl ilə etməlisiniz"</string>
 	<string name="manage_external_storage_deny">"Rədd et"</string>
 	<string name="close_app">"Tətbiqi qapadın"</string>
 </resources>

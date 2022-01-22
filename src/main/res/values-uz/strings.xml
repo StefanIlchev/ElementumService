@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="manage_external_storage_allow">"Ruxsat berish"</string>
+	<string name="manage_external_storage_allow_message">"Buni qo'lda qilishingiz kerak"</string>
 	<string name="manage_external_storage_deny">"Rad etish"</string>
 	<string name="close_app">"Ilovani yopish"</string>
 </resources>

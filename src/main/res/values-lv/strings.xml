@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="manage_external_storage_allow">"Atļaut"</string>
+	<string name="manage_external_storage_allow_message">"Jums tas jādara manuāli"</string>
 	<string name="manage_external_storage_deny">"Noraidīt"</string>
 	<string name="close_app">"Aizvērt lietotni"</string>
 </resources>

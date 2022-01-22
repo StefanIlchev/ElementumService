@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="manage_external_storage_allow">"Luba"</string>
+	<string name="manage_external_storage_allow_message">"Peate seda tegema käsitsi"</string>
 	<string name="manage_external_storage_deny">"Keela"</string>
 	<string name="close_app">"Sule rakendus"</string>
 </resources>

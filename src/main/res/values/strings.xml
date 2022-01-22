@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
 	<string name="app_name" translatable="false">Elementum Service</string>
 	<string name="manage_external_storage_allow">Allow</string>
-	<string name="manage_external_storage_allow_message" tools:ignore="MissingTranslation">You have to do this manually</string>
+	<string name="manage_external_storage_allow_message">You have to do this manually</string>
 	<string name="manage_external_storage_deny">Deny</string>
 	<string name="close_app">Close app</string>
 </resources>

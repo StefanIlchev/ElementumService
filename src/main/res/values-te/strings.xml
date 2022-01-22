@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="manage_external_storage_allow">"అనుమతించండి"</string>
+	<string name="manage_external_storage_allow_message">"మీరు దీన్ని మాన్యువల్‌గా చేయాలి"</string>
 	<string name="manage_external_storage_deny">"తిరస్కరించండి"</string>
 	<string name="close_app">"యాప్‌ను మూసివేయి"</string>
 </resources>

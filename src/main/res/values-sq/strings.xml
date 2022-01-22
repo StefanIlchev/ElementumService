@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="manage_external_storage_allow">"Lejo"</string>
+	<string name="manage_external_storage_allow_message">"Ju duhet ta bëni këtë me dorë"</string>
 	<string name="manage_external_storage_deny">"Moho"</string>
 	<string name="close_app">"Mbyll aplikacionin"</string>
 </resources>

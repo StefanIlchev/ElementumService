@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="manage_external_storage_allow">"Salli"</string>
+	<string name="manage_external_storage_allow_message">"Sinun on tehtävä tämä manuaalisesti"</string>
 	<string name="manage_external_storage_deny">"Kiellä"</string>
 	<string name="close_app">"Sulje sovellus"</string>
 </resources>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="manage_external_storage_allow">"Permitir"</string>
+	<string name="manage_external_storage_allow_message">"Tes que facelo manualmente"</string>
 	<string name="manage_external_storage_deny">"Rexeitar"</string>
 	<string name="close_app">"Pechar aplicación"</string>
 </resources>

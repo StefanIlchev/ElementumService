@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="manage_external_storage_allow">"Уруксат берүү"</string>
+	<string name="manage_external_storage_allow_message">"Муну кол менен жасашыңыз керек"</string>
 	<string name="manage_external_storage_deny">"Уруксат берилбейт"</string>
 	<string name="close_app">"Колдонмону жабуу"</string>
 </resources>

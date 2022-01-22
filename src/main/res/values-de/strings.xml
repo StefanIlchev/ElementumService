@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="manage_external_storage_allow">"Zulassen"</string>
+	<string name="manage_external_storage_allow_message">"Sie müssen dies manuell tun"</string>
 	<string name="manage_external_storage_deny">"Ablehnen"</string>
 	<string name="close_app">"App schließen"</string>
 </resources>

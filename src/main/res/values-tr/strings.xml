@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="manage_external_storage_allow">"İzin Ver"</string>
+	<string name="manage_external_storage_allow_message">"Bunu manuel olarak yapmalısın"</string>
 	<string name="manage_external_storage_deny">"Reddet"</string>
 	<string name="close_app">"Uygulamayı kapat"</string>
 </resources>

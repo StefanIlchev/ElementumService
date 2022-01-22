@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="manage_external_storage_allow">"Permiteți"</string>
+	<string name="manage_external_storage_allow_message">"Trebuie să faci asta manual"</string>
 	<string name="manage_external_storage_deny">"Refuzați"</string>
 	<string name="close_app">"Închideți aplicația"</string>
 </resources>
