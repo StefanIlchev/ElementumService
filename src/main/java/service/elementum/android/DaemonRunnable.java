@@ -12,6 +12,7 @@ import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -28,15 +29,15 @@ public class DaemonRunnable implements Runnable {
 	private volatile boolean isDestroyed = false;
 
 	public DaemonRunnable(Context context) {
-		var externalFilesDir = context.getExternalFilesDir(null);
-		var assetsDir = externalFilesDir != null ? new File(externalFilesDir, BuildConfig.ASSETS_DIR) : null;
-		var addonAssetsDir = assetsDir != null ? new File(assetsDir, BuildConfig.ADDON_ASSETS_DIR) : null;
 		bin = new File(context.getApplicationInfo().nativeLibraryDir);
 		assetsMarker = new File(context.getCodeCacheDir(), context.getPackageName());
 		assetManager = context.getAssets();
-		assets = addonAssetsDir == null ? Collections.emptyMap() : Collections.singletonMap(
-				BuildConfig.ADDON_ID, addonAssetsDir
-		);
+		assets = Collections.unmodifiableMap(new HashMap<>() {{
+			var externalFilesDir = context.getExternalFilesDir(null);
+			if (externalFilesDir != null) {
+				put(BuildConfig.ADDON_ID, new File(externalFilesDir, BuildConfig.ADDON_ASSETS_DIR));
+			}
+		}});
 	}
 
 	public boolean isDestroyed() {
@@ -75,23 +76,16 @@ public class DaemonRunnable implements Runnable {
 	}
 
 	private void extract() throws Throwable {
-		if (assetsMarker.exists()) {
+		if (assetsMarker.exists() || isDestroyed()) {
 			return;
 		}
 		for (var entry : assets.entrySet()) {
+			extract(entry.getKey(), entry.getValue());
 			if (isDestroyed()) {
 				return;
 			}
-			extract(entry.getKey(), entry.getValue());
 		}
-		if (isDestroyed()) {
-			return;
-		}
-		var parentFile = assetsMarker.getParentFile();
-		if (parentFile != null) {
-			parentFile.mkdirs();
-		}
-		assetsMarker.createNewFile();
+		assetsMarker.mkdirs();
 	}
 
 	private void execute() throws Throwable {

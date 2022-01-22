@@ -14,10 +14,8 @@ import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 
 public class MainActivity extends Activity {
 
@@ -39,16 +37,6 @@ public class MainActivity extends Activity {
 	@SuppressLint("InlinedApi")
 	private static final String FOREGROUND_SERVICE =
 			Manifest.permission.FOREGROUND_SERVICE;
-
-	private static List<String> listPermissions(String[] permissions, int[] grantResults, int grantResult) {
-		var result = new ArrayList<String>();
-		for (var i = 0; i < grantResults.length; ++i) {
-			if (grantResults[i] == grantResult) {
-				result.add(permissions[i]);
-			}
-		}
-		return result;
-	}
 
 	private Runnable manageExternalStorageAllowCmdRunnable = null;
 
@@ -85,10 +73,13 @@ public class MainActivity extends Activity {
 				.setTitle(R.string.app_name)
 				.setIcon(R.mipmap.ic_launcher)
 				.setMessage("adb shell appops set --uid " + getPackageName() + " MANAGE_EXTERNAL_STORAGE allow")
-				.setPositiveButton(R.string.manage_external_storage_allow, (dialog, which) ->
-						Toast.makeText(this, R.string.manage_external_storage_allow_message, Toast.LENGTH_SHORT).show())
+				.setPositiveButton(R.string.manage_external_storage_allow, (dialog, which) -> {
+					if (!isExternalStorageManager()) {
+						Toast.makeText(this, R.string.manage_external_storage_allow_message, Toast.LENGTH_SHORT).show();
+					}
+				})
 				.setNegativeButton(R.string.manage_external_storage_deny, (dialog, which) ->
-						setExternalStorageManager(true))
+						setExternalStorageManager(!isExternalStorageManager()))
 				.setNeutralButton(R.string.close_app, (dialog, which) ->
 						finish())
 				.setCancelable(false)
@@ -98,10 +89,10 @@ public class MainActivity extends Activity {
 
 			@Override
 			public void run() {
-				if (isExternalStorageManager() || !manageExternalStorageAllowCmdDialog.isShowing()) {
-					requestRequestedPermissionsOrTryStartForegroundServiceAndFinish();
-				} else {
+				if (manageExternalStorageAllowCmdDialog.isShowing() && !isExternalStorageManager()) {
 					ForegroundService.HANDLER.postDelayed(this, 100L);
+				} else if (requestRequestedPermissions() == null) {
+					startForegroundServiceAndFinish();
 				}
 			}
 		};
@@ -109,7 +100,10 @@ public class MainActivity extends Activity {
 		this.manageExternalStorageAllowCmdRunnable = manageExternalStorageAllowCmdRunnable;
 	}
 
-	private String[] requestManageExternalStorage() {
+	private boolean requestManageExternalStorage() {
+		if (isExternalStorageManager()) {
+			return false;
+		}
 		var uri = Uri.fromParts("package", getPackageName(), null);
 		var intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri);
 		if (intent.resolveActivity(getPackageManager()) != null) {
@@ -117,7 +111,7 @@ public class MainActivity extends Activity {
 		} else {
 			showManageExternalStorageAllowCmd();
 		}
-		return new String[]{MANAGE_EXTERNAL_STORAGE};
+		return true;
 	}
 
 	private String[] requestRequestedPermissions() {
@@ -127,8 +121,9 @@ public class MainActivity extends Activity {
 					.requestedPermissions;
 			if (requestedPermissions != null && requestedPermissions.length > 0) {
 				var set = new HashSet<>(Arrays.asList(requestedPermissions));
-				if (set.remove(MANAGE_EXTERNAL_STORAGE) && !isExternalStorageManager()) {
-					return requestManageExternalStorage();
+				if (set.remove(MANAGE_EXTERNAL_STORAGE) &&
+						requestManageExternalStorage()) {
+					return new String[]{MANAGE_EXTERNAL_STORAGE};
 				}
 				if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
 					set.remove(FOREGROUND_SERVICE);
@@ -145,26 +140,22 @@ public class MainActivity extends Activity {
 		return null;
 	}
 
-	private void tryStartForegroundService() {
+	private void startForegroundServiceAndFinish() {
 		var intent = new Intent(this, ForegroundService.class);
 		try {
 			startForegroundService(intent);
 		} catch (Throwable t) {
 			Log.w(TAG, t);
 		}
-	}
-
-	private void requestRequestedPermissionsOrTryStartForegroundServiceAndFinish() {
-		if (requestRequestedPermissions() == null) {
-			tryStartForegroundService();
-			finish();
-		}
+		finish();
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		requestRequestedPermissionsOrTryStartForegroundServiceAndFinish();
+		if (requestRequestedPermissions() == null) {
+			startForegroundServiceAndFinish();
+		}
 	}
 
 	@Override
@@ -176,21 +167,14 @@ public class MainActivity extends Activity {
 	@Override
 	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
 		if (requestCode == RequestCode.REQUESTED_PERMISSIONS.ordinal()) {
-			var deniedPermissions = listPermissions(permissions, grantResults, PackageManager.PERMISSION_DENIED);
-			if (deniedPermissions.isEmpty() && grantResults.length > 0) {
-				tryStartForegroundService();
-			} else {
-				Log.v(TAG, "deniedPermissions = [" + String.join(", ", deniedPermissions) + "]");
-			}
-			finish();
+			startForegroundServiceAndFinish();
 		}
 	}
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (requestCode == RequestCode.MANAGE_EXTERNAL_STORAGE.ordinal() && !isExternalStorageManager()) {
-			Log.v(TAG, "deniedPermissions = [" + MANAGE_EXTERNAL_STORAGE + "]");
-			finish();
+		if (requestCode == RequestCode.MANAGE_EXTERNAL_STORAGE.ordinal()) {
+			setExternalStorageManager(!isExternalStorageManager());
 		}
 	}
 }
