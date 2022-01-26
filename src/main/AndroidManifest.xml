@@ -4,7 +4,6 @@
 	package="service.elementum.android">
 
 	<application
-		android:allowBackup="false"
 		android:extractNativeLibs="true"
 		android:icon="@mipmap/ic_launcher"
 		android:label="@string/app_name"
@@ -18,7 +17,7 @@
 
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
-				<category android:name="android.intent.category.LAUNCHER" />
+				<category android:name="android.intent.category.DEFAULT" />
 			</intent-filter>
 		</activity>
 

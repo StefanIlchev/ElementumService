@@ -9,7 +9,7 @@ buildscript {
 	}
 
 	dependencies {
-		classpath 'com.android.tools.build:gradle:7.0.4'
+		classpath 'com.android.tools.build:gradle:7.1.0'
 		classpath 'org.codehaus.groovy:groovy-xml:3.0.9'
 	}
 }
@@ -48,8 +48,8 @@ android {
 	defaultConfig {
 		minSdkVersion 26
 		targetSdkVersion 31
-		versionCode System.getProperty('versionCode') as Integer ?: 13
-		versionName System.getProperty('versionName') ?: "0.1.$versionCode"
+		versionCode System.getProperty('versionCode') as Integer ?: 14
+		versionName System.getProperty('versionName') ?: "$versionCode"
 		applicationId 'service.elementum.android'
 		buildConfigField 'String', 'ADDON_ID', "\"$addonId\""
 		buildConfigField 'String', 'ADDON_ASSETS_DIR', "\"$addonAssetsDir\""
@@ -138,6 +138,7 @@ if (addonZip != null) {
 
 		doLast {
 			def applicationId = android.defaultConfig.applicationId
+			def intentAction = 'android.intent.action.MAIN'
 			def pathPattern = '/org\\.xbmc\\.kodi/'
 			def pathReplace = "/$applicationId/"
 			def startLine = '                proc = start_elementumd(stdout=subprocess.PIPE, stderr=subprocess.STDOUT)'
@@ -164,7 +165,8 @@ if (addonZip != null) {
 					|                            shutil.copytree(srcRepoDir, dstRepoDir)
 					|                        except Exception:
 					|                            pass
-					|                xbmc.executebuiltin('StartAndroidActivity($applicationId)')""".stripMargin()
+					|                xbmc.executebuiltin('StartAndroidActivity($applicationId, $intentAction)')"""
+					.stripMargin()
 			def pathLine = "        info['path'] = ADDON_PATH"
 			def pathLinePatched = """        pathPattern = '$pathPattern'
 					|        pathReplace = '$pathReplace'
