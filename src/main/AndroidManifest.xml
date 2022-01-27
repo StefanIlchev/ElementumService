@@ -16,8 +16,8 @@
 			android:theme="@style/AppTheme">
 
 			<intent-filter>
-				<action android:name="android.intent.action.MAIN" />
-				<category android:name="android.intent.category.DEFAULT" />
+				<action android:name="${mainIntentAction}" />
+				<category android:name="${mainIntentCategory}" />
 			</intent-filter>
 		</activity>
 

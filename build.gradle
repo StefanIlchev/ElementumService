@@ -51,6 +51,9 @@ android {
 		versionCode System.getProperty('versionCode') as Integer ?: 14
 		versionName System.getProperty('versionName') ?: "$versionCode"
 		applicationId 'service.elementum.android'
+		manifestPlaceholders = [
+				'mainIntentAction': 'android.intent.action.MAIN'
+		]
 		buildConfigField 'String', 'ADDON_ID', "\"$addonId\""
 		buildConfigField 'String', 'ADDON_ASSETS_DIR', "\"$addonAssetsDir\""
 		buildConfigField 'java.util.List<String>', 'SUBPROCESS_CMD', """java.util.Arrays.asList(
@@ -82,11 +85,20 @@ android {
 
 	buildTypes {
 
+		debug {
+			manifestPlaceholders = [
+					'mainIntentCategory': 'android.intent.category.LAUNCHER'
+			]
+		}
+
 		release {
 			minifyEnabled true
 			shrinkResources true
 			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
 			signingConfig signingConfigs.debug
+			manifestPlaceholders = [
+					'mainIntentCategory': 'android.intent.category.DEFAULT'
+			]
 		}
 	}
 
@@ -138,7 +150,7 @@ if (addonZip != null) {
 
 		doLast {
 			def applicationId = android.defaultConfig.applicationId
-			def intentAction = 'android.intent.action.MAIN'
+			def intentAction = android.defaultConfig.manifestPlaceholders['mainIntentAction']
 			def pathPattern = '/org\\.xbmc\\.kodi/'
 			def pathReplace = "/$applicationId/"
 			def startLine = '                proc = start_elementumd(stdout=subprocess.PIPE, stderr=subprocess.STDOUT)'
