@@ -10,34 +10,30 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Scanner;
 
 public class DaemonRunnable implements Runnable {
 
-	private final File bin;
-
-	private final File assetsMarker;
+	private static final String TAG = "DaemonRunnable";
 
 	private final AssetManager assetManager;
 
-	private final Map<String, File> assets;
+	private final File assetsMarker;
+
+	private final File nativeLibraryDir;
+
+	private final File externalFilesDir;
 
 	private volatile boolean isDestroyed = false;
 
 	public DaemonRunnable(Context context) {
-		bin = new File(context.getApplicationInfo().nativeLibraryDir);
-		assetsMarker = new File(context.getCodeCacheDir(), context.getPackageName());
 		assetManager = context.getAssets();
-		assets = Collections.unmodifiableMap(new HashMap<>() {{
-			var externalFilesDir = context.getExternalFilesDir(null);
-			if (externalFilesDir != null) {
-				put(BuildConfig.ADDON_ID, new File(externalFilesDir, BuildConfig.ADDON_ASSETS_DIR));
-			}
-		}});
+		assetsMarker = new File(context.getCodeCacheDir(), context.getPackageName());
+		nativeLibraryDir = new File(context.getApplicationInfo().nativeLibraryDir);
+		externalFilesDir = Objects.requireNonNull(context.getExternalFilesDir(null));
 	}
 
 	public boolean isDestroyed() {
@@ -48,24 +44,33 @@ public class DaemonRunnable implements Runnable {
 		isDestroyed = true;
 	}
 
+	private String format(String format) {
+		return String.format(
+				format,
+				nativeLibraryDir.getPath(),
+				externalFilesDir.getPath());
+	}
+
 	private void extract(String src, File dst) throws Throwable {
-		var node = src;
-		var name = dst.getName();
-		var parent = dst.getParent();
 		if (dst.exists()) {
+			if (assetsMarker.exists() || isDestroyed()) {
+				return;
+			}
 			try (var stream = Files.walk(dst.toPath())) {
 				stream.sorted(Comparator.reverseOrder())
 						.map(Path::toFile)
 						.forEach(File::delete);
 			}
 		}
-		for (var deque = new ArrayDeque<String>(); node != null && !isDestroyed(); node = name = deque.pollFirst()) {
+		var deque = new ArrayDeque<String>();
+		for (String node = src, name = dst.getName(); node != null && !isDestroyed(); node = name = deque.pollFirst()) {
 			var children = assetManager.list(node);
 			if (children != null) {
 				for (var child : children) {
 					deque.add(node + "/" + child);
 				}
 			}
+			var parent = dst.getParent();
 			var path = parent != null ? Paths.get(parent, name) : Paths.get(name);
 			try (var in = assetManager.open(node)) {
 				Files.copy(in, path);
@@ -76,11 +81,8 @@ public class DaemonRunnable implements Runnable {
 	}
 
 	private void extract() throws Throwable {
-		if (assetsMarker.exists() || isDestroyed()) {
-			return;
-		}
-		for (var entry : assets.entrySet()) {
-			extract(entry.getKey(), entry.getValue());
+		for (var entry : BuildConfig.SUBPROCESS_ASSETS.entrySet()) {
+			extract(entry.getKey(), new File(format(entry.getValue())));
 			if (isDestroyed()) {
 				return;
 			}
@@ -88,42 +90,46 @@ public class DaemonRunnable implements Runnable {
 		assetsMarker.mkdirs();
 	}
 
+	private ProcessBuilder build() {
+		var command = new ArrayList<String>();
+		for (var entry : BuildConfig.SUBPROCESS_CMD) {
+			command.add(format(entry));
+		}
+		var builder = new ProcessBuilder(command)
+				.directory(nativeLibraryDir)
+				.redirectErrorStream(true);
+		var environment = builder.environment();
+		for (var entry : BuildConfig.SUBPROCESS_ENV.entrySet()) {
+			environment.put(entry.getKey(), format(entry.getValue()));
+		}
+		return builder;
+	}
+
 	private void execute() throws Throwable {
-		for (var attempt = 0; !isDestroyed(); Thread.sleep(5_000L)) {
-			var builder = new ProcessBuilder(BuildConfig.SUBPROCESS_CMD)
-					.directory(bin)
-					.redirectErrorStream(true);
-			var environment = builder.environment();
-			environment.putAll(BuildConfig.SUBPROCESS_ENV);
-			environment.put("LD_LIBRARY_PATH", bin.getPath());
+		var builder = build();
+		for (var attempt = 0; !isDestroyed(); Thread.sleep(BuildConfig.SUBPROCESS_RETRY_DELAY)) {
 			var process = builder.start();
 			try (var scanner = new Scanner(process.getInputStream())) {
 				while (scanner.hasNextLine()) {
 					var line = scanner.nextLine();
-					Log.v(BuildConfig.ADDON_ID, line);
+					Log.v(BuildConfig.SUBPROCESS_TAG, line);
 					if (isDestroyed()) {
 						process.destroy();
 					}
 				}
 			}
 			var exitValue = process.waitFor();
-			Log.v(BuildConfig.ADDON_ID, "exitValue = " + exitValue);
-			if (isDestroyed()) {
-				return;
+			Log.v(TAG, "subprocessExitValue = " + exitValue);
+			if (BuildConfig.SUBPROCESS_EXIT_VALUES_END.contains(exitValue) || isDestroyed()) {
+				break;
 			}
-			switch (exitValue) {
-				case 5:
-					attempt = 0;
-				case -1:
-				case 0:
-					break;
-				case -9:
-				case 1:
-					return;
-				default:
-					if (++attempt > 3) {
-						return;
-					}
+			if (BuildConfig.SUBPROCESS_EXIT_VALUES_SKIP.contains(exitValue)) {
+				continue;
+			}
+			if (BuildConfig.SUBPROCESS_EXIT_VALUES_START.contains(exitValue)) {
+				attempt = 0;
+			} else if (++attempt > BuildConfig.SUBPROCESS_RETRIES_COUNT) {
+				break;
 			}
 		}
 	}
@@ -134,7 +140,7 @@ public class DaemonRunnable implements Runnable {
 			extract();
 			execute();
 		} catch (Throwable t) {
-			Log.w(BuildConfig.ADDON_ID, t);
+			Log.w(TAG, t);
 		}
 	}
 }

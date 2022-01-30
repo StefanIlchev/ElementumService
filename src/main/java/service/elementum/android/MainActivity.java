@@ -106,12 +106,18 @@ public class MainActivity extends Activity {
 		}
 		var uri = Uri.fromParts("package", getPackageName(), null);
 		var intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri);
-		if (intent.resolveActivity(getPackageManager()) != null) {
-			startActivityForResult(intent, RequestCode.MANAGE_EXTERNAL_STORAGE.ordinal());
-		} else {
-			showManageExternalStorageAllowCmd();
+		try {
+			var activityInfo = intent.resolveActivityInfo(getPackageManager(), 0);
+			if (activityInfo != null && activityInfo.isEnabled() && activityInfo.exported) {
+				startActivityForResult(intent, RequestCode.MANAGE_EXTERNAL_STORAGE.ordinal());
+			} else {
+				showManageExternalStorageAllowCmd();
+			}
+			return true;
+		} catch (Throwable t) {
+			Log.w(TAG, t);
 		}
-		return true;
+		return false;
 	}
 
 	private String[] requestRequestedPermissions() {

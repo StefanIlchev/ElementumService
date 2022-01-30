@@ -48,21 +48,44 @@ android {
 	defaultConfig {
 		minSdkVersion 26
 		targetSdkVersion 31
-		versionCode System.getProperty('versionCode') as Integer ?: 14
+		versionCode System.getProperty('versionCode') as Integer ?: 15
 		versionName System.getProperty('versionName') ?: "$versionCode"
 		applicationId 'service.elementum.android'
 		manifestPlaceholders = [
 				'mainIntentAction': 'android.intent.action.MAIN'
 		]
-		buildConfigField 'String', 'ADDON_ID', "\"$addonId\""
-		buildConfigField 'String', 'ADDON_ASSETS_DIR', "\"$addonAssetsDir\""
-		buildConfigField 'java.util.List<String>', 'SUBPROCESS_CMD', """java.util.Arrays.asList(
+		buildConfigField 'java.util.Map<String, String>', 'SUBPROCESS_ASSETS', """
+				|java.util.Collections.unmodifiableMap(new java.util.HashMap<>() {{
+				|  put(\"$addonId\", \"%2\$s/$addonAssetsDir\");
+				|}})""".stripMargin()
+		buildConfigField 'java.util.List<String>', 'SUBPROCESS_CMD', """
+				|java.util.Collections.unmodifiableList(java.util.Arrays.asList(
 				|    \"./libelementum.so\",
 				|    \"-remotePort=$remotePort\",
 				|    \"-localHost=$localHost\",
 				|    \"-localPort=$localPort\"
-				|)""".stripMargin()
-		buildConfigField 'java.util.Map<String, String>', 'SUBPROCESS_ENV', 'java.util.Collections.emptyMap()'
+				|))""".stripMargin()
+		buildConfigField 'java.util.Map<String, String>', 'SUBPROCESS_ENV', """
+				|java.util.Collections.unmodifiableMap(new java.util.HashMap<>() {{
+				|  put(\"LD_LIBRARY_PATH\", \"%1\$s\");
+				|}})""".stripMargin()
+		buildConfigField 'java.util.Set<Integer>', 'SUBPROCESS_EXIT_VALUES_END', """
+				|java.util.Collections.unmodifiableSet(new java.util.HashSet<>(java.util.Arrays.asList(
+				|    -9,
+				|    1
+				|)))""".stripMargin()
+		buildConfigField 'java.util.Set<Integer>', 'SUBPROCESS_EXIT_VALUES_SKIP', """
+				|java.util.Collections.unmodifiableSet(new java.util.HashSet<>(java.util.Arrays.asList(
+				|    -1,
+				|    0
+				|)))""".stripMargin()
+		buildConfigField 'java.util.Set<Integer>', 'SUBPROCESS_EXIT_VALUES_START', """
+				|java.util.Collections.unmodifiableSet(new java.util.HashSet<>(java.util.Arrays.asList(
+				|    5
+				|)))""".stripMargin()
+		buildConfigField 'int', 'SUBPROCESS_RETRIES_COUNT', "3"
+		buildConfigField 'long', 'SUBPROCESS_RETRY_DELAY', "5_000L"
+		buildConfigField 'String', 'SUBPROCESS_TAG', "\"$addonId\""
 	}
 
 	applicationVariants.all { variant ->
@@ -150,7 +173,8 @@ if (addonZip != null) {
 
 		doLast {
 			def applicationId = android.defaultConfig.applicationId
-			def intentAction = android.defaultConfig.manifestPlaceholders['mainIntentAction']
+			def mainIntentAction = android.defaultConfig.manifestPlaceholders['mainIntentAction']
+			def startArgs = "$applicationId, $mainIntentAction"
 			def pathPattern = '/org\\.xbmc\\.kodi/'
 			def pathReplace = "/$applicationId/"
 			def startLine = '                proc = start_elementumd(stdout=subprocess.PIPE, stderr=subprocess.STDOUT)'
@@ -177,8 +201,7 @@ if (addonZip != null) {
 					|                            shutil.copytree(srcRepoDir, dstRepoDir)
 					|                        except Exception:
 					|                            pass
-					|                xbmc.executebuiltin('StartAndroidActivity($applicationId, $intentAction)')"""
-					.stripMargin()
+					|                xbmc.executebuiltin('StartAndroidActivity($startArgs)')""".stripMargin()
 			def pathLine = "        info['path'] = ADDON_PATH"
 			def pathLinePatched = """        pathPattern = '$pathPattern'
 					|        pathReplace = '$pathReplace'
