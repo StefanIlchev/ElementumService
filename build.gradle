@@ -83,8 +83,8 @@ android {
 				|java.util.Collections.unmodifiableSet(new java.util.HashSet<>(java.util.Arrays.asList(
 				|    5
 				|)))""".stripMargin()
-		buildConfigField 'int', 'SUBPROCESS_RETRIES_COUNT', "3"
-		buildConfigField 'long', 'SUBPROCESS_RETRY_DELAY', "5_000L"
+		buildConfigField 'int', 'SUBPROCESS_RETRIES_COUNT', '3'
+		buildConfigField 'long', 'SUBPROCESS_RETRY_DELAY', '5_000L'
 		buildConfigField 'String', 'SUBPROCESS_TAG', "\"$addonId\""
 	}
 
