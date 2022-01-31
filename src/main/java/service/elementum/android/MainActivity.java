@@ -6,9 +6,11 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
 import android.util.Log;
@@ -54,6 +56,21 @@ public class MainActivity extends Activity {
 				.apply();
 	}
 
+	private ActivityInfo tryResolveActivityInfo(Intent intent, int flags) {
+		try {
+			return intent.resolveActivityInfo(getPackageManager(), flags);
+		} catch (Throwable ignore) {
+		}
+		return null;
+	}
+
+	private void tryStartActivityForResult(Intent intent, int requestCode, Bundle options) {
+		try {
+			startActivityForResult(intent, requestCode, options);
+		} catch (Throwable ignore) {
+		}
+	}
+
 	private void hideManageExternalStorageAllowCmd() {
 		var manageExternalStorageAllowCmdRunnable = this.manageExternalStorageAllowCmdRunnable;
 		if (manageExternalStorageAllowCmdRunnable != null) {
@@ -89,6 +106,9 @@ public class MainActivity extends Activity {
 
 			@Override
 			public void run() {
+				if (isFinishing() || isDestroyed()) {
+					return;
+				}
 				if (manageExternalStorageAllowCmdDialog.isShowing() && !isExternalStorageManager()) {
 					ForegroundService.MAIN_HANDLER.postDelayed(this, 100L);
 				} else if (requestRequestedPermissions() == null) {
@@ -106,18 +126,13 @@ public class MainActivity extends Activity {
 		}
 		var uri = Uri.fromParts("package", getPackageName(), null);
 		var intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri);
-		try {
-			var activityInfo = intent.resolveActivityInfo(getPackageManager(), 0);
-			if (activityInfo != null && activityInfo.isEnabled() && activityInfo.exported) {
-				startActivityForResult(intent, RequestCode.MANAGE_EXTERNAL_STORAGE.ordinal());
-			} else {
-				showManageExternalStorageAllowCmd();
-			}
-			return true;
-		} catch (Throwable t) {
-			Log.w(TAG, t);
+		var activityInfo = tryResolveActivityInfo(intent, 0);
+		if (activityInfo != null && activityInfo.isEnabled() && activityInfo.exported) {
+			tryStartActivityForResult(intent, RequestCode.MANAGE_EXTERNAL_STORAGE.ordinal(), null);
+		} else {
+			showManageExternalStorageAllowCmd();
 		}
-		return false;
+		return true;
 	}
 
 	private String[] requestRequestedPermissions() {
