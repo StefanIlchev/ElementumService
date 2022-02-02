@@ -118,15 +118,13 @@ public class DaemonRunnable implements Runnable {
 			var process = builder.start();
 			this.process = process;
 			if (isDestroyed()) {
+				this.process = null;
 				process.destroy();
 			}
 			try (var scanner = new Scanner(process.getInputStream())) {
 				while (scanner.hasNextLine()) {
 					var line = scanner.nextLine();
 					Log.v(BuildConfig.SUBPROCESS_TAG, line);
-					if (isDestroyed()) {
-						process.destroy();
-					}
 				}
 			}
 			var exitValue = process.waitFor();
