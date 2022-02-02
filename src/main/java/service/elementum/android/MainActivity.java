@@ -59,7 +59,8 @@ public class MainActivity extends Activity {
 	private ActivityInfo tryResolveActivityInfo(Intent intent, int flags) {
 		try {
 			return intent.resolveActivityInfo(getPackageManager(), flags);
-		} catch (Throwable ignore) {
+		} catch (Throwable t) {
+			Log.w(TAG, t);
 		}
 		return null;
 	}
@@ -67,7 +68,8 @@ public class MainActivity extends Activity {
 	private void tryStartActivityForResult(Intent intent, int requestCode, Bundle options) {
 		try {
 			startActivityForResult(intent, requestCode, options);
-		} catch (Throwable ignore) {
+		} catch (Throwable t) {
+			Log.w(TAG, t);
 		}
 	}
 
@@ -87,8 +89,8 @@ public class MainActivity extends Activity {
 	private void showManageExternalStorageAllowCmd() {
 		hideManageExternalStorageAllowCmd();
 		var manageExternalStorageAllowCmdDialog = new AlertDialog.Builder(this)
-				.setTitle(R.string.app_name)
 				.setIcon(R.mipmap.ic_launcher)
+				.setTitle(R.string.app_name)
 				.setMessage("adb shell appops set --uid " + getPackageName() + " MANAGE_EXTERNAL_STORAGE allow")
 				.setPositiveButton(R.string.manage_external_storage_allow, (dialog, which) -> {
 					if (!isExternalStorageManager()) {
@@ -162,7 +164,8 @@ public class MainActivity extends Activity {
 	}
 
 	private void startForegroundServiceAndFinish() {
-		var intent = new Intent(this, ForegroundService.class);
+		var intent = new Intent(this, ForegroundService.class)
+				.setAction(getIntent().getAction());
 		try {
 			startForegroundService(intent);
 		} catch (Throwable t) {
@@ -197,5 +200,10 @@ public class MainActivity extends Activity {
 		if (requestCode == RequestCode.MANAGE_EXTERNAL_STORAGE.ordinal()) {
 			setExternalStorageManager(!isExternalStorageManager());
 		}
+	}
+
+	@Override
+	protected void onNewIntent(Intent intent) {
+		setIntent(intent);
 	}
 }

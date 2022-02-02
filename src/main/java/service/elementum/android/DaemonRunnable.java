@@ -29,6 +29,8 @@ public class DaemonRunnable implements Runnable {
 
 	private volatile boolean isDestroyed = false;
 
+	private volatile Process process = null;
+
 	public DaemonRunnable(Context context) {
 		assetManager = context.getAssets();
 		assetsMarker = new File(context.getCodeCacheDir(), context.getPackageName());
@@ -42,6 +44,11 @@ public class DaemonRunnable implements Runnable {
 
 	public void destroy() {
 		isDestroyed = true;
+		var process = this.process;
+		if (process != null) {
+			this.process = null;
+			process.destroy();
+		}
 	}
 
 	private String format(String format) {
@@ -109,6 +116,10 @@ public class DaemonRunnable implements Runnable {
 		var builder = build();
 		for (var attempt = 0; !isDestroyed(); Thread.sleep(BuildConfig.SUBPROCESS_RETRY_DELAY)) {
 			var process = builder.start();
+			this.process = process;
+			if (isDestroyed()) {
+				process.destroy();
+			}
 			try (var scanner = new Scanner(process.getInputStream())) {
 				while (scanner.hasNextLine()) {
 					var line = scanner.nextLine();
@@ -119,6 +130,7 @@ public class DaemonRunnable implements Runnable {
 				}
 			}
 			var exitValue = process.waitFor();
+			this.process = null;
 			Log.v(TAG, "subprocessExitValue = " + exitValue);
 			if (BuildConfig.SUBPROCESS_EXIT_VALUES_END.contains(exitValue) || isDestroyed()) {
 				break;
