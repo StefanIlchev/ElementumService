@@ -111,10 +111,11 @@ public class MainActivity extends Activity {
 				if (isFinishing() || isDestroyed()) {
 					return;
 				}
-				if (manageExternalStorageAllowCmdDialog.isShowing() && !isExternalStorageManager()) {
+				if (getIntent().getAction() == null || !manageExternalStorageAllowCmdDialog.isShowing() ||
+						isExternalStorageManager()) {
+					resume();
+				} else {
 					ForegroundService.MAIN_HANDLER.postDelayed(this, 100L);
-				} else if (requestRequestedPermissions() == null) {
-					startForegroundServiceAndFinish();
 				}
 			}
 		};
@@ -163,23 +164,30 @@ public class MainActivity extends Activity {
 		return null;
 	}
 
-	private void startForegroundServiceAndFinish() {
-		var intent = new Intent(this, ForegroundService.class)
-				.setAction(getIntent().getAction());
+	private void callForegroundServiceAndFinish() {
+		var intent = new Intent(this, ForegroundService.class);
 		try {
-			startForegroundService(intent);
+			if (getIntent().getAction() == null) {
+				stopService(intent);
+			} else {
+				startForegroundService(intent);
+			}
 		} catch (Throwable t) {
 			Log.w(TAG, t);
 		}
 		finish();
 	}
 
+	private void resume() {
+		if (getIntent().getAction() == null || requestRequestedPermissions() == null) {
+			callForegroundServiceAndFinish();
+		}
+	}
+
 	@Override
 	protected void onResume() {
 		super.onResume();
-		if (requestRequestedPermissions() == null) {
-			startForegroundServiceAndFinish();
-		}
+		resume();
 	}
 
 	@Override
@@ -191,7 +199,7 @@ public class MainActivity extends Activity {
 	@Override
 	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
 		if (requestCode == RequestCode.REQUESTED_PERMISSIONS.ordinal()) {
-			startForegroundServiceAndFinish();
+			callForegroundServiceAndFinish();
 		}
 	}
 

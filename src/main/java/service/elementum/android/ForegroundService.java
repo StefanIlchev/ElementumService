@@ -125,14 +125,6 @@ public class ForegroundService extends Service {
 	}
 
 	@Override
-	public int onStartCommand(Intent intent, int flags, int startId) {
-		if (intent.getAction() == null) {
-			stopForeground();
-		}
-		return START_STICKY;
-	}
-
-	@Override
 	public void onDestroy() {
 		try {
 			stopDaemon();
