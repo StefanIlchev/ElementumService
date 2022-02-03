@@ -179,7 +179,8 @@ public class MainActivity extends Activity {
 	}
 
 	private void resume() {
-		if (getIntent().getAction() == null || requestRequestedPermissions() == null) {
+		if (getIntent().getAction() == null ||
+				requestRequestedPermissions() == null) {
 			callForegroundServiceAndFinish();
 		}
 	}

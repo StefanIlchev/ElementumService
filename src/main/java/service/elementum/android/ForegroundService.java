@@ -80,6 +80,7 @@ public class ForegroundService extends Service {
 		var mediaSession = this.mediaSession;
 		if (mediaSession != null) {
 			this.mediaSession = null;
+			mediaSession.setActive(false);
 			mediaSession.release();
 		}
 	}
@@ -93,6 +94,9 @@ public class ForegroundService extends Service {
 		this.mediaSession = mediaSession;
 		mediaSession.setMetadata(new MediaMetadata.Builder()
 				.putBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON, icLauncher)
+				.putString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE, appName)
+				.putString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE, closeApp)
+				.putString(MediaMetadata.METADATA_KEY_DISPLAY_DESCRIPTION, closeApp)
 				.putString(MediaMetadata.METADATA_KEY_TITLE, appName)
 				.putString(MediaMetadata.METADATA_KEY_ARTIST, closeApp)
 				.build());
