@@ -23,9 +23,9 @@ public class DaemonRunnable implements Runnable {
 
 	private final File assetsMarker;
 
-	private final File nativeLibraryDir;
+	private final File bin;
 
-	private final File externalFilesDir;
+	private final Object[] formatArgs;
 
 	private volatile boolean isDestroyed = false;
 
@@ -37,8 +37,11 @@ public class DaemonRunnable implements Runnable {
 	public DaemonRunnable(Context context) {
 		assetManager = context.getAssets();
 		assetsMarker = new File(context.getCodeCacheDir(), context.getPackageName());
-		nativeLibraryDir = new File(context.getApplicationInfo().nativeLibraryDir);
-		externalFilesDir = Objects.requireNonNull(context.getExternalFilesDir(null));
+		bin = new File(context.getApplicationInfo().nativeLibraryDir);
+		formatArgs = new Object[]{
+				bin.getPath(),
+				Objects.requireNonNull(context.getExternalFilesDir(null)).getPath()
+		};
 	}
 
 	public boolean isDestroyed() {
@@ -54,13 +57,6 @@ public class DaemonRunnable implements Runnable {
 		}
 	}
 
-	private String format(String format) {
-		return String.format(
-				format,
-				nativeLibraryDir.getPath(),
-				externalFilesDir.getPath());
-	}
-
 	private void extract(String src, File dst) throws Throwable {
 		if (dst.exists()) {
 			if (assetsMarker.exists() || isDestroyed()) {
@@ -71,6 +67,8 @@ public class DaemonRunnable implements Runnable {
 						.map(Path::toFile)
 						.forEach(File::delete);
 			}
+		} else {
+			assetsMarker.delete();
 		}
 		var deque = new ArrayDeque<String>();
 		for (String node = src, name = dst.getName(); node != null && !isDestroyed(); node = name = deque.pollFirst()) {
@@ -92,7 +90,7 @@ public class DaemonRunnable implements Runnable {
 
 	private void extract() throws Throwable {
 		for (var entry : BuildConfig.SUBPROCESS_ASSETS.entrySet()) {
-			extract(entry.getKey(), new File(format(entry.getValue())));
+			extract(entry.getKey(), new File(String.format(entry.getValue(), formatArgs)));
 			if (isDestroyed()) {
 				return;
 			}
@@ -103,14 +101,14 @@ public class DaemonRunnable implements Runnable {
 	private ProcessBuilder build() {
 		var command = new ArrayList<String>();
 		for (var entry : BuildConfig.SUBPROCESS_CMD) {
-			command.add(format(entry));
+			command.add(String.format(entry, formatArgs));
 		}
 		var builder = new ProcessBuilder(command)
-				.directory(nativeLibraryDir)
+				.directory(bin)
 				.redirectErrorStream(true);
 		var environment = builder.environment();
 		for (var entry : BuildConfig.SUBPROCESS_ENV.entrySet()) {
-			environment.put(entry.getKey(), format(entry.getValue()));
+			environment.put(entry.getKey(), String.format(entry.getValue(), formatArgs));
 		}
 		return builder;
 	}
