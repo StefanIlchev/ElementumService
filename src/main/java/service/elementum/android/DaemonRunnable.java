@@ -29,7 +29,10 @@ public class DaemonRunnable implements Runnable {
 
 	private volatile boolean isDestroyed = false;
 
-	private volatile Process process = null;
+	private Process process = null;
+
+	private final Runnable clearProcessRunnable = () ->
+			process = null;
 
 	public DaemonRunnable(Context context) {
 		assetManager = context.getAssets();
@@ -112,14 +115,23 @@ public class DaemonRunnable implements Runnable {
 		return builder;
 	}
 
+	private Runnable toSetProcessRunnable(Process value) {
+		return () -> {
+			if (isDestroyed()) {
+				value.destroy();
+			} else {
+				process = value;
+			}
+		};
+	}
+
 	private void execute() throws Throwable {
 		var builder = build();
 		for (var attempt = 0; !isDestroyed(); Thread.sleep(BuildConfig.SUBPROCESS_RETRY_DELAY)) {
 			var process = builder.start();
-			this.process = process;
-			if (isDestroyed()) {
-				this.process = null;
+			if (!ForegroundService.MAIN_HANDLER.post(toSetProcessRunnable(process))) {
 				process.destroy();
+				break;
 			}
 			try (var scanner = new Scanner(process.getInputStream())) {
 				while (scanner.hasNextLine()) {
@@ -128,9 +140,10 @@ public class DaemonRunnable implements Runnable {
 				}
 			}
 			var exitValue = process.waitFor();
-			this.process = null;
-			Log.v(TAG, "subprocessExitValue = " + exitValue);
-			if (BuildConfig.SUBPROCESS_EXIT_VALUES_END.contains(exitValue) || isDestroyed()) {
+			Log.v(TAG, "SUBPROCESS_EXIT_VALUE = " + exitValue);
+			if (isDestroyed() ||
+					!ForegroundService.MAIN_HANDLER.post(clearProcessRunnable) ||
+					BuildConfig.SUBPROCESS_EXIT_VALUES_END.contains(exitValue)) {
 				break;
 			}
 			if (BuildConfig.SUBPROCESS_EXIT_VALUES_SKIP.contains(exitValue)) {
