@@ -12,7 +12,7 @@ Install an `.apk` with an [Application Binary Interface](https://en.wikipedia.or
 
 Add [Elementum](https://github.com/elgatito/plugin.video.elementum) to [Kodi](https://github.com/xbmc/xbmc) from the `.android_client.zip`. When the addon completes installation it'll start the service app which may ask you for some [Android permissions](https://support.google.com/googleplay/answer/6270602).
 
-On [Android 11](https://developer.android.com/about/versions/11/privacy/storage#all-files-access) and up the service app may ask you to allow it to manage all files or show you the command to do so if your device [doesn't let it](https://issuetracker.google.com/issues/71327396#comment5). If you see the following command you might have to execute it for [Elementum](https://github.com/elgatito/plugin.video.elementum) to work properly:
+On [Android 11](https://developer.android.com/about/versions/11/privacy/storage#all-files-access) and up the service app may ask you to allow it to manage all files or try to open its settings if your device [doesn't let it](https://issuetracker.google.com/issues/71327396#comment5). If nothing else works the service app will show you the following command that will allow it to manage all files which you might have to execute for [Elementum](https://github.com/elgatito/plugin.video.elementum) to work properly:
 
 ```bat
 adb shell appops set --uid service.elementum.android MANAGE_EXTERNAL_STORAGE allow

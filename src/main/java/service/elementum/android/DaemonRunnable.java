@@ -2,6 +2,7 @@ package service.elementum.android;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.os.Looper;
 import android.util.Log;
 
 import java.io.File;
@@ -31,6 +32,14 @@ public class DaemonRunnable implements Runnable {
 
 	private Process process = null;
 
+	private final Runnable destroyProcessRunnable = () -> {
+		var process = this.process;
+		if (process != null) {
+			this.process = null;
+			process.destroy();
+		}
+	};
+
 	private final Runnable clearProcessRunnable = () ->
 			process = null;
 
@@ -50,10 +59,10 @@ public class DaemonRunnable implements Runnable {
 
 	public void destroy() {
 		isDestroyed = true;
-		var process = this.process;
-		if (process != null) {
-			this.process = null;
-			process.destroy();
+		if (Looper.myLooper() == ForegroundService.MAIN_HANDLER.getLooper()) {
+			destroyProcessRunnable.run();
+		} else {
+			ForegroundService.MAIN_HANDLER.post(destroyProcessRunnable);
 		}
 	}
 

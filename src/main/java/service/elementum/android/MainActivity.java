@@ -6,7 +6,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
@@ -56,13 +55,14 @@ public class MainActivity extends Activity {
 				.apply();
 	}
 
-	private ActivityInfo tryResolveActivityInfo(Intent intent, int flags) {
+	private boolean isActivityFound(Intent intent) {
 		try {
-			return intent.resolveActivityInfo(getPackageManager(), flags);
+			var activityInfo = intent.resolveActivityInfo(getPackageManager(), 0);
+			return activityInfo != null && activityInfo.isEnabled() && activityInfo.exported;
 		} catch (Throwable t) {
 			Log.w(TAG, t);
 		}
-		return null;
+		return false;
 	}
 
 	private void tryStartActivityForResult(Intent intent, int requestCode, Bundle options) {
@@ -129,8 +129,8 @@ public class MainActivity extends Activity {
 		}
 		var uri = Uri.fromParts("package", getPackageName(), null);
 		var intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri);
-		var activityInfo = tryResolveActivityInfo(intent, 0);
-		if (activityInfo != null && activityInfo.isEnabled() && activityInfo.exported) {
+		if (isActivityFound(intent) ||
+				isActivityFound(intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS))) {
 			tryStartActivityForResult(intent, RequestCode.MANAGE_EXTERNAL_STORAGE.ordinal(), null);
 		} else {
 			showManageExternalStorageAllowCmd();
@@ -151,6 +151,10 @@ public class MainActivity extends Activity {
 				}
 				if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
 					set.remove(FOREGROUND_SERVICE);
+				}
+				if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
+					set.remove(Manifest.permission.READ_EXTERNAL_STORAGE);
+					set.remove(Manifest.permission.WRITE_EXTERNAL_STORAGE);
 				}
 				if (!set.isEmpty()) {
 					var permissions = set.toArray(new String[]{});
