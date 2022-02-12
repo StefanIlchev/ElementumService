@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="stop">"روکیں"</string>
 	<string name="manage_external_storage_allow">"اجازت دیں"</string>
 	<string name="manage_external_storage_allow_message">"آپ کو یہ دستی طور پر کرنا ہوگا۔"</string>
 	<string name="manage_external_storage_deny">"مسترد کریں"</string>

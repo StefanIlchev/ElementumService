@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="stop">"Parar"</string>
 	<string name="manage_external_storage_allow">"Permitir"</string>
 	<string name="manage_external_storage_allow_message">"Tens de fazer isto manualmente."</string>
 	<string name="manage_external_storage_deny">"Recusar"</string>

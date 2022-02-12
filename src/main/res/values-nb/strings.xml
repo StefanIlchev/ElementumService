@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="stop">"Stopp"</string>
 	<string name="manage_external_storage_allow">"Tillat"</string>
 	<string name="manage_external_storage_allow_message">"Du må gjøre dette manuelt"</string>
 	<string name="manage_external_storage_deny">"Avslå"</string>

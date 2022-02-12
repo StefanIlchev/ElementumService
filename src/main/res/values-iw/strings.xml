@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="stop">"הפסקה"</string>
 	<string name="manage_external_storage_allow">"כן, זה בסדר"</string>
 	<string name="manage_external_storage_allow_message">"אתה צריך לעשות זאת באופן ידני"</string>
 	<string name="manage_external_storage_deny">"עדיף שלא"</string>

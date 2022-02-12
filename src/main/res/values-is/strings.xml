@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="stop">"Stöðva"</string>
 	<string name="manage_external_storage_allow">"Leyfa"</string>
 	<string name="manage_external_storage_allow_message">"Þú verður að gera þetta handvirkt"</string>
 	<string name="manage_external_storage_deny">"Hafna"</string>

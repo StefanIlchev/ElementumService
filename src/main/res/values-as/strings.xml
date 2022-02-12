@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="stop">"বন্ধ কৰক"</string>
 	<string name="manage_external_storage_allow">"অনুমতি দিয়ক"</string>
 	<string name="manage_external_storage_allow_message">"আপুনি এইটো হাতেৰে কৰিব লাগিব"</string>
 	<string name="manage_external_storage_deny">"প্ৰত্যাখ্যান কৰক"</string>

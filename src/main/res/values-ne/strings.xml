@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="stop">"रोक्नुहोस्"</string>
 	<string name="manage_external_storage_allow">"अनुमति दिनुहोस्"</string>
 	<string name="manage_external_storage_allow_message">"तपाईंले यो म्यानुअल रूपमा गर्नुपर्छ"</string>
 	<string name="manage_external_storage_deny">"अस्वीकार गर्नुहोस्"</string>

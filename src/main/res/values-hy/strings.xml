@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="stop">"Դադարեցնել"</string>
 	<string name="manage_external_storage_allow">"Թույլատրել"</string>
 	<string name="manage_external_storage_allow_message">"Դուք պետք է դա անեք ձեռքով"</string>
 	<string name="manage_external_storage_deny">"Մերժել"</string>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="stop">"중지"</string>
 	<string name="manage_external_storage_allow">"허용"</string>
 	<string name="manage_external_storage_allow_message">"이 작업을 수동으로 수행해야 합니다."</string>
 	<string name="manage_external_storage_deny">"거부"</string>

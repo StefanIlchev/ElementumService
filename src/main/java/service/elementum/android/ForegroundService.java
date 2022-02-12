@@ -34,11 +34,11 @@ public class ForegroundService extends Service {
 
 	private void startForeground(PendingIntent stopIntent) {
 		var appName = getString(R.string.app_name);
-		var closeApp = getString(R.string.close_app);
+		var stop = getString(R.string.stop);
 		var notification = new Notification.Builder(this, TAG)
 				.setSmallIcon(R.mipmap.ic_launcher)
 				.setContentTitle(appName)
-				.setContentText(closeApp)
+				.setContentText(stop)
 				.setContentIntent(stopIntent)
 				.build();
 		var notificationManager = getSystemService(NotificationManager.class);
@@ -89,16 +89,16 @@ public class ForegroundService extends Service {
 		stopMediaSession();
 		var icLauncher = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
 		var appName = getString(R.string.app_name);
-		var closeApp = getString(R.string.close_app);
+		var stop = getString(R.string.stop);
 		var mediaSession = new MediaSession(this, TAG);
 		this.mediaSession = mediaSession;
 		mediaSession.setMetadata(new MediaMetadata.Builder()
 				.putBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON, icLauncher)
 				.putString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE, appName)
-				.putString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE, closeApp)
-				.putString(MediaMetadata.METADATA_KEY_DISPLAY_DESCRIPTION, closeApp)
+				.putString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE, stop)
+				.putString(MediaMetadata.METADATA_KEY_DISPLAY_DESCRIPTION, stop)
 				.putString(MediaMetadata.METADATA_KEY_TITLE, appName)
-				.putString(MediaMetadata.METADATA_KEY_ARTIST, closeApp)
+				.putString(MediaMetadata.METADATA_KEY_ARTIST, stop)
 				.build());
 		mediaSession.setPlaybackState(new PlaybackState.Builder()
 				.setState(PlaybackState.STATE_PLAYING, PlaybackState.PLAYBACK_POSITION_UNKNOWN, 1.0F)

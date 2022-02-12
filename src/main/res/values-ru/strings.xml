@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="stop">"Остановить"</string>
 	<string name="manage_external_storage_allow">"Разрешить"</string>
 	<string name="manage_external_storage_allow_message">"Вам следует сделать это вручную"</string>
 	<string name="manage_external_storage_deny">"Отклонить"</string>

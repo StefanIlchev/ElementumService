@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="stop">"Zaustavi"</string>
 	<string name="manage_external_storage_allow">"Dozvoli"</string>
 	<string name="manage_external_storage_allow_message">"Moraš to da uradiš ručno"</string>
 	<string name="manage_external_storage_deny">"Odbij"</string>

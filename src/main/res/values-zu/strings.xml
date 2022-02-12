@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="stop">"Misa"</string>
 	<string name="manage_external_storage_allow">"Vumela"</string>
 	<string name="manage_external_storage_allow_message">"Kufanele ukwenze lokhu ngesandla"</string>
 	<string name="manage_external_storage_deny">"Yala"</string>
