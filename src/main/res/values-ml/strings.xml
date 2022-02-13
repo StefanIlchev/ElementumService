@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="app_name">"Elementum സേവനം"</string>
 	<string name="stop">"നിര്‍ത്തുക"</string>
 	<string name="manage_external_storage_allow">"അനുവദിക്കുക"</string>
 	<string name="manage_external_storage_allow_message">"നിങ്ങൾ ഇത് സ്വമേധയാ ചെയ്യേണ്ടതുണ്ട്"</string>

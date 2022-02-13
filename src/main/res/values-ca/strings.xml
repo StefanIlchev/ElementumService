@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="app_name">"Servei Elementum"</string>
 	<string name="stop">"Atura"</string>
 	<string name="manage_external_storage_allow">"Permet"</string>
 	<string name="manage_external_storage_allow_message">"Ho heu de fer manualment"</string>

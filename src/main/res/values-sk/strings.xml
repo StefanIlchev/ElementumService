@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="app_name">"Služba Elementum"</string>
 	<string name="stop">"Zastaviť"</string>
 	<string name="manage_external_storage_allow">"Povoliť"</string>
 	<string name="manage_external_storage_allow_message">"Musíte to urobiť ručne"</string>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="app_name">"Elementum-diens"</string>
 	<string name="stop">"Stop"</string>
 	<string name="manage_external_storage_allow">"Laat toe"</string>
 	<string name="manage_external_storage_allow_message">"Jy moet dit met die hand doen"</string>

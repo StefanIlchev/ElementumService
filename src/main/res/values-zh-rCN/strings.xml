@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="app_name">"Elementum 服务"</string>
 	<string name="stop">"停止"</string>
 	<string name="manage_external_storage_allow">"允许"</string>
 	<string name="manage_external_storage_allow_message">"您必须手动执行此操作"</string>

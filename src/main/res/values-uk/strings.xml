@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="app_name">"Сервіс Elementum"</string>
 	<string name="stop">"Зупинити"</string>
 	<string name="manage_external_storage_allow">"Дозвол."</string>
 	<string name="manage_external_storage_allow_message">"Ви повинні зробити це вручну"</string>

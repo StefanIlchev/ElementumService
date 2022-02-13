@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="app_name">"Elementum xizmati"</string>
 	<string name="stop">"To‘xtatish"</string>
 	<string name="manage_external_storage_allow">"Ruxsat berish"</string>
 	<string name="manage_external_storage_allow_message">"Buni qo'lda qilishingiz kerak"</string>

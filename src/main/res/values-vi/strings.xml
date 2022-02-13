@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="app_name">"Dịch vụ Elementum"</string>
 	<string name="stop">"Ngừng"</string>
 	<string name="manage_external_storage_allow">"Cho phép"</string>
 	<string name="manage_external_storage_allow_message">"Bạn phải thao tác việc này bằng tay rồi"</string>

@@ -16,7 +16,9 @@ import java.util.Comparator;
 import java.util.Objects;
 import java.util.Scanner;
 
-public class DaemonRunnable implements Runnable {
+import javax.security.auth.Destroyable;
+
+public class DaemonRunnable implements Runnable, Destroyable {
 
 	private static final String TAG = "DaemonRunnable";
 
@@ -53,10 +55,12 @@ public class DaemonRunnable implements Runnable {
 		};
 	}
 
+	@Override
 	public boolean isDestroyed() {
 		return isDestroyed;
 	}
 
+	@Override
 	public void destroy() {
 		isDestroyed = true;
 		if (Looper.myLooper() == ForegroundService.MAIN_HANDLER.getLooper()) {

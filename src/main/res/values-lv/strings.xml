@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="app_name">"Elementum pakalpojums"</string>
 	<string name="stop">"Apturēt"</string>
 	<string name="manage_external_storage_allow">"Atļaut"</string>
 	<string name="manage_external_storage_allow_message">"Jums tas jādara manuāli"</string>

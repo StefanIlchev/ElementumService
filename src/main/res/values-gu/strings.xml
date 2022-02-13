@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="app_name">"Elementum સેવા"</string>
 	<string name="stop">"રોકો"</string>
 	<string name="manage_external_storage_allow">"મંજૂરી આપો"</string>
 	<string name="manage_external_storage_allow_message">"તમારે આ જાતે કરવું પડશે"</string>

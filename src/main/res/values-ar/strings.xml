@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="app_name">"‏خدمة Elementum"</string>
 	<string name="stop">"إيقاف"</string>
 	<string name="manage_external_storage_allow">"السماح"</string>
 	<string name="manage_external_storage_allow_message">"عليك عمل هذا يدويا"</string>

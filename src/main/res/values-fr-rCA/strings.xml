@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="app_name">"Service Elementum"</string>
 	<string name="stop">"Arrêter"</string>
 	<string name="manage_external_storage_allow">"Autoriser"</string>
 	<string name="manage_external_storage_allow_message">"Vous devez faire ceci manuellement"</string>

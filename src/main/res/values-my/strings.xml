@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="app_name">"Elementum ဝန်ဆောင်မှု"</string>
 	<string name="stop">"ရပ်ရန်"</string>
 	<string name="manage_external_storage_allow">"ခွင့်ပြုရန်"</string>
 	<string name="manage_external_storage_allow_message">"ဒါကို သင်ကိုယ်တိုင်လုပ်ရမယ်။"</string>

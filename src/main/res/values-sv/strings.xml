@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="app_name">"Elementum-tjänst"</string>
 	<string name="stop">"Avbryt"</string>
 	<string name="manage_external_storage_allow">"Tillåt"</string>
 	<string name="manage_external_storage_allow_message">"Du måste göra detta manuellt"</string>
