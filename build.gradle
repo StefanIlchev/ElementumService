@@ -1,6 +1,3 @@
-import groovy.xml.MarkupBuilder
-import groovy.xml.XmlSlurper
-
 buildscript {
 
 	repositories {
@@ -10,7 +7,6 @@ buildscript {
 
 	dependencies {
 		classpath 'com.android.tools.build:gradle:7.1.1'
-		classpath 'org.codehaus.groovy:groovy-xml:3.0.9'
 	}
 }
 
@@ -256,9 +252,9 @@ if (addonZip != null) {
 				into repoAddonIdDir
 				include 'fanart.png', 'icon.png'
 			}
-			def addon = new XmlSlurper().parse(file("$addonIdDir/addon.xml"))
-			try (def writer = new FileWriter(file("$repoAddonIdDir/addon.xml"))) {
-				new MarkupBuilder(writer).addon(
+			def addon = new groovy.xml.XmlSlurper().parse(file("$addonIdDir/addon.xml"))
+			try (def writer = new FileWriter("$repoAddonIdDir/addon.xml")) {
+				new groovy.xml.MarkupBuilder(writer).addon(
 						'name': repoAddonName,
 						'id': repoAddonId,
 						'provider-name': addon.@'provider-name',
