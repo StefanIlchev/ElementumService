@@ -10,6 +10,7 @@ import android.graphics.BitmapFactory;
 import android.media.MediaMetadata;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -35,18 +36,20 @@ public class ForegroundService extends Service {
 	private void startForeground(PendingIntent stopIntent) {
 		var appName = getString(R.string.app_name);
 		var stop = getString(R.string.stop);
-		var notification = new Notification.Builder(this, TAG)
+		var builder = new Notification.Builder(this, TAG)
 				.setSmallIcon(R.mipmap.ic_launcher)
 				.setContentTitle(appName)
 				.setContentText(stop)
-				.setContentIntent(stopIntent)
-				.build();
-		var notificationManager = getSystemService(NotificationManager.class);
-		if (notificationManager != null) {
-			var notificationChannel = new NotificationChannel(TAG, appName, NotificationManager.IMPORTANCE_LOW);
-			notificationManager.createNotificationChannel(notificationChannel);
+				.setContentIntent(stopIntent);
+		var manager = getSystemService(NotificationManager.class);
+		if (manager != null) {
+			var channel = new NotificationChannel(TAG, appName, NotificationManager.IMPORTANCE_LOW);
+			manager.createNotificationChannel(channel);
 		}
-		startForeground(NOTIFICATION_ID, notification);
+		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
+			builder.setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE);
+		}
+		startForeground(NOTIFICATION_ID, builder.build());
 	}
 
 	private void stopForeground() {
