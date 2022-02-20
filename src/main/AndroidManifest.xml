@@ -18,6 +18,12 @@
 				<action android:name="${mainIntentAction}" />
 				<category android:name="${mainIntentCategory}" />
 			</intent-filter>
+
+			<intent-filter>
+				<action android:name="${mainIntentAction}" />
+				<category android:name="android.intent.category.DEFAULT" />
+				<data android:scheme="version" />
+			</intent-filter>
 		</activity>
 
 		<service

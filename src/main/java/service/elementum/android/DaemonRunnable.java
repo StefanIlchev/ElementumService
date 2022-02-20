@@ -83,6 +83,7 @@ public class DaemonRunnable implements Runnable, Destroyable {
 		} else {
 			assetsMarker.delete();
 		}
+		var parent = dst.getParent();
 		var deque = new ArrayDeque<String>();
 		for (String node = src, name = dst.getName(); node != null && !isDestroyed(); node = name = deque.pollFirst()) {
 			var children = assetManager.list(node);
@@ -91,7 +92,6 @@ public class DaemonRunnable implements Runnable, Destroyable {
 					deque.add(node + "/" + child);
 				}
 			}
-			var parent = dst.getParent();
 			var path = parent != null ? Paths.get(parent, name) : Paths.get(name);
 			try (var in = assetManager.open(node)) {
 				Files.copy(in, path);

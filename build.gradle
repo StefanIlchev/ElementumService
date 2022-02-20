@@ -44,7 +44,7 @@ android {
 	defaultConfig {
 		minSdkVersion 26
 		targetSdkVersion 31
-		versionCode System.getProperty('versionCode') as Integer ?: 25
+		versionCode System.getProperty('versionCode') as Integer ?: 26
 		versionName System.getProperty('versionName') ?: "$versionCode"
 		applicationId 'service.elementum.android'
 		manifestPlaceholders = [
@@ -151,15 +151,63 @@ android {
 	}
 }
 
+def writeRepoAddon(
+		addon,
+		addonIdDir,
+		repoAddonName,
+		repoAddonId,
+		repoAddonIdDir,
+		repoAddonDataDir,
+		repoAddonSummary) {
+	copy {
+		from addonIdDir
+		into repoAddonIdDir
+		include 'fanart.png', 'icon.png'
+	}
+	file("$repoAddonIdDir/addon.xml").withWriter {
+		new groovy.xml.MarkupBuilder(it).addon(
+				'name': repoAddonName,
+				'id': repoAddonId,
+				'provider-name': addon.@'provider-name',
+				'version': addon.@'version') {
+
+			extension('name': repoAddonName, 'point': 'xbmc.addon.repository') {
+
+				checksum("$repoAddonDataDir${addon.@'id'}/addons.xml.md5")
+
+				datadir('zip': 'true', repoAddonDataDir)
+
+				info('compressed': 'false', "$repoAddonDataDir${addon.@'id'}/addons.xml")
+			}
+
+			extension('point': 'xbmc.addon.metadata') {
+
+				platform('all')
+
+				summary('lang': 'en', repoAddonSummary)
+			}
+
+			requires {}
+		}
+	}
+}
+
 def addonZip = System.getProperty('addonZip')
 if (addonZip != null) {
 	def addonDir = "$buildDir.path/${file(addonZip).name - ~/\.[^.]+$/}"
 	def addonIdDir = "$addonDir/$addonId"
+
 	def repoAddonName = 'Elementum Repository'
 	def repoAddonId = 'repository.elementum'
 	def repoAddonIdDir = "$addonIdDir/$repoAddonId"
 	def repoAddonDataDir = "http://$localHost:$localPort/repository/elgatito/"
-	def repoAddonInfo = "${repoAddonDataDir}plugin.video.elementum/addons.xml"
+	def repoAddonSummary = 'GitHub repository for Elementum updates'
+
+	def serviceRepoAddonName = 'Elementum Service Repository'
+	def serviceRepoAddonId = 'repository.service.elementum'
+	def serviceRepoAddonIdDir = "$addonIdDir/$serviceRepoAddonId"
+	def serviceRepoAddonDataDir = "https://StefanIlchev.github.io/ElementumService/"
+	def serviceRepoAddonSummary = 'GitHub repository for Elementum Service updates'
 
 	task patchAddon() {
 
@@ -169,43 +217,69 @@ if (addonZip != null) {
 
 		doLast {
 			def applicationId = android.defaultConfig.applicationId
-			def mainIntentAction = android.defaultConfig.manifestPlaceholders['mainIntentAction']
-			def startArgs = "$applicationId, $mainIntentAction"
+			def startArgs = [
+					applicationId,
+					android.defaultConfig.manifestPlaceholders['mainIntentAction'],
+					'',
+					"version://${android.defaultConfig.versionName}"
+			].join(', ')
 			def pathPattern = '/org\\.xbmc\\.kodi/'
 			def pathReplace = "/$applicationId/"
 			def startLine = '                proc = start_elementumd(stdout=subprocess.PIPE, stderr=subprocess.STDOUT)'
-			def startLinePatched = """                srcRepoDir = os.path.join(ADDON_PATH, '$repoAddonId')
+			def startLinePatched = """
+					|                srcRepoDir = os.path.join(ADDON_PATH, '$repoAddonId')
 					|                dstRepoDir = os.path.join(ADDON_PATH, '..', '$repoAddonId')
 					|                srcRepoAddon = os.path.join(srcRepoDir, 'addon.xml')
 					|                dstRepoAddon = os.path.join(dstRepoDir, 'addon.xml')
-					|                if os.path.isfile(srcRepoAddon):
-					|                    isRepoAddonEqual = False
-					|                    try:
-					|                        isRepoAddonEqual = filecmp.cmp(srcRepoAddon, dstRepoAddon, shallow=False)
-					|                    except Exception:
-					|                        pass
-					|                    if not isRepoAddonEqual:
+					|                srcServiceRepoDir = os.path.join(ADDON_PATH, '$serviceRepoAddonId')
+					|                dstServiceRepoDir = os.path.join(ADDON_PATH, '..', '$serviceRepoAddonId')
+					|                srcServiceRepoAddon = os.path.join(srcServiceRepoDir, 'addon.xml')
+					|                dstServiceRepoAddon = os.path.join(dstServiceRepoDir, 'addon.xml')
+					|                repoAddons = [{
+					|                    'srcDir'  : srcRepoDir,
+					|                    'dstDir'  : dstRepoDir,
+					|                    'srcAddon': srcRepoAddon,
+					|                    'dstAddon': dstRepoAddon
+					|                }, {
+					|                    'srcDir'  : srcServiceRepoDir,
+					|                    'dstDir'  : dstServiceRepoDir,
+					|                    'srcAddon': srcServiceRepoAddon,
+					|                    'dstAddon': dstServiceRepoAddon
+					|                }]
+					|                for repoAddon in repoAddons:
+					|                    if os.path.isfile(repoAddon['srcAddon']):
+					|                        isRepoAddonEqual = False
 					|                        try:
-					|                            os.makedirs(dstRepoDir)
+					|                            isRepoAddonEqual = filecmp.cmp(
+					|                                repoAddon['srcAddon'],
+					|                                repoAddon['dstAddon'],
+					|                                shallow=False)
 					|                        except Exception:
 					|                            pass
-					|                        try:
-					|                            shutil.rmtree(dstRepoDir)
-					|                        except Exception:
-					|                            pass
-					|                        try:
-					|                            shutil.copytree(srcRepoDir, dstRepoDir)
-					|                        except Exception:
-					|                            pass
+					|                        if not isRepoAddonEqual:
+					|                            try:
+					|                                os.makedirs(repoAddon['dstDir'])
+					|                            except Exception:
+					|                                pass
+					|                            try:
+					|                                shutil.rmtree(repoAddon['dstDir'])
+					|                            except Exception:
+					|                                pass
+					|                            try:
+					|                                shutil.copytree(repoAddon['srcDir'], repoAddon['dstDir'])
+					|                            except Exception:
+					|                                pass
 					|                xbmc.executebuiltin('StartAndroidActivity($startArgs)')""".stripMargin()
 			def pathLine = "        info['path'] = ADDON_PATH"
-			def pathLinePatched = """        pathPattern = '$pathPattern'
+			def pathLinePatched = """
+					|        pathPattern = '$pathPattern'
 					|        pathReplace = '$pathReplace'
 					|        info['path'] = re.sub(pathPattern, pathReplace, ADDON_PATH, 1)
 					|        info['fanart'] = re.sub(pathPattern, pathReplace, info['fanart'], 1)
 					|        info['icon'] = re.sub(pathPattern, pathReplace, info['icon'], 1)""".stripMargin()
 			def translateLine = '        return translatePath(*args, **kwargs)'
-			def translateLinePatched = """        pathPattern = '$pathPattern'
+			def translateLinePatched = """
+					|        pathPattern = '$pathPattern'
 					|        pathReplace = '$pathReplace'
 					|        result = translatePath(*args, **kwargs)
 					|        return re.sub(pathPattern, pathReplace, result, 1)""".stripMargin()
@@ -247,38 +321,33 @@ if (addonZip != null) {
 				delete tmp
 			}
 
-			copy {
-				from addonIdDir
-				into repoAddonIdDir
-				include 'fanart.png', 'icon.png'
+			def addonFile = file("$addonIdDir/addon.xml")
+			def addon = new groovy.xml.XmlSlurper().parse(addonFile)
+			addon.@'version' = android.defaultConfig.versionName
+			addon.requires.appendNode {
+				'import'('addon': serviceRepoAddonId, 'optional': 'true')
 			}
-			def addon = new groovy.xml.XmlSlurper().parse(file("$addonIdDir/addon.xml"))
-			try (def writer = new FileWriter("$repoAddonIdDir/addon.xml")) {
-				new groovy.xml.MarkupBuilder(writer).addon(
-						'name': repoAddonName,
-						'id': repoAddonId,
-						'provider-name': addon.@'provider-name',
-						'version': addon.@'version') {
-
-					extension('name': repoAddonName, 'point': 'xbmc.addon.repository') {
-
-						checksum("${repoAddonInfo}.md5")
-
-						datadir('zip': 'true', repoAddonDataDir)
-
-						info('compressed': 'false', repoAddonInfo)
-					}
-
-					extension('point': 'xbmc.addon.metadata') {
-
-						platform('all')
-
-						summary('lang': 'en', 'GitHub repository for Elementum updates')
-					}
-
-					requires {}
-				}
+			addonFile.withWriter {
+				groovy.xml.XmlUtil.serialize(new groovy.xml.StreamingMarkupBuilder().bind {
+					mkp.yield addon
+				}, it)
 			}
+			writeRepoAddon(
+					addon,
+					addonIdDir,
+					repoAddonName,
+					repoAddonId,
+					repoAddonIdDir,
+					repoAddonDataDir,
+					repoAddonSummary)
+			writeRepoAddon(
+					addon,
+					addonIdDir,
+					serviceRepoAddonName,
+					serviceRepoAddonId,
+					serviceRepoAddonIdDir,
+					serviceRepoAddonDataDir,
+					serviceRepoAddonSummary)
 		}
 	}
 
@@ -325,14 +394,47 @@ if (addonZip != null) {
 		it.dependsOn genMainJniLibs
 	}
 
+	def androidClientZip = file("$buildDir.path/$addonId-${android.defaultConfig.versionName}.android_client.zip")
+
 	task zipAndroidClient(type: Zip, dependsOn: [patchAddon]) {
 		from addonDir
-		destinationDirectory = file(addonDir).parentFile
-		archiveFileName = "${file(addonDir).name}.android_client.zip"
+		destinationDirectory = androidClientZip.parentFile
+		archiveFileName = androidClientZip.name
 		exclude '**/.*', "$addonId/resources/bin"
 
 		doFirst {
-			delete "${addonDir}.android_client.zip"
+			delete androidClientZip
+		}
+	}
+
+	task genAndroidClientRepo(dependsOn: [zipAndroidClient]) {
+		def androidClientRepo = file("$buildDir.path/addons.xml")
+		def androidClientRepoMd5 = file("$buildDir.path/addons.xml.md5")
+		def androidClientRepoZip = file("$buildDir.path/$addonId-${android.defaultConfig.versionName}.zip")
+
+		doFirst {
+			delete androidClientRepo
+			delete androidClientRepoMd5
+			delete androidClientRepoZip
+		}
+
+		doLast {
+			def addon = new groovy.xml.XmlSlurper().parse(file("$addonIdDir/addon.xml"))
+			androidClientRepo.withWriter {
+				groovy.xml.XmlUtil.serialize(new groovy.xml.StreamingMarkupBuilder().bind {
+					addons {
+						mkp.yield addon
+					}
+				}, it)
+			}
+			androidClientRepoMd5.withWriter {
+				it.write(androidClientRepo.text.md5())
+			}
+			copy {
+				from androidClientZip
+				into androidClientRepoZip.parentFile
+				rename { androidClientRepoZip.name }
+			}
 		}
 	}
 }

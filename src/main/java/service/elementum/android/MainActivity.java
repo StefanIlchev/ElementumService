@@ -55,6 +55,12 @@ public class MainActivity extends Activity {
 				.apply();
 	}
 
+	private String getVersionNameIfDifferent() {
+		var data = getIntent().getData();
+		var versionName = data != null ? data.getHost() : null;
+		return versionName == null || BuildConfig.VERSION_NAME.equals(versionName) ? null : versionName;
+	}
+
 	private boolean isActivityFound(Intent intent) {
 		try {
 			var activityInfo = intent.resolveActivityInfo(getPackageManager(), 0);
@@ -111,9 +117,10 @@ public class MainActivity extends Activity {
 				if (isFinishing() || isDestroyed()) {
 					return;
 				}
-				if (getIntent().getAction() == null || !manageExternalStorageAllowCmdDialog.isShowing() ||
+				if (getIntent().getAction() == null || getVersionNameIfDifferent() != null ||
+						!manageExternalStorageAllowCmdDialog.isShowing() ||
 						isExternalStorageManager()) {
-					resume();
+					doResume();
 				} else {
 					ForegroundService.MAIN_HANDLER.postDelayed(this, 100L);
 				}
@@ -170,9 +177,13 @@ public class MainActivity extends Activity {
 
 	private void callForegroundServiceAndFinish() {
 		var intent = new Intent(this, ForegroundService.class);
+		var versionName = getVersionNameIfDifferent();
 		try {
 			if (getIntent().getAction() == null) {
 				stopService(intent);
+			} else if (versionName != null) {
+				stopService(intent);
+				Toast.makeText(this, BuildConfig.VERSION_NAME + " =/= " + versionName, Toast.LENGTH_LONG).show();
 			} else {
 				startForegroundService(intent);
 			}
@@ -182,8 +193,8 @@ public class MainActivity extends Activity {
 		finish();
 	}
 
-	private void resume() {
-		if (getIntent().getAction() == null ||
+	private void doResume() {
+		if (getIntent().getAction() == null || getVersionNameIfDifferent() != null ||
 				requestRequestedPermissions() == null) {
 			callForegroundServiceAndFinish();
 		}
@@ -192,7 +203,7 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		resume();
+		doResume();
 	}
 
 	@Override

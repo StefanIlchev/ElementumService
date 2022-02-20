@@ -4,7 +4,7 @@ A service that executes binaries for [Kodi](https://github.com/xbmc/xbmc)'s addo
 
 ## Download
 
-See the [Releases](https://github.com/StefanIlchev/ElementumService/releases) page.
+Use source [https://StefanIlchev.github.io/ElementumService](https://StefanIlchev.github.io/ElementumService).
 
 ## Install
 
@@ -17,6 +17,12 @@ On [Android 11](https://developer.android.com/about/versions/11/privacy/storage#
 ```bat
 adb shell appops set --uid service.elementum.android MANAGE_EXTERNAL_STORAGE allow
 ```
+
+## Auto-update
+
+Reinstall the addon from the added `Elementum Service Repository` and [Kodi](https://github.com/xbmc/xbmc) should keep it up to date. If you don't see the repository as an option check if it's not disabled.
+
+The service app will need to be manually kept up to date as it won't work if it's a different version and will show a message like `<service-version> =/= <client-version>`.
 
 ## Build
 
