@@ -151,6 +151,18 @@ android {
 	}
 }
 
+def toMethodJson(method, params) {
+	return groovy.json.JsonOutput.toJson(['method': method, 'params': params, 'jsonrpc': '2.0', 'id': '1'])
+}
+
+def toGetAddonDetailsJson(addonId, properties) {
+	return toMethodJson('Addons.GetAddonDetails', ['addonid': addonId, 'properties': properties])
+}
+
+def toSetAddonEnabledJson(addonId, enabled) {
+	return toMethodJson('Addons.SetAddonEnabled', ['addonid': addonId, 'enabled': enabled])
+}
+
 def writeRepoAddon(
 		addon,
 		addonIdDir,
@@ -196,6 +208,7 @@ def addonZip = System.getProperty('addonZip')
 if (addonZip != null) {
 	def addonDir = "$buildDir.path/${file(addonZip).name - ~/\.[^.]+$/}"
 	def addonIdDir = "$addonDir/$addonId"
+	def addonVersion = android.defaultConfig.versionName
 
 	def repoAddonName = 'Elementum Repository'
 	def repoAddonId = 'repository.elementum'
@@ -221,55 +234,71 @@ if (addonZip != null) {
 					applicationId,
 					android.defaultConfig.manifestPlaceholders['mainIntentAction'],
 					'',
-					"version://${android.defaultConfig.versionName}"
-			].join(', ')
+					"version://$addonVersion"
+			]
+			def serviceRepoInstalledEnabledJson = toGetAddonDetailsJson(serviceRepoAddonId, ['installed', 'enabled'])
+			def serviceRepoEnableJson = toSetAddonEnabledJson(serviceRepoAddonId, true)
 			def pathPattern = '/org\\.xbmc\\.kodi/'
 			def pathReplace = "/$applicationId/"
-			def startLine = '                proc = start_elementumd(stdout=subprocess.PIPE, stderr=subprocess.STDOUT)'
+			def versionLine = '    installed_version = read_current_version(binary_dir)'
+			def versionLinePatched = """
+					|    installed_version = ADDON_VERSION
+					|    binary_dir = os.path.join(ADDON_PATH, 'resources', 'screenshots')
+					|    dest_binary_dir = binary_dir
+					|    binary_path = os.path.join(binary_dir, 'home.png')
+					|    dest_binary_path = binary_path""".stripMargin()
+			def binaryLine = '    return dest_binary_dir, ensure_exec_perms(dest_binary_path)'
+			def binaryLinePatched = "    return 'N/A', 'N/A'"
+			def startLine = '        return subprocess.Popen(args, **kwargs)'
 			def startLinePatched = """
-					|                srcRepoDir = os.path.join(ADDON_PATH, '$repoAddonId')
-					|                dstRepoDir = os.path.join(ADDON_PATH, '..', '$repoAddonId')
-					|                srcRepoAddon = os.path.join(srcRepoDir, 'addon.xml')
-					|                dstRepoAddon = os.path.join(dstRepoDir, 'addon.xml')
-					|                srcServiceRepoDir = os.path.join(ADDON_PATH, '$serviceRepoAddonId')
-					|                dstServiceRepoDir = os.path.join(ADDON_PATH, '..', '$serviceRepoAddonId')
-					|                srcServiceRepoAddon = os.path.join(srcServiceRepoDir, 'addon.xml')
-					|                dstServiceRepoAddon = os.path.join(dstServiceRepoDir, 'addon.xml')
-					|                repoAddons = [{
-					|                    'srcDir'  : srcRepoDir,
-					|                    'dstDir'  : dstRepoDir,
-					|                    'srcAddon': srcRepoAddon,
-					|                    'dstAddon': dstRepoAddon
-					|                }, {
-					|                    'srcDir'  : srcServiceRepoDir,
-					|                    'dstDir'  : dstServiceRepoDir,
-					|                    'srcAddon': srcServiceRepoAddon,
-					|                    'dstAddon': dstServiceRepoAddon
-					|                }]
-					|                for repoAddon in repoAddons:
-					|                    if os.path.isfile(repoAddon['srcAddon']):
-					|                        isRepoAddonEqual = False
-					|                        try:
-					|                            isRepoAddonEqual = filecmp.cmp(
-					|                                repoAddon['srcAddon'],
-					|                                repoAddon['dstAddon'],
-					|                                shallow=False)
-					|                        except Exception:
-					|                            pass
-					|                        if not isRepoAddonEqual:
-					|                            try:
-					|                                os.makedirs(repoAddon['dstDir'])
-					|                            except Exception:
-					|                                pass
-					|                            try:
-					|                                shutil.rmtree(repoAddon['dstDir'])
-					|                            except Exception:
-					|                                pass
-					|                            try:
-					|                                shutil.copytree(repoAddon['srcDir'], repoAddon['dstDir'])
-					|                            except Exception:
-					|                                pass
-					|                xbmc.executebuiltin('StartAndroidActivity($startArgs)')""".stripMargin()
+					|        for repoId in ['$repoAddonId', '$serviceRepoAddonId']:
+					|            repoDirSrc = os.path.join(ADDON_PATH, repoId)
+					|            repoDirDst = os.path.join(ADDON_PATH, '..', repoId)
+					|            repoInfoSrc = os.path.join(repoDirSrc, 'addon.xml')
+					|            repoInfoDst = os.path.join(repoDirDst, 'addon.xml')
+					|            if not os.path.isfile(repoInfoSrc):
+					|                continue
+					|            try:
+					|                if filecmp.cmp(repoInfoSrc, repoInfoDst, shallow=False):
+					|                    continue
+					|            except Exception:
+					|                pass
+					|            try:
+					|                os.makedirs(repoDirDst)
+					|            except Exception:
+					|                pass
+					|            try:
+					|                shutil.rmtree(repoDirDst)
+					|            except Exception:
+					|                pass
+					|            try:
+					|                shutil.copytree(repoDirSrc, repoDirDst)
+					|            except Exception:
+					|                pass
+					|        xbmc.executebuiltin('StartAndroidActivity(${startArgs.join(', ')})')
+					|        try:
+					|            from elementum.provider import parse_json
+					|            serviceRepoInstalledEnabledJson = '$serviceRepoInstalledEnabledJson'
+					|            serviceRepoEnableJson = '$serviceRepoEnableJson'
+					|            addon = parse_json(xbmc.executeJSONRPC(serviceRepoInstalledEnabledJson)) \\
+					|                .get('result', {}).get('addon', {})
+					|            if addon.get('installed', False):
+					|                if not addon.get('enabled', False):
+					|                    xbmc.executeJSONRPC(serviceRepoEnableJson)
+					|                return False
+					|            xbmc.executebuiltin('UpdateLocalAddons')
+					|            xbmc.executebuiltin('InstallAddon($serviceRepoAddonId)')
+					|            for attempt in range(10):
+					|                addon = parse_json(xbmc.executeJSONRPC(serviceRepoInstalledEnabledJson)) \\
+					|                    .get('result', {}).get('addon', {})
+					|                if addon.get('installed', False):
+					|                    break
+					|                time.sleep(1)
+					|            xbmc.executeJSONRPC(serviceRepoEnableJson)
+					|            xbmc.executebuiltin('UpdateLocalAddons')
+					|            xbmc.executebuiltin('UpdateAddonRepos')
+					|        except Exception:
+					|            pass""".stripMargin()
 			def pathLine = "        info['path'] = ADDON_PATH"
 			def pathLinePatched = """
 					|        pathPattern = '$pathPattern'
@@ -285,6 +314,8 @@ if (addonZip != null) {
 					|        return re.sub(pathPattern, pathReplace, result, 1)""".stripMargin()
 			def patches = [
 					(file("$addonIdDir/resources/site-packages/elementum/daemon.py")): [
+							[versionLine, versionLinePatched],
+							[binaryLine, binaryLinePatched],
 							[startLine, startLinePatched]
 					],
 					(file("$addonIdDir/resources/site-packages/elementum/rpc.py"))   : [
@@ -323,7 +354,7 @@ if (addonZip != null) {
 
 			def addonFile = file("$addonIdDir/addon.xml")
 			def addon = new groovy.xml.XmlSlurper().parse(addonFile)
-			addon.@'version' = android.defaultConfig.versionName
+			addon.@'version' = addonVersion
 			addon.requires.appendNode {
 				'import'('addon': serviceRepoAddonId, 'optional': 'true')
 			}
@@ -394,7 +425,7 @@ if (addonZip != null) {
 		it.dependsOn genMainJniLibs
 	}
 
-	def androidClientZip = file("$buildDir.path/$addonId-${android.defaultConfig.versionName}.android_client.zip")
+	def androidClientZip = file("$buildDir.path/$addonId-${addonVersion}.android_client.zip")
 
 	task zipAndroidClient(type: Zip, dependsOn: [patchAddon]) {
 		from addonDir
@@ -407,33 +438,31 @@ if (addonZip != null) {
 		}
 	}
 
-	task genAndroidClientRepo(dependsOn: [zipAndroidClient]) {
-		def androidClientRepo = file("$buildDir.path/addons.xml")
-		def androidClientRepoMd5 = file("$buildDir.path/addons.xml.md5")
-		def androidClientRepoZip = file("$buildDir.path/$addonId-${android.defaultConfig.versionName}.zip")
+	task genServiceRepo(dependsOn: [patchAddon, zipAndroidClient]) {
+		def serviceRepoDir = "$buildDir.path/ElementumService"
+		def serviceRepoZip = file("$serviceRepoDir/$addonId/$addonId-${addonVersion}.zip")
+		def serviceRepoInfo = file("$serviceRepoDir/$addonId/addons.xml")
+		def serviceRepoInfoMd5 = file("$serviceRepoDir/$addonId/addons.xml.md5")
 
 		doFirst {
-			delete androidClientRepo
-			delete androidClientRepoMd5
-			delete androidClientRepoZip
+			delete serviceRepoDir
 		}
 
 		doLast {
-			def addon = new groovy.xml.XmlSlurper().parse(file("$addonIdDir/addon.xml"))
-			androidClientRepo.withWriter {
+			copy {
+				from androidClientZip
+				into serviceRepoZip.parentFile
+				rename { serviceRepoZip.name }
+			}
+			serviceRepoInfo.withWriter {
 				groovy.xml.XmlUtil.serialize(new groovy.xml.StreamingMarkupBuilder().bind {
 					addons {
-						mkp.yield addon
+						mkp.yield new groovy.xml.XmlSlurper().parse(file("$addonIdDir/addon.xml"))
 					}
 				}, it)
 			}
-			androidClientRepoMd5.withWriter {
-				it.write(androidClientRepo.text.md5())
-			}
-			copy {
-				from androidClientZip
-				into androidClientRepoZip.parentFile
-				rename { androidClientRepoZip.name }
+			serviceRepoInfoMd5.withWriter {
+				it.write(serviceRepoInfo.text.md5())
 			}
 		}
 	}
