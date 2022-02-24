@@ -6,7 +6,7 @@ buildscript {
 	}
 
 	dependencies {
-		classpath 'com.android.tools.build:gradle:7.1.1'
+		classpath 'com.android.tools.build:gradle:7.1.2'
 	}
 }
 
@@ -52,18 +52,18 @@ android {
 		]
 		buildConfigField 'java.util.Map<String, String>', 'SUBPROCESS_ASSETS', """
 				|java.util.Collections.unmodifiableMap(new java.util.HashMap<>() {{
-				|  put(\"$addonId\", \"%2\$s/$addonAssetsDir\");
+				|  put("$addonId", "%2\$s/$addonAssetsDir");
 				|}})""".stripMargin()
 		buildConfigField 'java.util.List<String>', 'SUBPROCESS_CMD', """
 				|java.util.Collections.unmodifiableList(java.util.Arrays.asList(
-				|    \"./libelementum.so\",
-				|    \"-remotePort=$remotePort\",
-				|    \"-localHost=$localHost\",
-				|    \"-localPort=$localPort\"
+				|    "./libelementum.so",
+				|    "-remotePort=$remotePort",
+				|    "-localHost=$localHost",
+				|    "-localPort=$localPort"
 				|))""".stripMargin()
 		buildConfigField 'java.util.Map<String, String>', 'SUBPROCESS_ENV', """
 				|java.util.Collections.unmodifiableMap(new java.util.HashMap<>() {{
-				|  put(\"LD_LIBRARY_PATH\", \"%1\$s\");
+				|  put("LD_LIBRARY_PATH", "%1\$s");
 				|}})""".stripMargin()
 		buildConfigField 'java.util.Set<Integer>', 'SUBPROCESS_EXIT_VALUES_END', """
 				|java.util.Collections.unmodifiableSet(new java.util.HashSet<>(java.util.Arrays.asList(
