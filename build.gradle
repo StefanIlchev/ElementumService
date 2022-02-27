@@ -219,7 +219,7 @@ if (addonZip != null) {
 	def serviceRepoAddonName = 'Elementum Service Repository'
 	def serviceRepoAddonId = 'repository.service.elementum'
 	def serviceRepoAddonIdDir = "$addonIdDir/$serviceRepoAddonId"
-	def serviceRepoAddonDataDir = "https://StefanIlchev.github.io/ElementumService/"
+	def serviceRepoAddonDataDir = "https://StefanIlchev.github.io/$project.name/"
 	def serviceRepoAddonSummary = 'GitHub repository for Elementum Service updates'
 
 	task patchAddon() {
@@ -438,11 +438,8 @@ if (addonZip != null) {
 		}
 	}
 
-	task genServiceRepo(dependsOn: [patchAddon, zipAndroidClient]) {
-		def serviceRepoDir = "$buildDir.path/ElementumService"
-		def serviceRepoZip = file("$serviceRepoDir/$addonId/$addonId-${addonVersion}.zip")
-		def serviceRepoInfo = file("$serviceRepoDir/$addonId/addons.xml")
-		def serviceRepoInfoMd5 = file("$serviceRepoDir/$addonId/addons.xml.md5")
+	task genServiceRepo(dependsOn: ['assembleRelease', patchAddon, zipAndroidClient]) {
+		def serviceRepoDir = "$buildDir.path/$project.name"
 
 		doFirst {
 			delete serviceRepoDir
@@ -450,10 +447,21 @@ if (addonZip != null) {
 
 		doLast {
 			copy {
+				from "$buildDir.path/outputs/apk/release"
+				into serviceRepoDir
+				include '*.apk'
+			}
+			copy {
+				from androidClientZip
+				into serviceRepoDir
+			}
+			def serviceRepoZip = file("$serviceRepoDir/$addonId/$addonId-${addonVersion}.zip")
+			copy {
 				from androidClientZip
 				into serviceRepoZip.parentFile
 				rename { serviceRepoZip.name }
 			}
+			def serviceRepoInfo = file("$serviceRepoDir/$addonId/addons.xml")
 			serviceRepoInfo.withWriter {
 				groovy.xml.XmlUtil.serialize(new groovy.xml.StreamingMarkupBuilder().bind {
 					addons {
@@ -461,8 +469,38 @@ if (addonZip != null) {
 					}
 				}, it)
 			}
+			def serviceRepoInfoMd5 = file("$serviceRepoDir/$addonId/addons.xml.md5")
 			serviceRepoInfoMd5.withWriter {
 				it.write(serviceRepoInfo.text.md5())
+			}
+			def htmlPage = file("$serviceRepoDir/index.html")
+			htmlPage.withWriter {
+				it << '<!DOCTYPE html>\n'
+				new groovy.xml.MarkupBuilder(it).html(
+						'lang': 'en') {
+
+					head {
+
+						meta('charset': 'utf-8')
+
+						title(project.name)
+					}
+
+					body {
+
+						table {
+							file(serviceRepoDir).listFiles((FileFilter) { it.isFile() && it != htmlPage }).each {
+								def name = groovy.xml.XmlUtil.escapeXml(it.name)
+								def nameData = """<td><a href="$name">$name</a></td>"""
+								def sizeData = """<td style="text-align: right;">${it.length()}B</td>"""
+
+								tr {
+									mkp.yieldUnescaped "\n        $nameData$sizeData\n      "
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}
