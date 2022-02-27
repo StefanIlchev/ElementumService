@@ -476,8 +476,7 @@ if (addonZip != null) {
 			def htmlPage = file("$serviceRepoDir/index.html")
 			htmlPage.withWriter {
 				it << '<!DOCTYPE html>\n'
-				new groovy.xml.MarkupBuilder(it).html(
-						'lang': 'en') {
+				new groovy.xml.MarkupBuilder(it).html('lang': 'en') {
 
 					head {
 
