@@ -117,12 +117,12 @@ public class MainActivity extends Activity {
 				if (isFinishing() || isDestroyed()) {
 					return;
 				}
-				if (getIntent().getAction() == null || getVersionNameIfDifferent() != null ||
-						!manageExternalStorageAllowCmdDialog.isShowing() ||
-						isExternalStorageManager()) {
-					doResume();
-				} else {
+				if (getIntent().getAction() == null || getVersionNameIfDifferent() != null) {
+					callForegroundServiceAndFinish();
+				} else if (manageExternalStorageAllowCmdDialog.isShowing() && !isExternalStorageManager()) {
 					ForegroundService.MAIN_HANDLER.postDelayed(this, 100L);
+				} else if (requestRequestedPermissions() == null) {
+					callForegroundServiceAndFinish();
 				}
 			}
 		};
@@ -193,17 +193,13 @@ public class MainActivity extends Activity {
 		finish();
 	}
 
-	private void doResume() {
+	@Override
+	protected void onResume() {
+		super.onResume();
 		if (getIntent().getAction() == null || getVersionNameIfDifferent() != null ||
 				requestRequestedPermissions() == null) {
 			callForegroundServiceAndFinish();
 		}
-	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-		doResume();
 	}
 
 	@Override
