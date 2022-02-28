@@ -164,8 +164,10 @@ def toSetAddonEnabledJson(addonId, enabled) {
 }
 
 def writeRepoAddon(
-		addon,
+		addonId,
 		addonIdDir,
+		addonVersion,
+		providerName,
 		repoAddonName,
 		repoAddonId,
 		repoAddonIdDir,
@@ -177,30 +179,28 @@ def writeRepoAddon(
 		include 'fanart.png', 'icon.png'
 	}
 	file("$repoAddonIdDir/addon.xml").withWriter {
-		new groovy.xml.MarkupBuilder(it).addon(
-				'name': repoAddonName,
-				'id': repoAddonId,
-				'provider-name': addon.@'provider-name',
-				'version': addon.@'version') {
+		groovy.xml.XmlUtil.serialize(new groovy.xml.StreamingMarkupBuilder().bind {
+			addon('name': repoAddonName, 'id': repoAddonId, 'provider-name': providerName, 'version': addonVersion) {
 
-			extension('name': repoAddonName, 'point': 'xbmc.addon.repository') {
+				extension('name': repoAddonName, 'point': 'xbmc.addon.repository') {
 
-				checksum("$repoAddonDataDir${addon.@'id'}/addons.xml.md5")
+					checksum("$repoAddonDataDir$addonId/addons.xml.md5")
 
-				datadir('zip': 'true', repoAddonDataDir)
+					datadir('zip': 'true', repoAddonDataDir)
 
-				info('compressed': 'false', "$repoAddonDataDir${addon.@'id'}/addons.xml")
+					info('compressed': 'false', "$repoAddonDataDir$addonId/addons.xml")
+				}
+
+				extension('point': 'xbmc.addon.metadata') {
+
+					platform('all')
+
+					summary('lang': 'en', repoAddonSummary)
+				}
+
+				requires {}
 			}
-
-			extension('point': 'xbmc.addon.metadata') {
-
-				platform('all')
-
-				summary('lang': 'en', repoAddonSummary)
-			}
-
-			requires {}
-		}
+		}, it)
 	}
 }
 
@@ -354,6 +354,7 @@ if (addonZip != null) {
 
 			def addonFile = file("$addonIdDir/addon.xml")
 			def addon = new groovy.xml.XmlSlurper().parse(addonFile)
+			def providerName = addon.@'provider-name'
 			addon.@'version' = addonVersion
 			addon.requires.appendNode {
 				'import'('addon': serviceRepoAddonId, 'optional': 'true')
@@ -364,16 +365,20 @@ if (addonZip != null) {
 				}, it)
 			}
 			writeRepoAddon(
-					addon,
+					addonId,
 					addonIdDir,
+					addonVersion,
+					providerName,
 					repoAddonName,
 					repoAddonId,
 					repoAddonIdDir,
 					repoAddonDataDir,
 					repoAddonSummary)
 			writeRepoAddon(
-					addon,
+					addonId,
 					addonIdDir,
+					addonVersion,
+					providerName,
 					serviceRepoAddonName,
 					serviceRepoAddonId,
 					serviceRepoAddonIdDir,
@@ -475,26 +480,36 @@ if (addonZip != null) {
 			}
 			def htmlPage = file("$serviceRepoDir/index.html")
 			htmlPage.withWriter {
-				it << '<!DOCTYPE html>\n'
-				new groovy.xml.MarkupBuilder(it).html('lang': 'en') {
+				def builder = new groovy.xml.StreamingMarkupBuilder()
+				builder.setUseDoubleQuotes(true)
+				it << '<!DOCTYPE html>' << builder.bind {
+					html('lang': 'en') {
 
-					head {
+						head {
 
-						meta('charset': 'utf-8')
+							meta('charset': 'utf-8')
 
-						title(project.name)
-					}
+							title(project.name)
+						}
 
-					body {
+						body {
 
-						table {
-							file(serviceRepoDir).listFiles((FileFilter) { it.isFile() && it != htmlPage }).each {
-								def name = groovy.xml.XmlUtil.escapeXml(it.name)
-								def nameData = """<td><a href="$name">$name</a></td>"""
-								def sizeData = """<td style="text-align: right;">${it.length()}B</td>"""
+							table {
+								file(serviceRepoDir).listFiles((FileFilter) {
+									it.isFile() && it != htmlPage
+								}).each {
+									def name = groovy.xml.XmlUtil.escapeXml(it.name)
+									def size = "${it.length()}B"
 
-								tr {
-									mkp.yieldUnescaped "\n        $nameData$sizeData\n      "
+									tr {
+
+										td {
+
+											a('href': name, name)
+										}
+
+										td('style': 'text-align: right;', size)
+									}
 								}
 							}
 						}
