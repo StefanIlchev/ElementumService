@@ -499,14 +499,14 @@ if (addonZip != null) {
 									it.isFile() && it != htmlPage
 								}).each {
 									def name = groovy.xml.XmlUtil.escapeXml(it.name)
+									def date = new Date(it.lastModified()).format('yyyy-MM-dd HH:mm')
 									def size = "${it.length()}B"
 
 									tr {
 
-										td {
+										td { a('href': name, name) }
 
-											a('href': name, name)
-										}
+										td(date)
 
 										td('style': 'text-align: right;', size)
 									}
