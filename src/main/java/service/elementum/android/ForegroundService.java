@@ -171,13 +171,8 @@ public class ForegroundService extends Service {
 		}
 	}
 
-	private void startUpdateInstall(long updateDownloadId) {
+	private void startUpdateInstall(DownloadManager manager, long updateDownloadId) {
 		stopUpdateInstall();
-		var manager = getSystemService(DownloadManager.class);
-		if (manager == null) {
-			stopForeground();
-			return;
-		}
 		var receiver = new BroadcastReceiver() {
 
 			@Override
@@ -208,7 +203,7 @@ public class ForegroundService extends Service {
 			var query = new DownloadManager.Query().setFilterById(updateDownloadId);
 			try (var cursor = manager.query(query)) {
 				var uri = cursor != null ? manager.getUriForDownloadedFile(updateDownloadId) : null;
-				if (uri != null && cursor.moveToFirst()) {
+				if (updateVersionName != null && uri != null && cursor.moveToFirst()) {
 					var localUri = cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI));
 					updateInstall(new File(Uri.parse(localUri).getPath()));
 					return;
@@ -218,7 +213,11 @@ public class ForegroundService extends Service {
 			} finally {
 				deleteUpdateDir();
 			}
-			MAIN_HANDLER.post(this::stopForeground);
+			MAIN_HANDLER.post(() -> {
+				if (updateVersionName != null) {
+					stopForeground();
+				}
+			});
 		});
 	}
 
@@ -239,6 +238,11 @@ public class ForegroundService extends Service {
 
 	private void startUpdateDownload(String versionName) {
 		stopUpdateDownload();
+		var manager = getSystemService(DownloadManager.class);
+		if (manager == null) {
+			stopForeground();
+			return;
+		}
 		var receiver = new BroadcastReceiver() {
 
 			@Override
@@ -250,7 +254,7 @@ public class ForegroundService extends Service {
 						updateDownloadId = 0L;
 						updateDownloadReceiver = null;
 						unregisterReceiver(this);
-						startUpdateInstall(id);
+						startUpdateInstall(manager, id);
 					}
 				} else if (DownloadManager.ACTION_NOTIFICATION_CLICKED.equals(action)) {
 					var id = updateDownloadId;
@@ -272,37 +276,34 @@ public class ForegroundService extends Service {
 				.setDestinationInExternalFilesDir(this, Environment.DIRECTORY_DOWNLOADS, uri.getLastPathSegment())
 				.setTitle(appName)
 				.setDescription(stop);
-		var manager = getSystemService(DownloadManager.class);
-		var updateDownloadId = manager != null ? manager.enqueue(request) : 0L;
-		if (updateDownloadId == 0L) {
-			stopForeground();
-			return;
-		}
+		var updateDownloadId = manager.enqueue(request);
+		this.updateDownloadId = updateDownloadId;
 		WORK_EXECUTOR.execute(() -> {
 			var query = new DownloadManager.Query().setFilterById(updateDownloadId);
 			try {
-				for (; updateVersionName != null; Thread.sleep(1000L)) {
+				for (; ; Thread.sleep(1_000L)) {
 					try (var cursor = manager.query(query)) {
-						var status = cursor != null && cursor.moveToFirst()
+						var status = updateVersionName != null && cursor != null && cursor.moveToFirst()
 								? cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
 								: DownloadManager.STATUS_FAILED;
-						switch (status) {
-							case DownloadManager.STATUS_FAILED:
-								MAIN_HANDLER.post(() -> {
-									if (updateVersionName != null) {
-										stopForeground();
-									}
-								});
-							case DownloadManager.STATUS_SUCCESSFUL:
-								return;
+						if (status == DownloadManager.STATUS_FAILED) {
+							break;
+						}
+						if (status == DownloadManager.STATUS_SUCCESSFUL) {
+							return;
 						}
 					}
 				}
 			} catch (Throwable t) {
 				Log.w(TAG, t);
 			}
+			deleteUpdateDir();
+			MAIN_HANDLER.post(() -> {
+				if (updateVersionName != null) {
+					stopForeground();
+				}
+			});
 		});
-		this.updateDownloadId = updateDownloadId;
 	}
 
 	private void stopUpdate() {
