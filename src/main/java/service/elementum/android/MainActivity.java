@@ -24,7 +24,8 @@ public class MainActivity extends Activity {
 
 	private enum RequestCode {
 		REQUESTED_PERMISSIONS,
-		MANAGE_EXTERNAL_STORAGE
+		MANAGE_EXTERNAL_STORAGE,
+		REQUEST_INSTALL_PACKAGES
 	}
 
 	private static final String TAG = "MainActivity";
@@ -59,6 +60,16 @@ public class MainActivity extends Activity {
 				.edit()
 				.putBoolean(MANAGE_EXTERNAL_STORAGE, value)
 				.apply();
+	}
+
+	private boolean isInstallPackagesRequester() {
+		return getPackageManager().canRequestPackageInstalls();
+	}
+
+	private void setInstallPackagesRequester(boolean value) {
+		if (value) {
+			getIntent().setAction(null);
+		}
 	}
 
 	private boolean isActivityFound(Intent intent) {
@@ -130,17 +141,21 @@ public class MainActivity extends Activity {
 		this.allowCmdRunnable = allowCmdRunnable;
 	}
 
-	private boolean requestManageExternalStorage() {
-		if (isExternalStorageManager()) {
+	private boolean request(
+			String permission,
+			Supplier<Boolean> supplier,
+			Consumer<Boolean> consumer,
+			String action,
+			RequestCode requestCode) {
+		if (supplier.get()) {
 			return false;
 		}
-		var uri = Uri.fromParts("package", getPackageName(), null);
-		var intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri);
+		var intent = new Intent(action, Uri.fromParts("package", getPackageName(), null));
 		if (isActivityFound(intent) ||
 				isActivityFound(intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS))) {
-			tryStartActivityForResult(intent, RequestCode.MANAGE_EXTERNAL_STORAGE.ordinal(), null);
+			tryStartActivityForResult(intent, requestCode.ordinal(), null);
 		} else {
-			showAllowCmd("MANAGE_EXTERNAL_STORAGE", this::isExternalStorageManager, this::setExternalStorageManager);
+			showAllowCmd(permission, supplier, consumer);
 		}
 		return true;
 	}
@@ -152,11 +167,23 @@ public class MainActivity extends Activity {
 					.requestedPermissions;
 			if (requestedPermissions != null && requestedPermissions.length > 0) {
 				var set = new HashSet<>(Arrays.asList(requestedPermissions));
-				if (set.remove(MANAGE_EXTERNAL_STORAGE) &&
-						requestManageExternalStorage()) {
+				if (set.remove(MANAGE_EXTERNAL_STORAGE) && request(
+						"MANAGE_EXTERNAL_STORAGE",
+						this::isExternalStorageManager,
+						this::setExternalStorageManager,
+						ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+						RequestCode.MANAGE_EXTERNAL_STORAGE)) {
 					return new String[]{MANAGE_EXTERNAL_STORAGE};
 				}
-				set.remove(Manifest.permission.REQUEST_INSTALL_PACKAGES);
+				if (set.remove(Manifest.permission.REQUEST_INSTALL_PACKAGES) &&
+						ForegroundService.getUpdateVersionName(getIntent()) != null && request(
+						"REQUEST_INSTALL_PACKAGES",
+						this::isInstallPackagesRequester,
+						this::setInstallPackagesRequester,
+						Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+						RequestCode.REQUEST_INSTALL_PACKAGES)) {
+					return new String[]{Manifest.permission.REQUEST_INSTALL_PACKAGES};
+				}
 				if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
 					set.remove(FOREGROUND_SERVICE);
 				}
@@ -219,6 +246,8 @@ public class MainActivity extends Activity {
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode == RequestCode.MANAGE_EXTERNAL_STORAGE.ordinal()) {
 			setExternalStorageManager(!isExternalStorageManager());
+		} else if (requestCode == RequestCode.REQUEST_INSTALL_PACKAGES.ordinal()) {
+			setInstallPackagesRequester(!isInstallPackagesRequester());
 		}
 	}
 

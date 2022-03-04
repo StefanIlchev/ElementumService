@@ -43,10 +43,10 @@ public class ForegroundService extends Service {
 
 	public static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
 
-	private static Uri toUri(String versionName) {
-		var abi = Build.SUPPORTED_ABIS[0];
-		var fileName = String.join("-", BuildConfig.PROJECT_NAME, abi, BuildConfig.BUILD_TYPE, versionName);
-		return Uri.parse(BuildConfig.REPO_URL + fileName + ".apk");
+	public static String getUpdateVersionName(Intent intent) {
+		var data = intent.getData();
+		var versionName = data != null ? data.getSchemeSpecificPart() : null;
+		return versionName == null || BuildConfig.VERSION_NAME.equals(versionName) ? null : versionName;
 	}
 
 	private DaemonRunnable daemonRunnable = null;
@@ -57,7 +57,7 @@ public class ForegroundService extends Service {
 
 	private BroadcastReceiver updateInstallReceiver = null;
 
-	private volatile int updateInstallId = 0;
+	private int updateInstallId = 0;
 
 	private BroadcastReceiver updateDownloadReceiver = null;
 
@@ -120,18 +120,12 @@ public class ForegroundService extends Service {
 		this.daemonRunnable = daemonRunnable;
 	}
 
-	private void deleteUpdateDir() {
-		var updateDir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
-		if (updateDir == null || !updateDir.exists()) {
-			return;
-		}
-		try (var stream = Files.walk(updateDir.toPath())) {
-			stream.sorted(Comparator.reverseOrder())
-					.map(Path::toFile)
-					.forEach(File::delete);
-		} catch (Throwable t) {
-			Log.w(TAG, t);
-		}
+	private void postUpdateStop(String versionName) {
+		MAIN_HANDLER.post(() -> {
+			if (versionName.equals(updateVersionName)) {
+				stopForeground();
+			}
+		});
 	}
 
 	private void stopUpdateInstall() {
@@ -147,38 +141,19 @@ public class ForegroundService extends Service {
 		}
 	}
 
-	private void updateInstall(File file) throws Exception {
-		var installer = getPackageManager().getPackageInstaller();
-		var params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
-		params.setSize(file.length());
-		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
-			params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED);
+	private void startUpdateInstall(String versionName, String fileName) {
+		var dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+		var file = dir != null ? new File(dir, fileName) : null;
+		if (file == null || !file.isFile()) {
+			stopForeground();
+			return;
 		}
-		var updateInstallId = installer.createSession(params);
-		this.updateInstallId = updateInstallId;
-		try (var session = installer.openSession(updateInstallId)) {
-			try (var out = session.openWrite(file.getName(), 0L, file.length())) {
-				Files.copy(file.toPath(), out);
-				session.fsync(out);
-			}
-			var statusReceiver = PendingIntent.getBroadcast(
-					this,
-					updateInstallId,
-					new Intent(TAG),
-					Build.VERSION.SDK_INT > Build.VERSION_CODES.R ? PendingIntent.FLAG_MUTABLE : 0)
-					.getIntentSender();
-			session.commit(statusReceiver);
-		}
-	}
-
-	private void startUpdateInstall(DownloadManager manager, long updateDownloadId) {
-		stopUpdateInstall();
 		var receiver = new BroadcastReceiver() {
 
 			@Override
 			public void onReceive(Context context, Intent intent) {
 				var sessionId = intent != null ? intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, 0) : 0;
-				if (sessionId == 0 || sessionId != updateInstallId) {
+				if (sessionId == 0 || sessionId != updateInstallId || !versionName.equals(updateVersionName)) {
 					return;
 				}
 				updateInstallId = 0;
@@ -197,28 +172,39 @@ public class ForegroundService extends Service {
 				stopForeground();
 			}
 		};
-		registerReceiver(receiver, new IntentFilter(TAG));
+		registerReceiver(receiver, new IntentFilter(TAG), null, MAIN_HANDLER);
 		updateInstallReceiver = receiver;
-		WORK_EXECUTOR.execute(() -> {
-			var query = new DownloadManager.Query().setFilterById(updateDownloadId);
-			try (var cursor = manager.query(query)) {
-				var uri = cursor != null ? manager.getUriForDownloadedFile(updateDownloadId) : null;
-				if (updateVersionName != null && uri != null && cursor.moveToFirst()) {
-					var localUri = cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI));
-					updateInstall(new File(Uri.parse(localUri).getPath()));
-					return;
-				}
-			} catch (Throwable t) {
-				Log.w(TAG, t);
-			} finally {
-				deleteUpdateDir();
-			}
-			MAIN_HANDLER.post(() -> {
-				if (updateVersionName != null) {
-					stopForeground();
+		var installer = getPackageManager().getPackageInstaller();
+		var params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+		params.setSize(file.length());
+		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
+			params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED);
+		}
+		try {
+			var updateInstallId = installer.createSession(params);
+			this.updateInstallId = updateInstallId;
+			var statusReceiver = PendingIntent.getBroadcast(
+					this,
+					updateInstallId,
+					new Intent(TAG),
+					Build.VERSION.SDK_INT > Build.VERSION_CODES.R ? PendingIntent.FLAG_MUTABLE : 0)
+					.getIntentSender();
+			WORK_EXECUTOR.execute(() -> {
+				try (var session = installer.openSession(updateInstallId)) {
+					try (var out = session.openWrite(file.getName(), 0L, file.length())) {
+						Files.copy(file.toPath(), out);
+						session.fsync(out);
+					}
+					session.commit(statusReceiver);
+				} catch (Throwable t) {
+					Log.w(TAG, t);
+					postUpdateStop(versionName);
 				}
 			});
-		});
+		} catch (Throwable t) {
+			Log.w(TAG, t);
+			stopForeground();
+		}
 	}
 
 	private int stopUpdateDownload() {
@@ -237,12 +223,13 @@ public class ForegroundService extends Service {
 	}
 
 	private void startUpdateDownload(String versionName) {
-		stopUpdateDownload();
 		var manager = getSystemService(DownloadManager.class);
 		if (manager == null) {
 			stopForeground();
 			return;
 		}
+		var abi = Build.SUPPORTED_ABIS[0];
+		var fileName = String.join("-", BuildConfig.PROJECT_NAME, abi, BuildConfig.BUILD_TYPE, versionName) + ".apk";
 		var receiver = new BroadcastReceiver() {
 
 			@Override
@@ -250,16 +237,17 @@ public class ForegroundService extends Service {
 				var action = intent != null ? intent.getAction() : null;
 				if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
 					var id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0L);
-					if (id != 0L && id == updateDownloadId) {
+					if (id != 0L && id == updateDownloadId && versionName.equals(updateVersionName)) {
 						updateDownloadId = 0L;
 						updateDownloadReceiver = null;
 						unregisterReceiver(this);
-						startUpdateInstall(manager, id);
+						startUpdateInstall(versionName, fileName);
 					}
 				} else if (DownloadManager.ACTION_NOTIFICATION_CLICKED.equals(action)) {
 					var id = updateDownloadId;
 					var ids = intent.getLongArrayExtra(DownloadManager.EXTRA_NOTIFICATION_CLICK_DOWNLOAD_IDS);
-					if (id != 0L && ids != null && Arrays.stream(ids).anyMatch(it -> it == id)) {
+					if (id != 0L && ids != null && Arrays.stream(ids).anyMatch(it -> it == id) &&
+							versionName.equals(updateVersionName)) {
 						stopForeground();
 					}
 				}
@@ -267,13 +255,12 @@ public class ForegroundService extends Service {
 		};
 		var filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
 		filter.addAction(DownloadManager.ACTION_NOTIFICATION_CLICKED);
-		registerReceiver(receiver, filter);
+		registerReceiver(receiver, filter, null, MAIN_HANDLER);
 		updateDownloadReceiver = receiver;
-		var uri = toUri(versionName);
 		var appName = getString(R.string.app_name);
 		var stop = getString(R.string.stop);
-		var request = new DownloadManager.Request(uri)
-				.setDestinationInExternalFilesDir(this, Environment.DIRECTORY_DOWNLOADS, uri.getLastPathSegment())
+		var request = new DownloadManager.Request(Uri.parse(BuildConfig.REPO_URL + fileName))
+				.setDestinationInExternalFilesDir(this, Environment.DIRECTORY_DOWNLOADS, fileName)
 				.setTitle(appName)
 				.setDescription(stop);
 		var updateDownloadId = manager.enqueue(request);
@@ -283,39 +270,43 @@ public class ForegroundService extends Service {
 			try {
 				for (; ; Thread.sleep(1_000L)) {
 					try (var cursor = manager.query(query)) {
-						var status = updateVersionName != null && cursor != null && cursor.moveToFirst()
+						var status = cursor != null && cursor.moveToFirst()
 								? cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
 								: DownloadManager.STATUS_FAILED;
+						if (status == DownloadManager.STATUS_SUCCESSFUL || !versionName.equals(updateVersionName)) {
+							return;
+						}
 						if (status == DownloadManager.STATUS_FAILED) {
 							break;
-						}
-						if (status == DownloadManager.STATUS_SUCCESSFUL) {
-							return;
 						}
 					}
 				}
 			} catch (Throwable t) {
 				Log.w(TAG, t);
 			}
-			deleteUpdateDir();
-			MAIN_HANDLER.post(() -> {
-				if (updateVersionName != null) {
-					stopForeground();
-				}
-			});
+			postUpdateStop(versionName);
 		});
 	}
 
 	private void stopUpdate() {
+		var versionName = updateVersionNameMsg;
 		updateVersionName = null;
-		var updateVersionNameMsg = this.updateVersionNameMsg;
-		this.updateVersionNameMsg = null;
-		if (updateVersionNameMsg != null && !BuildConfig.VERSION_NAME.equals(updateVersionNameMsg)) {
-			Toast.makeText(this, BuildConfig.VERSION_NAME + " =/= " + updateVersionNameMsg, Toast.LENGTH_LONG).show();
+		updateVersionNameMsg = null;
+		if (versionName != null && !BuildConfig.VERSION_NAME.equals(versionName)) {
+			Toast.makeText(this, BuildConfig.VERSION_NAME + " =/= " + versionName, Toast.LENGTH_LONG).show();
 		}
-		stopUpdateDownload();
 		stopUpdateInstall();
-		deleteUpdateDir();
+		stopUpdateDownload();
+		var dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+		if (dir != null && dir.exists()) {
+			try (var stream = Files.walk(dir.toPath())) {
+				stream.sorted(Comparator.reverseOrder())
+						.map(Path::toFile)
+						.forEach(File::delete);
+			} catch (Throwable t) {
+				Log.w(TAG, t);
+			}
+		}
 	}
 
 	private void startUpdate(String versionName) {
@@ -372,10 +363,9 @@ public class ForegroundService extends Service {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		var data = intent.getData();
-		var versionName = data != null ? data.getSchemeSpecificPart() : null;
+		var versionName = getUpdateVersionName(intent);
 		try {
-			if (versionName == null || BuildConfig.VERSION_NAME.equals(versionName)) {
+			if (versionName == null) {
 				if (daemonRunnable == null) {
 					stopUpdate();
 					startDaemon();
