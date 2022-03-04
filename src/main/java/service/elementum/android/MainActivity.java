@@ -211,6 +211,7 @@ public class MainActivity extends Activity {
 		try {
 			if (intent.getAction() == null) {
 				stopService(intent);
+				ForegroundService.showDifferent(this, ForegroundService.getUpdateVersionName(intent));
 			} else {
 				startForegroundService(intent);
 			}

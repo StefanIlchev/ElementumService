@@ -49,6 +49,13 @@ public class ForegroundService extends Service {
 		return versionName == null || BuildConfig.VERSION_NAME.equals(versionName) ? null : versionName;
 	}
 
+	public static void showDifferent(Context context, String versionName) {
+		if (versionName == null || BuildConfig.VERSION_NAME.equals(versionName)) {
+			return;
+		}
+		Toast.makeText(context, BuildConfig.VERSION_NAME + " =/= " + versionName, Toast.LENGTH_LONG).show();
+	}
+
 	private DaemonRunnable daemonRunnable = null;
 
 	private volatile String updateVersionName = null;
@@ -292,9 +299,7 @@ public class ForegroundService extends Service {
 		var versionName = updateVersionNameMsg;
 		updateVersionName = null;
 		updateVersionNameMsg = null;
-		if (versionName != null && !BuildConfig.VERSION_NAME.equals(versionName)) {
-			Toast.makeText(this, BuildConfig.VERSION_NAME + " =/= " + versionName, Toast.LENGTH_LONG).show();
-		}
+		showDifferent(this, versionName);
 		stopUpdateInstall();
 		stopUpdateDownload();
 		var dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
