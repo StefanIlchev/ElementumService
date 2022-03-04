@@ -2,8 +2,8 @@
 <resources>
 	<string name="app_name">"Dịch vụ Elementum"</string>
 	<string name="stop">"Ngừng"</string>
-	<string name="manage_external_storage_allow">"Cho phép"</string>
-	<string name="manage_external_storage_allow_message">"Bạn phải thao tác việc này bằng tay rồi"</string>
-	<string name="manage_external_storage_deny">"Từ chối"</string>
+	<string name="allow">"Cho phép"</string>
+	<string name="allow_message">"Bạn phải thao tác việc này bằng tay rồi"</string>
+	<string name="deny">"Từ chối"</string>
 	<string name="close_app">"Đóng ứng dụng"</string>
 </resources>

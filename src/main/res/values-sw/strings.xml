@@ -2,8 +2,8 @@
 <resources>
 	<string name="app_name">"Huduma ya Elementum"</string>
 	<string name="stop">"Simamisha"</string>
-	<string name="manage_external_storage_allow">"Ruhusu"</string>
-	<string name="manage_external_storage_allow_message">"Lazima ufanye hivi kwa mikono"</string>
-	<string name="manage_external_storage_deny">"Kataza"</string>
+	<string name="allow">"Ruhusu"</string>
+	<string name="allow_message">"Lazima ufanye hivi kwa mikono"</string>
+	<string name="deny">"Kataza"</string>
 	<string name="close_app">"Funga programu"</string>
 </resources>

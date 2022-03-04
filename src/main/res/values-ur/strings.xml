@@ -2,8 +2,8 @@
 <resources>
 	<string name="app_name">"‏Elementum سروس"</string>
 	<string name="stop">"روکیں"</string>
-	<string name="manage_external_storage_allow">"اجازت دیں"</string>
-	<string name="manage_external_storage_allow_message">"آپ کو یہ دستی طور پر کرنا ہوگا۔"</string>
-	<string name="manage_external_storage_deny">"مسترد کریں"</string>
+	<string name="allow">"اجازت دیں"</string>
+	<string name="allow_message">"آپ کو یہ دستی طور پر کرنا ہوگا۔"</string>
+	<string name="deny">"مسترد کریں"</string>
 	<string name="close_app">"ایپ بند کریں"</string>
 </resources>

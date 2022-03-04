@@ -2,8 +2,8 @@
 <resources>
 	<string name="app_name">"Služba Elementum"</string>
 	<string name="stop">"Zastavit"</string>
-	<string name="manage_external_storage_allow">"Povolit"</string>
-	<string name="manage_external_storage_allow_message">"Musíte to udělat ručně"</string>
-	<string name="manage_external_storage_deny">"Odepřít"</string>
+	<string name="allow">"Povolit"</string>
+	<string name="allow_message">"Musíte to udělat ručně"</string>
+	<string name="deny">"Odepřít"</string>
 	<string name="close_app">"Zavřít aplikaci"</string>
 </resources>

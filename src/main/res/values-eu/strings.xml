@@ -2,8 +2,8 @@
 <resources>
 	<string name="app_name">"Elementum zerbitzua"</string>
 	<string name="stop">"Gelditu"</string>
-	<string name="manage_external_storage_allow">"Eman baimena"</string>
-	<string name="manage_external_storage_allow_message">"Hau eskuz egin behar duzu"</string>
-	<string name="manage_external_storage_deny">"Ukatu"</string>
+	<string name="allow">"Eman baimena"</string>
+	<string name="allow_message">"Hau eskuz egin behar duzu"</string>
+	<string name="deny">"Ukatu"</string>
 	<string name="close_app">"Itxi aplikazioa"</string>
 </resources>

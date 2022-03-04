@@ -2,8 +2,8 @@
 <resources>
 	<string name="app_name">"Serviciul Elementum"</string>
 	<string name="stop">"Opriți"</string>
-	<string name="manage_external_storage_allow">"Permiteți"</string>
-	<string name="manage_external_storage_allow_message">"Trebuie să faci asta manual"</string>
-	<string name="manage_external_storage_deny">"Refuzați"</string>
+	<string name="allow">"Permiteți"</string>
+	<string name="allow_message">"Trebuie să faci asta manual"</string>
+	<string name="deny">"Refuzați"</string>
 	<string name="close_app">"Închideți aplicația"</string>
 </resources>

@@ -22,7 +22,9 @@ adb shell appops set --uid service.elementum.android MANAGE_EXTERNAL_STORAGE all
 
 Reinstall the addon from the added `Elementum Service Repository` and [Kodi](https://github.com/xbmc/xbmc) should keep it up to date. If you don't see the repository as an option check if it's not disabled.
 
-The service app will need to be manually kept up to date as it won't work if it's a different version and will show a message like `<service-version> =/= <client-version>`.
+When updating itself the service app might ask you to allow it to install apps and to confirm the update. After an update the service [won't be started automatically](https://developer.android.com/guide/components/activities/background-starts). A start can be triggered by interacting with the addon which will try to start the service if it's not responding.
+
+The service app won't work if it's a different version and will show a message like `<service-version> =/= <client-version>`.
 
 ## Build
 

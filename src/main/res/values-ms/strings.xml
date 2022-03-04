@@ -2,8 +2,8 @@
 <resources>
 	<string name="app_name">"Perkhidmatan Elementum"</string>
 	<string name="stop">"Berhenti"</string>
-	<string name="manage_external_storage_allow">"Benarkan"</string>
-	<string name="manage_external_storage_allow_message">"Anda perlu melakukan ini secara manual"</string>
-	<string name="manage_external_storage_deny">"Nafi"</string>
+	<string name="allow">"Benarkan"</string>
+	<string name="allow_message">"Anda perlu melakukan ini secara manual"</string>
+	<string name="deny">"Nafi"</string>
 	<string name="close_app">"Tutup apl"</string>
 </resources>

@@ -2,8 +2,8 @@
 <resources>
 	<string name="app_name">"Elementum-tjänst"</string>
 	<string name="stop">"Avbryt"</string>
-	<string name="manage_external_storage_allow">"Tillåt"</string>
-	<string name="manage_external_storage_allow_message">"Du måste göra detta manuellt"</string>
-	<string name="manage_external_storage_deny">"Neka"</string>
+	<string name="allow">"Tillåt"</string>
+	<string name="allow_message">"Du måste göra detta manuellt"</string>
+	<string name="deny">"Neka"</string>
 	<string name="close_app">"Stäng appen"</string>
 </resources>

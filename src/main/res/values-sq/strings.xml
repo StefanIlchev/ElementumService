@@ -2,8 +2,8 @@
 <resources>
 	<string name="app_name">"Shërbimi Elementum"</string>
 	<string name="stop">"Ndalo"</string>
-	<string name="manage_external_storage_allow">"Lejo"</string>
-	<string name="manage_external_storage_allow_message">"Ju duhet ta bëni këtë me dorë"</string>
-	<string name="manage_external_storage_deny">"Moho"</string>
+	<string name="allow">"Lejo"</string>
+	<string name="allow_message">"Ju duhet ta bëni këtë me dorë"</string>
+	<string name="deny">"Moho"</string>
 	<string name="close_app">"Mbyll aplikacionin"</string>
 </resources>

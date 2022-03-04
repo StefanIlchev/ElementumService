@@ -2,8 +2,8 @@
 <resources>
 	<string name="app_name">"บริการ Elementum"</string>
 	<string name="stop">"หยุด"</string>
-	<string name="manage_external_storage_allow">"อนุญาต"</string>
-	<string name="manage_external_storage_allow_message">"คุณต้องทำสิ่งนี้ด้วยตนเอง"</string>
-	<string name="manage_external_storage_deny">"ปฏิเสธ"</string>
+	<string name="allow">"อนุญาต"</string>
+	<string name="allow_message">"คุณต้องทำสิ่งนี้ด้วยตนเอง"</string>
+	<string name="deny">"ปฏิเสธ"</string>
 	<string name="close_app">"ปิดแอป"</string>
 </resources>

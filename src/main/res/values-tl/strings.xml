@@ -2,8 +2,8 @@
 <resources>
 	<string name="app_name">"Serbisyo ng Elementum"</string>
 	<string name="stop">"Ihinto"</string>
-	<string name="manage_external_storage_allow">"Payagan"</string>
-	<string name="manage_external_storage_allow_message">"Kailangan mong gawin ito nang manu-mano"</string>
-	<string name="manage_external_storage_deny">"Tanggihan"</string>
+	<string name="allow">"Payagan"</string>
+	<string name="allow_message">"Kailangan mong gawin ito nang manu-mano"</string>
+	<string name="deny">"Tanggihan"</string>
 	<string name="close_app">"Isara ang app"</string>
 </resources>

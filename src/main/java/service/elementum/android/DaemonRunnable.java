@@ -70,7 +70,7 @@ public class DaemonRunnable implements Runnable, Destroyable {
 		}
 	}
 
-	private void extract(String src, File dst) throws Throwable {
+	private void extract(String src, File dst) throws Exception {
 		if (dst.exists()) {
 			if (assetsMarker.exists() || isDestroyed()) {
 				return;
@@ -101,7 +101,7 @@ public class DaemonRunnable implements Runnable, Destroyable {
 		}
 	}
 
-	private void extract() throws Throwable {
+	private void extract() throws Exception {
 		for (var entry : BuildConfig.SUBPROCESS_ASSETS.entrySet()) {
 			extract(entry.getKey(), new File(String.format(entry.getValue(), formatArgs)));
 			if (isDestroyed()) {
@@ -136,7 +136,7 @@ public class DaemonRunnable implements Runnable, Destroyable {
 		};
 	}
 
-	private void execute() throws Throwable {
+	private void execute() throws Exception {
 		var builder = build();
 		for (var attempt = 0; !isDestroyed(); Thread.sleep(BuildConfig.SUBPROCESS_RETRY_DELAY)) {
 			var process = builder.start();

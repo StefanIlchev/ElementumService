@@ -2,8 +2,8 @@
 <resources>
 	<string name="app_name">"Storitev Elementum"</string>
 	<string name="stop">"Ustavi"</string>
-	<string name="manage_external_storage_allow">"Dovoli"</string>
-	<string name="manage_external_storage_allow_message">"To morate storiti ročno"</string>
-	<string name="manage_external_storage_deny">"Zavrni"</string>
+	<string name="allow">"Dovoli"</string>
+	<string name="allow_message">"To morate storiti ročno"</string>
+	<string name="deny">"Zavrni"</string>
 	<string name="close_app">"Zapri aplikacijo"</string>
 </resources>

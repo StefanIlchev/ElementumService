@@ -2,8 +2,8 @@
 <resources>
 	<string name="app_name">"Услуга Elementum"</string>
 	<string name="stop">"Запри"</string>
-	<string name="manage_external_storage_allow">"Дозволи"</string>
-	<string name="manage_external_storage_allow_message">"Треба да го направите ова рачно"</string>
-	<string name="manage_external_storage_deny">"Одбиј"</string>
+	<string name="allow">"Дозволи"</string>
+	<string name="allow_message">"Треба да го направите ова рачно"</string>
+	<string name="deny">"Одбиј"</string>
 	<string name="close_app">"Затвори ја апликацијата"</string>
 </resources>

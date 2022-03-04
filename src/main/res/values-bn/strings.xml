@@ -2,8 +2,8 @@
 <resources>
 	<string name="app_name">"Elementum পরিষেবা"</string>
 	<string name="stop">"থামান"</string>
-	<string name="manage_external_storage_allow">"অনুমতি দিন"</string>
-	<string name="manage_external_storage_allow_message">"আপনি নিজে এই কাজ করতে হবে"</string>
-	<string name="manage_external_storage_deny">"অস্বীকার করুন"</string>
+	<string name="allow">"অনুমতি দিন"</string>
+	<string name="allow_message">"আপনি নিজে এই কাজ করতে হবে"</string>
+	<string name="deny">"অস্বীকার করুন"</string>
 	<string name="close_app">"অ্যাপ্লিকেশান বন্ধ করুন"</string>
 </resources>
