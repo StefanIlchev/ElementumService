@@ -74,6 +74,18 @@ public class ForegroundService extends Service {
 
 	private MediaSession mediaSession = null;
 
+	private String getUpdateVersionName(Intent intent) {
+		var sharedPreferences = getSharedPreferences(TAG, MODE_PRIVATE);
+		if (intent == null) {
+			return getUpdate(sharedPreferences.getString(BuildConfig.PROJECT_NAME, null));
+		}
+		var versionName = getVersionName(intent);
+		sharedPreferences.edit()
+				.putString(BuildConfig.PROJECT_NAME, versionName)
+				.apply();
+		return getUpdate(versionName);
+	}
+
 	private void tryStartActivity(Intent intent, Bundle options) {
 		try {
 			startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), options);
@@ -380,16 +392,7 @@ public class ForegroundService extends Service {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		String versionName;
-		if (intent != null) {
-			versionName = getUpdate(getVersionName(intent));
-			getSharedPreferences(TAG, MODE_PRIVATE)
-					.edit()
-					.putString(BuildConfig.PROJECT_NAME, versionName)
-					.apply();
-		} else {
-			versionName = getUpdate(getSharedPreferences(TAG, MODE_PRIVATE).getString(BuildConfig.PROJECT_NAME, null));
-		}
+		var versionName = getUpdateVersionName(intent);
 		try {
 			if (versionName == null) {
 				if (daemonRunnable == null) {
