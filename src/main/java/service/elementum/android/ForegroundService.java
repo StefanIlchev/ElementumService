@@ -378,10 +378,6 @@ public class ForegroundService extends Service {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		if (intent == null) {
-			stopForeground();
-			return START_STICKY;
-		}
 		var versionName = getUpdateVersionName(intent);
 		try {
 			if (versionName == null) {
