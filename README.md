@@ -24,9 +24,9 @@ Reinstall the addon from the added `Elementum Service Repository` and [Kodi](htt
 
 When updating itself the service app might ask you to allow it to install apps and to confirm the update. After an update the service [won't be started automatically](https://developer.android.com/guide/components/activities/background-starts). A start can be triggered by interacting with the addon which will try to start the service if it's not responding.
 
-The service app won't work if it's a different version and will show a message like:
+The service app won't work if it's a different version from the addon and will show a message like:
 
-"&lt;service-version&gt; &#2260; &lt;client-version&gt;"
+`<service-version> ≠ <client-version>`
 
 ## Build
 
