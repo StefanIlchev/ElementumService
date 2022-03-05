@@ -3,7 +3,7 @@
 	<string name="app_name">"Usługa Elementum"</string>
 	<string name="stop">"Zatrzymaj"</string>
 	<string name="allow">"Zezwól"</string>
-	<string name="allow_message">"Musisz to zrobić ręcznie"</string>
+	<string name="allow_cmd_allow_message">"Musisz to zrobić ręcznie"</string>
 	<string name="deny">"Odmów"</string>
 	<string name="close_app">"Zamknij aplikację"</string>
 </resources>

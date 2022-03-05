@@ -44,7 +44,7 @@ public class ForegroundService extends Service {
 	public static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
 
 	public static String getUpdateVersionName(Intent intent) {
-		var data = intent.getData();
+		var data = intent != null ? intent.getData() : null;
 		var versionName = data != null ? data.getSchemeSpecificPart() : null;
 		return versionName == null || BuildConfig.VERSION_NAME.equals(versionName) ? null : versionName;
 	}
@@ -53,7 +53,7 @@ public class ForegroundService extends Service {
 		if (versionName == null || BuildConfig.VERSION_NAME.equals(versionName)) {
 			return;
 		}
-		Toast.makeText(context, BuildConfig.VERSION_NAME + " =/= " + versionName, Toast.LENGTH_LONG).show();
+		Toast.makeText(context, BuildConfig.VERSION_NAME + " \u2260 " + versionName, Toast.LENGTH_LONG).show();
 	}
 
 	private DaemonRunnable daemonRunnable = null;
@@ -135,6 +135,14 @@ public class ForegroundService extends Service {
 		});
 	}
 
+	private boolean unregisterUpdateReceiver(String versionName, BroadcastReceiver receiver) {
+		if (versionName.equals(updateVersionName)) {
+			return false;
+		}
+		unregisterReceiver(receiver);
+		return true;
+	}
+
 	private void stopUpdateInstall() {
 		var updateInstallReceiver = this.updateInstallReceiver;
 		if (updateInstallReceiver != null) {
@@ -159,20 +167,20 @@ public class ForegroundService extends Service {
 
 			@Override
 			public void onReceive(Context context, Intent intent) {
-				var sessionId = intent != null ? intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, 0) : 0;
-				if (sessionId == 0 || sessionId != updateInstallId || !versionName.equals(updateVersionName)) {
+				var id = intent != null ? intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, 0) : 0;
+				if (unregisterUpdateReceiver(versionName, this) || id == 0 || id != updateInstallId) {
 					return;
 				}
 				updateInstallId = 0;
 				updateInstallReceiver = null;
 				unregisterReceiver(this);
 				var status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);
-				Intent userAction = status == PackageInstaller.STATUS_PENDING_USER_ACTION
+				Intent activity = status == PackageInstaller.STATUS_PENDING_USER_ACTION
 						? intent.getParcelableExtra(Intent.EXTRA_INTENT)
 						: null;
-				if (userAction != null) {
+				if (activity != null) {
 					updateVersionName = null;
-					tryStartActivity(userAction, null);
+					tryStartActivity(activity, null);
 				} else if (status == PackageInstaller.STATUS_SUCCESS) {
 					updateVersionName = null;
 				}
@@ -241,10 +249,13 @@ public class ForegroundService extends Service {
 
 			@Override
 			public void onReceive(Context context, Intent intent) {
+				if (unregisterUpdateReceiver(versionName, this)) {
+					return;
+				}
 				var action = intent != null ? intent.getAction() : null;
 				if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
 					var id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0L);
-					if (id != 0L && id == updateDownloadId && versionName.equals(updateVersionName)) {
+					if (id != 0L && id == updateDownloadId) {
 						updateDownloadId = 0L;
 						updateDownloadReceiver = null;
 						unregisterReceiver(this);
@@ -253,8 +264,7 @@ public class ForegroundService extends Service {
 				} else if (DownloadManager.ACTION_NOTIFICATION_CLICKED.equals(action)) {
 					var id = updateDownloadId;
 					var ids = intent.getLongArrayExtra(DownloadManager.EXTRA_NOTIFICATION_CLICK_DOWNLOAD_IDS);
-					if (id != 0L && ids != null && Arrays.stream(ids).anyMatch(it -> it == id) &&
-							versionName.equals(updateVersionName)) {
+					if (id != 0L && ids != null && Arrays.stream(ids).anyMatch(it -> it == id)) {
 						stopForeground();
 					}
 				}
@@ -368,6 +378,10 @@ public class ForegroundService extends Service {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
+		if (intent == null) {
+			stopForeground();
+			return START_STICKY;
+		}
 		var versionName = getUpdateVersionName(intent);
 		try {
 			if (versionName == null) {

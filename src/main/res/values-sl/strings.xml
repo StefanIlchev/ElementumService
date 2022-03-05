@@ -3,7 +3,7 @@
 	<string name="app_name">"Storitev Elementum"</string>
 	<string name="stop">"Ustavi"</string>
 	<string name="allow">"Dovoli"</string>
-	<string name="allow_message">"To morate storiti ročno"</string>
+	<string name="allow_cmd_allow_message">"To morate storiti ročno"</string>
 	<string name="deny">"Zavrni"</string>
 	<string name="close_app">"Zapri aplikacijo"</string>
 </resources>

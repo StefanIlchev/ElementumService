@@ -3,7 +3,7 @@
 	<string name="app_name">"Elementum-þjónusta"</string>
 	<string name="stop">"Stöðva"</string>
 	<string name="allow">"Leyfa"</string>
-	<string name="allow_message">"Þú verður að gera þetta handvirkt"</string>
+	<string name="allow_cmd_allow_message">"Þú verður að gera þetta handvirkt"</string>
 	<string name="deny">"Hafna"</string>
 	<string name="close_app">"Loka forriti"</string>
 </resources>

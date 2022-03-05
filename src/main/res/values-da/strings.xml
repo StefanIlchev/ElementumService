@@ -3,7 +3,7 @@
 	<string name="app_name">"Elementum-tjeneste"</string>
 	<string name="stop">"Stop"</string>
 	<string name="allow">"Tillad"</string>
-	<string name="allow_message">"Du skal gøre dette manuelt"</string>
+	<string name="allow_cmd_allow_message">"Du skal gøre dette manuelt"</string>
 	<string name="deny">"Afvis"</string>
 	<string name="close_app">"Luk app"</string>
 </resources>

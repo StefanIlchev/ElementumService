@@ -3,7 +3,7 @@
 	<string name="app_name">"Elementum ծառայություն"</string>
 	<string name="stop">"Դադարեցնել"</string>
 	<string name="allow">"Թույլատրել"</string>
-	<string name="allow_message">"Դուք պետք է դա անեք ձեռքով"</string>
+	<string name="allow_cmd_allow_message">"Դուք պետք է դա անեք ձեռքով"</string>
 	<string name="deny">"Մերժել"</string>
 	<string name="close_app">"Փակել հավելվածը"</string>
 </resources>

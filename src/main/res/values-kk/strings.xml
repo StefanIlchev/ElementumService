@@ -3,7 +3,7 @@
 	<string name="app_name">"Elementum қызметі"</string>
 	<string name="stop">"Тоқтату"</string>
 	<string name="allow">"Рұқсат беру"</string>
-	<string name="allow_message">"Мұны қолмен жасау керек"</string>
+	<string name="allow_cmd_allow_message">"Мұны қолмен жасау керек"</string>
 	<string name="deny">"Тыйым салу"</string>
 	<string name="close_app">"Қолданбаны жабу"</string>
 </resources>

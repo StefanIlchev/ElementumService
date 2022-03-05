@@ -3,7 +3,7 @@
 	<string name="app_name">"Elementum Hizmeti"</string>
 	<string name="stop">"Durdur"</string>
 	<string name="allow">"İzin Ver"</string>
-	<string name="allow_message">"Bunu manuel olarak yapmalısın"</string>
+	<string name="allow_cmd_allow_message">"Bunu manuel olarak yapmalısın"</string>
 	<string name="deny">"Reddet"</string>
 	<string name="close_app">"Uygulamayı kapat"</string>
 </resources>

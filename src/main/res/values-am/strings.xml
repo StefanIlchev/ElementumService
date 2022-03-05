@@ -3,7 +3,7 @@
 	<string name="app_name">"Elementum አገልግሎት"</string>
 	<string name="stop">"አቁም"</string>
 	<string name="allow">"ፍቀድ"</string>
-	<string name="allow_message">"ይህንን በእጅዎ ማድረግ አለብዎት"</string>
+	<string name="allow_cmd_allow_message">"ይህንን በእጅዎ ማድረግ አለብዎት"</string>
 	<string name="deny">"ያስተባብሉ"</string>
 	<string name="close_app">"መተግበሪያን ዝጋ"</string>
 </resources>

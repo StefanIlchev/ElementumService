@@ -3,7 +3,7 @@
 	<string name="app_name">"Elementum სერვისი"</string>
 	<string name="stop">"შეწყვეტა"</string>
 	<string name="allow">"უფლების მიცემა"</string>
-	<string name="allow_message">"თქვენ უნდა გააკეთოთ ეს ხელით"</string>
+	<string name="allow_cmd_allow_message">"თქვენ უნდა გააკეთოთ ეს ხელით"</string>
 	<string name="deny">"აკრძალვა"</string>
 	<string name="close_app">"აპის დახურვა"</string>
 </resources>

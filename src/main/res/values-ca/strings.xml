@@ -3,7 +3,7 @@
 	<string name="app_name">"Servei Elementum"</string>
 	<string name="stop">"Atura"</string>
 	<string name="allow">"Permet"</string>
-	<string name="allow_message">"Ho heu de fer manualment"</string>
+	<string name="allow_cmd_allow_message">"Ho heu de fer manualment"</string>
 	<string name="deny">"Denega"</string>
 	<string name="close_app">"Tanca l\'aplicació"</string>
 </resources>

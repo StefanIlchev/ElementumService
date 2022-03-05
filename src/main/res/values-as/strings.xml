@@ -3,7 +3,7 @@
 	<string name="app_name">"Elementum সেৱা"</string>
 	<string name="stop">"বন্ধ কৰক"</string>
 	<string name="allow">"অনুমতি দিয়ক"</string>
-	<string name="allow_message">"আপুনি এইটো হাতেৰে কৰিব লাগিব"</string>
+	<string name="allow_cmd_allow_message">"আপুনি এইটো হাতেৰে কৰিব লাগিব"</string>
 	<string name="deny">"প্ৰত্যাখ্যান কৰক"</string>
 	<string name="close_app">"এপটো বন্ধ কৰক"</string>
 </resources>

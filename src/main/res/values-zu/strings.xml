@@ -3,7 +3,7 @@
 	<string name="app_name">"Isevisi ye-Elementum"</string>
 	<string name="stop">"Misa"</string>
 	<string name="allow">"Vumela"</string>
-	<string name="allow_message">"Kufanele ukwenze lokhu ngesandla"</string>
+	<string name="allow_cmd_allow_message">"Kufanele ukwenze lokhu ngesandla"</string>
 	<string name="deny">"Yala"</string>
 	<string name="close_app">"Vala uhlelo lokusebenza"</string>
 </resources>

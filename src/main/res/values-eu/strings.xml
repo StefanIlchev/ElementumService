@@ -3,7 +3,7 @@
 	<string name="app_name">"Elementum zerbitzua"</string>
 	<string name="stop">"Gelditu"</string>
 	<string name="allow">"Eman baimena"</string>
-	<string name="allow_message">"Hau eskuz egin behar duzu"</string>
+	<string name="allow_cmd_allow_message">"Hau eskuz egin behar duzu"</string>
 	<string name="deny">"Ukatu"</string>
 	<string name="close_app">"Itxi aplikazioa"</string>
 </resources>

@@ -67,8 +67,9 @@ public class MainActivity extends Activity {
 	}
 
 	private void setInstallPackagesRequester(boolean value) {
-		if (value) {
-			getIntent().setAction(null);
+		var intent = getIntent();
+		if (intent != null && value) {
+			intent.setAction(null);
 		}
 	}
 
@@ -88,6 +89,15 @@ public class MainActivity extends Activity {
 		} catch (Throwable t) {
 			Log.w(TAG, t);
 		}
+	}
+
+	private boolean tryStopService(Intent intent) {
+		try {
+			return stopService(intent);
+		} catch (Throwable t) {
+			Log.w(TAG, t);
+		}
+		return false;
 	}
 
 	private void hideAllowCmd() {
@@ -111,13 +121,20 @@ public class MainActivity extends Activity {
 				.setMessage("adb shell appops set --uid " + getPackageName() + " " + permission + " allow")
 				.setPositiveButton(R.string.allow, (dialog, which) -> {
 					if (!supplier.get()) {
-						Toast.makeText(this, R.string.allow_message, Toast.LENGTH_SHORT).show();
+						Toast.makeText(this, R.string.allow_cmd_allow_message, Toast.LENGTH_SHORT).show();
 					}
 				})
-				.setNegativeButton(R.string.deny, (dialog, which) ->
-						consumer.accept(!supplier.get()))
-				.setNeutralButton(R.string.close_app, (dialog, which) ->
-						finish())
+				.setNegativeButton(R.string.deny, (dialog, which) -> {
+					if (!supplier.get()) {
+						consumer.accept(true);
+					}
+				})
+				.setNeutralButton(R.string.close_app, (dialog, which) -> {
+					var intent = getIntent();
+					if (intent != null) {
+						intent.setAction(null).setDataAndType(null, null);
+					}
+				})
 				.setCancelable(false)
 				.show();
 		this.allowCmdDialog = allowCmdDialog;
@@ -128,7 +145,8 @@ public class MainActivity extends Activity {
 				if (isFinishing() || isDestroyed()) {
 					return;
 				}
-				if (getIntent().getAction() == null) {
+				var intent = getIntent();
+				if (intent == null || intent.getAction() == null) {
 					callForegroundServiceAndFinish();
 				} else if (allowCmdDialog.isShowing() && !supplier.get()) {
 					ForegroundService.MAIN_HANDLER.postDelayed(this, 100L);
@@ -182,6 +200,7 @@ public class MainActivity extends Activity {
 						this::setInstallPackagesRequester,
 						Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
 						RequestCode.REQUEST_INSTALL_PACKAGES)) {
+					tryStopService(new Intent(this, ForegroundService.class));
 					return new String[]{Manifest.permission.REQUEST_INSTALL_PACKAGES};
 				}
 				if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
@@ -207,13 +226,14 @@ public class MainActivity extends Activity {
 	}
 
 	private void callForegroundServiceAndFinish() {
-		var intent = new Intent(getIntent()).setClass(this, ForegroundService.class);
+		var intent = getIntent();
+		var service = (intent != null ? new Intent(intent) : new Intent()).setClass(this, ForegroundService.class);
 		try {
-			if (intent.getAction() == null) {
-				stopService(intent);
-				ForegroundService.showDifferent(this, ForegroundService.getUpdateVersionName(intent));
+			if (service.getAction() == null) {
+				tryStopService(service);
+				ForegroundService.showDifferent(this, ForegroundService.getUpdateVersionName(service));
 			} else {
-				startForegroundService(intent);
+				startForegroundService(service);
 			}
 		} catch (Throwable t) {
 			Log.w(TAG, t);
@@ -224,7 +244,8 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		if (getIntent().getAction() == null ||
+		var intent = getIntent();
+		if (intent == null || intent.getAction() == null ||
 				requestRequestedPermissions() == null) {
 			callForegroundServiceAndFinish();
 		}

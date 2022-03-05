@@ -3,7 +3,7 @@
 	<string name="app_name">"Perkhidmatan Elementum"</string>
 	<string name="stop">"Berhenti"</string>
 	<string name="allow">"Benarkan"</string>
-	<string name="allow_message">"Anda perlu melakukan ini secara manual"</string>
+	<string name="allow_cmd_allow_message">"Anda perlu melakukan ini secara manual"</string>
 	<string name="deny">"Nafi"</string>
 	<string name="close_app">"Tutup apl"</string>
 </resources>

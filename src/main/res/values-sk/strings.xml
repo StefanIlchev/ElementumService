@@ -3,7 +3,7 @@
 	<string name="app_name">"Služba Elementum"</string>
 	<string name="stop">"Zastaviť"</string>
 	<string name="allow">"Povoliť"</string>
-	<string name="allow_message">"Musíte to urobiť ručne"</string>
+	<string name="allow_cmd_allow_message">"Musíte to urobiť ručne"</string>
 	<string name="deny">"Zamietnuť"</string>
 	<string name="close_app">"Zavrieť aplikáciu"</string>
 </resources>

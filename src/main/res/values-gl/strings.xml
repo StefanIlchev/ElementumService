@@ -3,7 +3,7 @@
 	<string name="app_name">"Servizo Elementum"</string>
 	<string name="stop">"Deter"</string>
 	<string name="allow">"Permitir"</string>
-	<string name="allow_message">"Tes que facelo manualmente"</string>
+	<string name="allow_cmd_allow_message">"Tes que facelo manualmente"</string>
 	<string name="deny">"Rexeitar"</string>
 	<string name="close_app">"Pechar aplicación"</string>
 </resources>

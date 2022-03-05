@@ -3,7 +3,7 @@
 	<string name="app_name">"Elementum paslauga"</string>
 	<string name="stop">"Stabdyti"</string>
 	<string name="allow">"Leisti"</string>
-	<string name="allow_message">"Turite tai padaryti rankiniu būdu"</string>
+	<string name="allow_cmd_allow_message">"Turite tai padaryti rankiniu būdu"</string>
 	<string name="deny">"Atmesti"</string>
 	<string name="close_app">"Uždaryti programą"</string>
 </resources>

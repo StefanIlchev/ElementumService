@@ -3,7 +3,7 @@
 	<string name="app_name">"Elementum-szolgáltatás"</string>
 	<string name="stop">"Leállítás"</string>
 	<string name="allow">"Engedélyezés"</string>
-	<string name="allow_message">"Ezt manuálisan kell megtennie"</string>
+	<string name="allow_cmd_allow_message">"Ezt manuálisan kell megtennie"</string>
 	<string name="deny">"Elutasítás"</string>
 	<string name="close_app">"Alkalmazás bezárása"</string>
 </resources>

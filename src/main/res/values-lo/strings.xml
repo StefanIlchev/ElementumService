@@ -3,7 +3,7 @@
 	<string name="app_name">"ບໍລິການ Elementum"</string>
 	<string name="stop">"ຢຸດ"</string>
 	<string name="allow">"ອະນຸຍາດ"</string>
-	<string name="allow_message">"ທ່ານຕ້ອງເຮັດສິ່ງນີ້ດ້ວຍຕົນເອງ"</string>
+	<string name="allow_cmd_allow_message">"ທ່ານຕ້ອງເຮັດສິ່ງນີ້ດ້ວຍຕົນເອງ"</string>
 	<string name="deny">"ປະ​ຕິ​ເສດ"</string>
 	<string name="close_app">"ປິດແອັບ"</string>
 </resources>
