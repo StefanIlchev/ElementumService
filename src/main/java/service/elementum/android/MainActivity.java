@@ -194,7 +194,7 @@ public class MainActivity extends Activity {
 					return new String[]{MANAGE_EXTERNAL_STORAGE};
 				}
 				if (set.remove(Manifest.permission.REQUEST_INSTALL_PACKAGES) &&
-						ForegroundService.getUpdateVersionName(getIntent()) != null && request(
+						ForegroundService.getUpdate(ForegroundService.getVersionName(getIntent())) != null && request(
 						"REQUEST_INSTALL_PACKAGES",
 						this::isInstallPackagesRequester,
 						this::setInstallPackagesRequester,
@@ -231,7 +231,7 @@ public class MainActivity extends Activity {
 		try {
 			if (service.getAction() == null) {
 				tryStopService(service);
-				ForegroundService.showDifferent(this, ForegroundService.getUpdateVersionName(service));
+				ForegroundService.showDifferent(this, ForegroundService.getVersionName(service));
 			} else {
 				startForegroundService(service);
 			}

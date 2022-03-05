@@ -43,9 +43,12 @@ public class ForegroundService extends Service {
 
 	public static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
 
-	public static String getUpdateVersionName(Intent intent) {
+	public static String getVersionName(Intent intent) {
 		var data = intent != null ? intent.getData() : null;
-		var versionName = data != null ? data.getSchemeSpecificPart() : null;
+		return data != null ? data.getSchemeSpecificPart() : null;
+	}
+
+	public static String getUpdate(String versionName) {
 		return versionName == null || BuildConfig.VERSION_NAME.equals(versionName) ? null : versionName;
 	}
 
@@ -380,13 +383,13 @@ public class ForegroundService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		String versionName;
 		if (intent != null) {
-			versionName = getUpdateVersionName(intent);
+			versionName = getUpdate(getVersionName(intent));
 			getSharedPreferences(TAG, MODE_PRIVATE)
 					.edit()
 					.putString(BuildConfig.PROJECT_NAME, versionName)
 					.apply();
 		} else {
-			versionName = getSharedPreferences(TAG, MODE_PRIVATE).getString(BuildConfig.PROJECT_NAME, null);
+			versionName = getUpdate(getSharedPreferences(TAG, MODE_PRIVATE).getString(BuildConfig.PROJECT_NAME, null));
 		}
 		try {
 			if (versionName == null) {
