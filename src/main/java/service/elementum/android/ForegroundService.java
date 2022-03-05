@@ -378,7 +378,16 @@ public class ForegroundService extends Service {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		var versionName = getUpdateVersionName(intent);
+		String versionName;
+		if (intent != null) {
+			versionName = getUpdateVersionName(intent);
+			getSharedPreferences(TAG, MODE_PRIVATE)
+					.edit()
+					.putString(BuildConfig.PROJECT_NAME, versionName)
+					.apply();
+		} else {
+			versionName = getSharedPreferences(TAG, MODE_PRIVATE).getString(BuildConfig.PROJECT_NAME, null);
+		}
 		try {
 			if (versionName == null) {
 				if (daemonRunnable == null) {
