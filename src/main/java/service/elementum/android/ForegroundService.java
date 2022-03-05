@@ -53,10 +53,9 @@ public class ForegroundService extends Service {
 	}
 
 	public static void showDifferent(Context context, String versionName) {
-		if (getUpdate(versionName) == null) {
-			return;
+		if (getUpdate(versionName) != null) {
+			Toast.makeText(context, BuildConfig.VERSION_NAME + " \u2260 " + versionName, Toast.LENGTH_LONG).show();
 		}
-		Toast.makeText(context, BuildConfig.VERSION_NAME + " \u2260 " + versionName, Toast.LENGTH_LONG).show();
 	}
 
 	private DaemonRunnable daemonRunnable = null;
