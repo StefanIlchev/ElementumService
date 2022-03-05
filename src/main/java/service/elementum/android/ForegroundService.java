@@ -53,7 +53,7 @@ public class ForegroundService extends Service {
 	}
 
 	public static void showDifferent(Context context, String versionName) {
-		if (versionName == null || BuildConfig.VERSION_NAME.equals(versionName)) {
+		if (getUpdate(versionName) == null) {
 			return;
 		}
 		Toast.makeText(context, BuildConfig.VERSION_NAME + " \u2260 " + versionName, Toast.LENGTH_LONG).show();

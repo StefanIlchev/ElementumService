@@ -46,7 +46,7 @@ android {
 	defaultConfig {
 		minSdkVersion 26
 		targetSdkVersion 31
-		versionCode System.getProperty('versionCode') as Integer ?: 34
+		versionCode System.getProperty('versionCode') as Integer ?: 35
 		versionName System.getProperty('versionName') ?: "$versionCode"
 		applicationId 'service.elementum.android'
 		manifestPlaceholders = [
