@@ -404,7 +404,7 @@ if (addonZip != null) {
 			copy {
 				from addonDir
 				into srcMainAssetsGen
-				exclude '**/.*', "$addonId/resources/bin", "$addonId/$repoAddonId"
+				exclude '**/.*', "$addonId/resources/bin", "$addonId/$repoAddonId", "$addonId/$serviceRepoAddonId"
 			}
 		}
 	}
