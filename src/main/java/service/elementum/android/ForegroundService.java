@@ -189,8 +189,8 @@ public class ForegroundService extends Service {
 				updateInstallReceiver = null;
 				unregisterReceiver(this);
 				var status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);
-				Intent activity = status == PackageInstaller.STATUS_PENDING_USER_ACTION
-						? intent.getParcelableExtra(Intent.EXTRA_INTENT)
+				var activity = status == PackageInstaller.STATUS_PENDING_USER_ACTION
+						? intent.<Intent>getParcelableExtra(Intent.EXTRA_INTENT)
 						: null;
 				if (activity != null) {
 					updateVersionName = null;
