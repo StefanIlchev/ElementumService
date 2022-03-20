@@ -27,10 +27,8 @@ allprojects {
 }
 
 def localProperties = new Properties()
-try {
-	localProperties.load(file('local.properties').newInputStream())
-} catch (Throwable t) {
-	t.printStackTrace()
+file('local.properties').withReader {
+	localProperties.load(it)
 }
 
 def addonId = 'plugin.video.elementum'
