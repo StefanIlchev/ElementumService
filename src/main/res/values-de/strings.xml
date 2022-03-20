@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="app_name">"Elementum-Dienst"</string>
-	<string name="stop">"Beenden"</string>
-	<string name="allow">"Zulassen"</string>
-	<string name="allow_cmd_allow_message">"Sie müssen dies manuell tun"</string>
-	<string name="deny">"Ablehnen"</string>
-	<string name="close_app">"App schließen"</string>
 </resources>

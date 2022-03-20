@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="app_name">"Elementum സേവനം"</string>
-	<string name="stop">"നിര്‍ത്തുക"</string>
-	<string name="allow">"അനുവദിക്കുക"</string>
-	<string name="allow_cmd_allow_message">"നിങ്ങൾ ഇത് സ്വമേധയാ ചെയ്യേണ്ടതുണ്ട്"</string>
-	<string name="deny">"നിരസിക്കുക"</string>
-	<string name="close_app">"ആപ്പ് അടയ്‌ക്കുക"</string>
 </resources>

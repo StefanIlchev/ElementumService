@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="app_name">"Elementum үйлчилгээ"</string>
-	<string name="stop">"Зогсоох"</string>
-	<string name="allow">"Зөвшөөрөх"</string>
-	<string name="allow_cmd_allow_message">"Та үүнийг гараар хийх хэрэгтэй"</string>
-	<string name="deny">"Татгалзах"</string>
-	<string name="close_app">"Аппыг хаах"</string>
 </resources>

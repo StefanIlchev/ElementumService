@@ -1,180 +1,98 @@
 package service.elementum.android;
 
 import android.content.Context;
-import android.content.res.AssetManager;
-import android.os.Looper;
-import android.util.Log;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Scanner;
+import java.util.Set;
 
-import javax.security.auth.Destroyable;
+import ilchev.stefan.binarywrapper.BaseDaemonRunnable;
 
-public class DaemonRunnable implements Runnable, Destroyable {
+@SuppressWarnings("Java9CollectionFactory")
+public class DaemonRunnable extends BaseDaemonRunnable {
 
-	private static final String TAG = "DaemonRunnable";
+	private static final Set<Integer> SUBPROCESS_EXIT_VALUES_END = Collections.unmodifiableSet(new HashSet<>(
+			Arrays.asList(-9, 1)
+	));
 
-	private final AssetManager assetManager;
+	private static final Set<Integer> SUBPROCESS_EXIT_VALUES_SKIP = Collections.unmodifiableSet(new HashSet<>(
+			Arrays.asList(-1, 0)
+	));
 
-	private final File assetsMarker;
+	private static final Set<Integer> SUBPROCESS_EXIT_VALUES_START = Collections.singleton(5);
 
-	private final File bin;
+	private final Map<String, File> subprocessAssets;
 
-	private final Object[] formatArgs;
+	private final List<String> subprocessCmd;
 
-	private volatile boolean isDestroyed = false;
+	private final Map<String, String> subprocessEnv;
 
-	private Process process = null;
-
-	private final Runnable destroyProcessRunnable = () -> {
-		var process = this.process;
-		if (process != null) {
-			this.process = null;
-			process.destroy();
-		}
-	};
-
-	private final Runnable clearProcessRunnable = () ->
-			process = null;
-
-	public DaemonRunnable(Context context) {
-		assetManager = context.getAssets();
-		assetsMarker = new File(context.getCodeCacheDir(), context.getPackageName());
-		bin = new File(context.getApplicationInfo().nativeLibraryDir);
-		formatArgs = new Object[]{
-				bin.getPath(),
-				Objects.requireNonNull(context.getExternalFilesDir(null)).getPath()
-		};
+	public DaemonRunnable(Context context, String... subprocessArgs) {
+		super(context);
+		subprocessAssets = Collections.unmodifiableMap(new HashMap<>() {{
+			var externalFilesDir = Objects.requireNonNull(context.getExternalFilesDir(null));
+			put(BuildConfig.ADDON_ID, new File(externalFilesDir, ".kodi/addons/" + BuildConfig.ADDON_ID));
+		}});
+		subprocessCmd = Collections.unmodifiableList(new ArrayList<>() {{
+			add("./libelementum.so");
+			if (subprocessArgs != null) {
+				addAll(Arrays.asList(subprocessArgs));
+			}
+		}});
+		subprocessEnv = Collections.unmodifiableMap(new HashMap<>() {{
+			put("LD_LIBRARY_PATH", context.getApplicationInfo().nativeLibraryDir);
+		}});
 	}
 
 	@Override
-	public boolean isDestroyed() {
-		return isDestroyed;
+	protected Map<String, File> getSubprocessAssets() {
+		return subprocessAssets;
 	}
 
 	@Override
-	public void destroy() {
-		isDestroyed = true;
-		if (Looper.myLooper() == ForegroundService.MAIN_HANDLER.getLooper()) {
-			destroyProcessRunnable.run();
-		} else {
-			ForegroundService.MAIN_HANDLER.post(destroyProcessRunnable);
-		}
-	}
-
-	private void extract(String src, File dst) throws Exception {
-		if (dst.exists()) {
-			if (assetsMarker.exists() || isDestroyed()) {
-				return;
-			}
-			try (var stream = Files.walk(dst.toPath())) {
-				stream.sorted(Comparator.reverseOrder())
-						.map(Path::toFile)
-						.forEach(File::delete);
-			}
-		} else {
-			assetsMarker.delete();
-		}
-		var parent = dst.getParent();
-		var deque = new ArrayDeque<String>();
-		for (String node = src, name = dst.getName(); node != null && !isDestroyed(); node = name = deque.pollFirst()) {
-			var children = assetManager.list(node);
-			if (children != null) {
-				for (var child : children) {
-					deque.add(node + "/" + child);
-				}
-			}
-			var path = parent != null ? Paths.get(parent, name) : Paths.get(name);
-			try (var in = assetManager.open(node)) {
-				Files.copy(in, path);
-			} catch (FileNotFoundException ignore) {
-				Files.createDirectories(path);
-			}
-		}
-	}
-
-	private void extract() throws Exception {
-		for (var entry : BuildConfig.SUBPROCESS_ASSETS.entrySet()) {
-			extract(entry.getKey(), new File(String.format(entry.getValue(), formatArgs)));
-			if (isDestroyed()) {
-				return;
-			}
-		}
-		assetsMarker.mkdirs();
-	}
-
-	private ProcessBuilder build() {
-		var command = new ArrayList<String>();
-		for (var entry : BuildConfig.SUBPROCESS_CMD) {
-			command.add(String.format(entry, formatArgs));
-		}
-		var builder = new ProcessBuilder(command)
-				.directory(bin)
-				.redirectErrorStream(true);
-		var environment = builder.environment();
-		for (var entry : BuildConfig.SUBPROCESS_ENV.entrySet()) {
-			environment.put(entry.getKey(), String.format(entry.getValue(), formatArgs));
-		}
-		return builder;
-	}
-
-	private Runnable toSetProcessRunnable(Process value) {
-		return () -> {
-			if (isDestroyed()) {
-				value.destroy();
-			} else {
-				process = value;
-			}
-		};
-	}
-
-	private void execute() throws Exception {
-		var builder = build();
-		for (var attempt = 0; !isDestroyed(); Thread.sleep(BuildConfig.SUBPROCESS_RETRY_DELAY)) {
-			var process = builder.start();
-			if (!ForegroundService.MAIN_HANDLER.post(toSetProcessRunnable(process))) {
-				process.destroy();
-				break;
-			}
-			try (var scanner = new Scanner(process.getInputStream())) {
-				while (scanner.hasNextLine()) {
-					var line = scanner.nextLine();
-					Log.v(BuildConfig.SUBPROCESS_TAG, line);
-				}
-			}
-			var exitValue = process.waitFor();
-			Log.v(TAG, "SUBPROCESS_EXIT_VALUE = " + exitValue);
-			if (isDestroyed() ||
-					!ForegroundService.MAIN_HANDLER.post(clearProcessRunnable) ||
-					BuildConfig.SUBPROCESS_EXIT_VALUES_END.contains(exitValue)) {
-				break;
-			}
-			if (BuildConfig.SUBPROCESS_EXIT_VALUES_SKIP.contains(exitValue)) {
-				continue;
-			}
-			if (BuildConfig.SUBPROCESS_EXIT_VALUES_START.contains(exitValue)) {
-				attempt = 0;
-			} else if (++attempt > BuildConfig.SUBPROCESS_RETRIES_COUNT) {
-				break;
-			}
-		}
+	protected List<String> getSubprocessCmd() {
+		return subprocessCmd;
 	}
 
 	@Override
-	public void run() {
-		try {
-			extract();
-			execute();
-		} catch (Throwable t) {
-			Log.w(TAG, t);
-		}
+	protected Map<String, String> getSubprocessEnv() {
+		return subprocessEnv;
+	}
+
+	@Override
+	protected Set<Integer> getSubprocessExitValuesEnd() {
+		return SUBPROCESS_EXIT_VALUES_END;
+	}
+
+	@Override
+	protected Set<Integer> getSubprocessExitValuesSkip() {
+		return SUBPROCESS_EXIT_VALUES_SKIP;
+	}
+
+	@Override
+	protected Set<Integer> getSubprocessExitValuesStart() {
+		return SUBPROCESS_EXIT_VALUES_START;
+	}
+
+	@Override
+	protected int getSubprocessRetriesCount() {
+		return 3;
+	}
+
+	@Override
+	protected long getSubprocessRetryDelay() {
+		return 5_000L;
+	}
+
+	@Override
+	protected String getSubprocessTag() {
+		return BuildConfig.ADDON_ID;
 	}
 }

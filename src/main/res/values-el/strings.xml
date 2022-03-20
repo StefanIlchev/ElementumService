@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="app_name">"Υπηρεσία Elementum"</string>
-	<string name="stop">"Διακοπή"</string>
-	<string name="allow">"Να επιτρέπεται"</string>
-	<string name="allow_cmd_allow_message">"Πρέπει να το κάνεις αυτό χειροκίνητα"</string>
-	<string name="deny">"Άρνηση"</string>
-	<string name="close_app">"Κλείσιμο εφαρμογής"</string>
 </resources>

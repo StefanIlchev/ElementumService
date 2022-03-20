@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="app_name">"Услуга Elementum"</string>
-	<string name="stop">"Запри"</string>
-	<string name="allow">"Дозволи"</string>
-	<string name="allow_cmd_allow_message">"Треба да го направите ова рачно"</string>
-	<string name="deny">"Одбиј"</string>
-	<string name="close_app">"Затвори ја апликацијата"</string>
 </resources>

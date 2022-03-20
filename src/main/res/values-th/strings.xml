@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="app_name">"บริการ Elementum"</string>
-	<string name="stop">"หยุด"</string>
-	<string name="allow">"อนุญาต"</string>
-	<string name="allow_cmd_allow_message">"คุณต้องทำสิ่งนี้ด้วยตนเอง"</string>
-	<string name="deny">"ปฏิเสธ"</string>
-	<string name="close_app">"ปิดแอป"</string>
 </resources>

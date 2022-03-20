@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="app_name">"Elementum సర్వీస్"</string>
-	<string name="stop">"ఆపివేయి"</string>
-	<string name="allow">"అనుమతించండి"</string>
-	<string name="allow_cmd_allow_message">"మీరు దీన్ని మాన్యువల్‌గా చేయాలి"</string>
-	<string name="deny">"తిరస్కరించండి"</string>
-	<string name="close_app">"యాప్‌ను మూసివేయి"</string>
 </resources>

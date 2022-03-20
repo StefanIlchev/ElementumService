@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="app_name">"Elementum-palvelu"</string>
-	<string name="stop">"Seis"</string>
-	<string name="allow">"Salli"</string>
-	<string name="allow_cmd_allow_message">"Sinun on tehtävä tämä manuaalisesti"</string>
-	<string name="deny">"Kiellä"</string>
-	<string name="close_app">"Sulje sovellus"</string>
 </resources>

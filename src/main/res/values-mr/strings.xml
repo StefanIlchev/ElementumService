@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="app_name">"Elementum सेवा"</string>
-	<string name="stop">"थांबा"</string>
-	<string name="allow">"अनुमती द्या"</string>
-	<string name="allow_cmd_allow_message">"तुम्हाला हे स्वहस्ते करावे लागेल"</string>
-	<string name="deny">"नकार द्या"</string>
-	<string name="close_app">"अ‍ॅप बंद करा"</string>
 </resources>

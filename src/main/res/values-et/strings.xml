@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="app_name">"Elementum-teenus"</string>
-	<string name="stop">"Peata"</string>
-	<string name="allow">"Luba"</string>
-	<string name="allow_cmd_allow_message">"Peate seda tegema käsitsi"</string>
-	<string name="deny">"Keela"</string>
-	<string name="close_app">"Sule rakendus"</string>
 </resources>

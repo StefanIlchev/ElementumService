@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="app_name">"Elementum-diens"</string>
-	<string name="stop">"Stop"</string>
-	<string name="allow">"Laat toe"</string>
-	<string name="allow_cmd_allow_message">"Jy moet dit met die hand doen"</string>
-	<string name="deny">"Weier"</string>
-	<string name="close_app">"Maak program toe"</string>
 </resources>
