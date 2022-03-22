@@ -50,7 +50,7 @@ android {
 	defaultConfig {
 		minSdk 26
 		targetSdk compileSdk
-		versionCode localProperties.getProperty('versionCode') as Integer ?: 39
+		versionCode localProperties.getProperty('versionCode') as Integer ?: 40
 		versionName localProperties.getProperty('versionName') ?: "$versionCode"
 		applicationId 'service.elementum.android'
 		manifestPlaceholders = [
@@ -257,10 +257,9 @@ if (addonZip != null) {
 					|                shutil.copy(iconPng, os.path.join(idDir, 'icon.png'))
 					|            except Exception:
 					|                pass
-					|        fragment = '%00'.join(list(map(lambda arg: str.replace(arg, '=', '%3D'), args[1:])))
-					|        if fragment != '':
-					|            fragment = '#' + fragment
-					|        xbmc.executebuiltin('StartAndroidActivity($startArgs)' % fragment)
+					|        dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args[1:])
+					|        dataSuffix = '#' + dataFragment if dataFragment != '' else ''
+					|        xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
 					|        for id in [serviceRepoAddonId]:
 					|            try:
 					|                from elementum.provider import parse_json
@@ -289,15 +288,14 @@ if (addonZip != null) {
 			def retryLinePatched = """
 					|            args = []
 					|            if ADDON.getSetting('local_port') != '':
-					|                args.append('-remotePort%3D' + ADDON.getSetting('local_port'))
+					|                args.append('-remotePort=' + ADDON.getSetting('local_port'))
 					|            if ADDON.getSetting('remote_host') != '':
-					|                args.append('-localHost%3D' + ADDON.getSetting('remote_host'))
+					|                args.append('-localHost=' + ADDON.getSetting('remote_host'))
 					|            if ADDON.getSetting('remote_port') != '':
-					|                args.append('-localPort%3D' + ADDON.getSetting('remote_port'))
-					|            fragment = '%00'.join(args)
-					|            if fragment != '':
-					|                fragment = '#' + fragment
-					|            xbmc.executebuiltin('StartAndroidActivity($startArgs)' % fragment)
+					|                args.append('-localPort=' + ADDON.getSetting('remote_port'))
+					|            dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args)
+					|            dataSuffix = '#' + dataFragment if dataFragment != '' else ''
+					|            xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
 					|            notify(getLocalizedString(30116), time = 7000)""".stripMargin()
 			def pathLine = "        info['path'] = ADDON_PATH"
 			def pathLinePatched = """
