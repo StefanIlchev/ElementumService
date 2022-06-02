@@ -200,15 +200,14 @@ if (addonZip != null) {
 					requires {}
 				}
 			}.toString()
-			def applicationId = android.defaultConfig.applicationId
 			def startArgs = [
-					applicationId,
+					android.namespace,
 					android.defaultConfig.manifestPlaceholders['mainIntentAction'],
 					'',
 					"version:$addonVersion%s"
 			].join(', ')
 			def pathPattern = '/org\\.xbmc\\.kodi/'
-			def pathReplace = "/$applicationId/"
+			def pathReplace = "/$android.namespace/"
 			def versionLine = '    installed_version = read_current_version(binary_dir)'
 			def versionLinePatched = """
 					|    installed_version = ADDON_VERSION
