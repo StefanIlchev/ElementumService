@@ -51,7 +51,7 @@ android {
 	defaultConfig {
 		minSdk 26
 		targetSdk compileSdk
-		versionCode localProperties.getProperty('versionCode') as Integer ?: 41
+		versionCode localProperties.getProperty('versionCode') as Integer ?: 42
 		versionName localProperties.getProperty('versionName') ?: "$versionCode"
 		manifestPlaceholders = [
 				'mainIntentAction': 'android.intent.action.MAIN'
@@ -184,11 +184,14 @@ if (addonZip != null) {
 
 					extension('name': '{name}', 'point': 'xbmc.addon.repository') {
 
-						checksum("{dataDir}$addonId/addons.xml.md5")
+						dir {
 
-						datadir('zip': 'true', '{dataDir}')
+							checksum("{dataDir}$addonId/addons.xml.md5")
 
-						info('compressed': 'false', "{dataDir}$addonId/addons.xml")
+							datadir('zip': 'true', '{dataDir}')
+
+							info('compressed': 'false', "{dataDir}$addonId/addons.xml")
+						}
 					}
 
 					extension('point': 'xbmc.addon.metadata') {
