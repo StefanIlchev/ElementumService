@@ -1,3 +1,7 @@
+import groovy.json.JsonOutput
+import groovy.xml.StreamingMarkupBuilder
+import groovy.xml.XmlUtil
+
 buildscript {
 
 	repositories {
@@ -8,7 +12,7 @@ buildscript {
 	}
 
 	dependencies {
-		classpath 'com.android.tools.build:gradle:7.2.2'
+		classpath 'com.android.tools.build:gradle:7.3.0'
 	}
 }
 
@@ -136,15 +140,15 @@ dependencies {
 	implementation localProperties.getProperty('binaryWrapper') ?: 'com.github.StefanIlchev:binaryWrapper:1.0.3'
 }
 
-def toMethodJson(method, params) {
-	return groovy.json.JsonOutput.toJson(['jsonrpc': '2.0', 'id': '1', 'method': method, 'params': params])
+static def toMethodJson(method, params) {
+	return JsonOutput.toJson(['jsonrpc': '2.0', 'id': '1', 'method': method, 'params': params])
 }
 
-def toGetAddonDetailsJson(addonId, properties) {
+static def toGetAddonDetailsJson(addonId, properties) {
 	return toMethodJson('Addons.GetAddonDetails', ['addonid': addonId, 'properties': properties])
 }
 
-def toSetAddonEnabledJson(addonId, enabled) {
+static def toSetAddonEnabledJson(addonId, enabled) {
 	return toMethodJson('Addons.SetAddonEnabled', ['addonid': addonId, 'enabled': enabled])
 }
 
@@ -175,11 +179,11 @@ if (addonZip != null) {
 				'import'('addon': serviceRepoAddonId, 'optional': 'true')
 			}
 			addonFile.withWriter {
-				groovy.xml.XmlUtil.serialize(new groovy.xml.StreamingMarkupBuilder().bind {
+				XmlUtil.serialize(new StreamingMarkupBuilder().bind {
 					mkp.yield addonInfo
 				}, it)
 			}
-			def repoAddonInfoFormat = new groovy.xml.StreamingMarkupBuilder().bind {
+			def repoAddonInfoFormat = new StreamingMarkupBuilder().bind {
 				addon(
 						'name': '{name}',
 						'id': '{id}',
@@ -434,7 +438,7 @@ if (addonZip != null) {
 			}
 			def repoInfo = file("$repoDir/$addonId/addons.xml")
 			repoInfo.withWriter {
-				groovy.xml.XmlUtil.serialize(new groovy.xml.StreamingMarkupBuilder().bind {
+				XmlUtil.serialize(new StreamingMarkupBuilder().bind {
 					addons {
 						mkp.yield new groovy.xml.XmlSlurper().parse(file("$addonIdDir/addon.xml"))
 					}
@@ -446,7 +450,7 @@ if (addonZip != null) {
 			}
 			def htmlPage = file("$repoDir/index.html")
 			htmlPage.withWriter {
-				def builder = new groovy.xml.StreamingMarkupBuilder()
+				def builder = new StreamingMarkupBuilder()
 				builder.setUseDoubleQuotes(true)
 				it << '<!DOCTYPE html>' << builder.bind {
 					html('lang': 'en') {
@@ -462,7 +466,7 @@ if (addonZip != null) {
 
 							table {
 								file(repoDir).listFiles((FileFilter) { it.isFile() && it != htmlPage }).each {
-									def name = groovy.xml.XmlUtil.escapeXml(it.name)
+									def name = XmlUtil.escapeXml(it.name)
 									def date = new Date(it.lastModified()).format('yyyy-MM-dd HH:mm')
 									def size = "${it.length()}B"
 
