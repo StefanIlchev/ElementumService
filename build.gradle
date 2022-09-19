@@ -59,7 +59,7 @@ android {
 	defaultConfig {
 		minSdk 26
 		targetSdk compileSdk
-		versionCode localProperties.getProperty('versionCode') as Integer ?: 43
+		versionCode localProperties.getProperty('versionCode') as Integer ?: 44
 		versionName localProperties.getProperty('versionName') ?: "$versionCode"
 		manifestPlaceholders = [
 				'mainIntentAction': 'android.intent.action.MAIN'
@@ -89,20 +89,11 @@ android {
 
 	buildTypes {
 
-		debug {
-			manifestPlaceholders = [
-					'mainIntentCategory': 'android.intent.category.LAUNCHER'
-			]
-		}
-
 		release {
 			minifyEnabled true
 			shrinkResources true
 			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
 			signingConfig signingConfigs.debug
-			manifestPlaceholders = [
-					'mainIntentCategory': 'android.intent.category.DEFAULT'
-			]
 		}
 	}
 
@@ -137,7 +128,7 @@ android {
 }
 
 dependencies {
-	implementation localProperties.getProperty('binaryWrapper') ?: 'com.github.StefanIlchev:binaryWrapper:1.0.3'
+	implementation localProperties.getProperty('binaryWrapper') ?: 'com.github.StefanIlchev:binaryWrapper:1.0.4'
 }
 
 static def toMethodJson(method, params) {

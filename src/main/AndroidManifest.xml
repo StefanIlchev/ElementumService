@@ -16,7 +16,7 @@
 
 			<intent-filter>
 				<action android:name="${mainIntentAction}" />
-				<category android:name="${mainIntentCategory}" />
+				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 
 			<intent-filter>
