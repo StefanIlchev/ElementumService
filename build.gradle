@@ -120,6 +120,7 @@ android {
 	}
 
 	packagingOptions {
+		doNotStrip '**/lib*.so'
 
 		jniLibs {
 			useLegacyPackaging true
