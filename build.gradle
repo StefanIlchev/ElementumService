@@ -120,9 +120,9 @@ android {
 	}
 
 	packagingOptions {
-		doNotStrip '**/lib*.so'
 
 		jniLibs {
+			keepDebugSymbols += '**/lib*.so'
 			useLegacyPackaging true
 		}
 	}
