@@ -20,4 +20,15 @@ public class MainActivity extends BaseMainActivity {
 		var intent = getIntent();
 		return getVersionName(intent != null ? intent.getData() : null);
 	}
+
+	@Override
+	protected boolean isStopIntent() {
+		if (super.isStopIntent()) {
+			return true;
+		}
+		var intent = getIntent();
+		var data = intent != null ? intent.getData() : null;
+		var scheme = data != null ? data.getScheme() : null;
+		return "stop".equals(scheme);
+	}
 }

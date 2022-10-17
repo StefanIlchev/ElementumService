@@ -34,21 +34,26 @@ public class DaemonRunnable extends BaseDaemonRunnable {
 
 	private final Map<String, String> subprocessEnv;
 
+	private final File lockFile;
+
 	public DaemonRunnable(Context context, String... subprocessArgs) {
 		super(context);
+		var externalFilesDir = Objects.requireNonNull(context.getExternalFilesDir(null));
+		var nativeLibraryDir = context.getApplicationInfo().nativeLibraryDir;
+		var addonDir = new File(externalFilesDir, ".kodi/addons/" + BuildConfig.ADDON_ID);
 		subprocessAssets = Collections.unmodifiableMap(new HashMap<>() {{
-			var externalFilesDir = Objects.requireNonNull(context.getExternalFilesDir(null));
-			put(BuildConfig.ADDON_ID, new File(externalFilesDir, ".kodi/addons/" + BuildConfig.ADDON_ID));
+			put(BuildConfig.ADDON_ID, addonDir);
 		}});
 		subprocessCmd = Collections.unmodifiableList(new ArrayList<>() {{
 			add("./libelementum.so");
 			if (subprocessArgs != null) {
-				addAll(Arrays.asList(subprocessArgs));
+				Collections.addAll(this, subprocessArgs);
 			}
 		}});
 		subprocessEnv = Collections.unmodifiableMap(new HashMap<>() {{
-			put("LD_LIBRARY_PATH", context.getApplicationInfo().nativeLibraryDir);
+			put("LD_LIBRARY_PATH", nativeLibraryDir);
 		}});
+		lockFile = new File(addonDir, ".lockfile");
 	}
 
 	@Override
@@ -94,5 +99,11 @@ public class DaemonRunnable extends BaseDaemonRunnable {
 	@Override
 	protected String getSubprocessTag() {
 		return BuildConfig.ADDON_ID;
+	}
+
+	@Override
+	public void run() {
+		lockFile.delete();
+		super.run();
 	}
 }

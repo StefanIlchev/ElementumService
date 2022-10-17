@@ -22,6 +22,8 @@
 			<intent-filter>
 				<action android:name="${mainIntentAction}" />
 				<category android:name="android.intent.category.DEFAULT" />
+
+				<data android:scheme="stop" />
 				<data android:scheme="version" />
 			</intent-filter>
 		</activity>

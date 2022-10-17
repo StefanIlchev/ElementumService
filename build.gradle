@@ -59,7 +59,7 @@ android {
 	defaultConfig {
 		minSdk 26
 		targetSdk compileSdk
-		versionCode localProperties.getProperty('versionCode') as Integer ?: 44
+		versionCode localProperties.getProperty('versionCode') as Integer ?: 45
 		versionName localProperties.getProperty('versionName') ?: "$versionCode"
 		manifestPlaceholders = [
 				'mainIntentAction': 'android.intent.action.MAIN'
@@ -129,7 +129,7 @@ android {
 }
 
 dependencies {
-	implementation localProperties.getProperty('binaryWrapper') ?: 'com.github.StefanIlchev:binaryWrapper:1.0.4'
+	implementation localProperties.getProperty('binaryWrapper') ?: 'com.github.StefanIlchev:binaryWrapper:1.0.5'
 }
 
 static def toMethodJson(method, params) {
@@ -204,12 +204,13 @@ if (addonZip != null) {
 					requires {}
 				}
 			}.toString()
-			def startArgs = [
+			def args = [
 					android.namespace,
 					android.defaultConfig.manifestPlaceholders['mainIntentAction'],
 					'',
-					"version:$addonVersion%s"
-			].join(', ')
+			].join ', '
+			def stopArgs = "$args, stop:$addonVersion"
+			def startArgs = "$args, version:$addonVersion%s"
 			def pathPattern = '/org\\.xbmc\\.kodi/'
 			def pathReplace = "/$android.namespace/"
 			def versionLine = '    installed_version = read_current_version(binary_dir)'
@@ -223,6 +224,7 @@ if (addonZip != null) {
 			def binaryLinePatched = "    return 'N/A', 'N/A'"
 			def startLine = '        return subprocess.Popen(args, **kwargs)'
 			def startLinePatched = """
+					|        xbmc.executebuiltin('StartAndroidActivity($stopArgs)')
 					|        repoAddonId = '$repoAddonId'
 					|        serviceRepoAddonId = '$serviceRepoAddonId'
 					|        repoAddonInfoFormat = "$repoAddonInfoFormat"
