@@ -1,6 +1,7 @@
 package service.elementum.android;
 
 import android.content.Context;
+import android.os.Handler;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -26,10 +27,10 @@ public class DaemonRunnable extends BaseDaemonRunnable {
 
 	private final Map<String, String> subprocessEnv;
 
-	private final File lockFile;
+	private final File lockfile;
 
-	public DaemonRunnable(Context context, String... subprocessArgs) {
-		super(context);
+	public DaemonRunnable(Context context, Handler mainHandler, String... subprocessArgs) {
+		super(context, mainHandler);
 		var externalFilesDir = Objects.requireNonNull(context.getExternalFilesDir(null));
 		var nativeLibraryDir = context.getApplicationInfo().nativeLibraryDir;
 		var addonDir = new File(externalFilesDir, ".kodi/addons/" + BuildConfig.ADDON_ID);
@@ -41,7 +42,7 @@ public class DaemonRunnable extends BaseDaemonRunnable {
 		}
 		this.subprocessCmd = Collections.unmodifiableList(subprocessCmd);
 		subprocessEnv = Map.of("LD_LIBRARY_PATH", nativeLibraryDir);
-		lockFile = new File(addonDir, ".lockfile");
+		lockfile = new File(addonDir, ".lockfile");
 	}
 
 	@Override
@@ -91,7 +92,7 @@ public class DaemonRunnable extends BaseDaemonRunnable {
 
 	@Override
 	public void run() {
-		lockFile.delete();
+		lockfile.delete();
 		super.run();
 	}
 }

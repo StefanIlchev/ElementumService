@@ -59,7 +59,7 @@ android {
 	defaultConfig {
 		minSdk 26
 		targetSdk compileSdk
-		versionCode localProperties.getProperty('versionCode') as Integer ?: 47
+		versionCode localProperties.getProperty('versionCode') as Integer ?: 48
 		versionName localProperties.getProperty('versionName') ?: "$versionCode"
 		manifestPlaceholders = [
 				'mainIntentAction': 'android.intent.action.MAIN'
@@ -129,7 +129,7 @@ android {
 }
 
 dependencies {
-	implementation localProperties.getProperty('binaryWrapper') ?: 'com.github.StefanIlchev:binaryWrapper:1.0.7'
+	implementation localProperties.getProperty('binaryWrapper') ?: 'com.github.StefanIlchev:binaryWrapper:1.0.8'
 }
 
 static def toMethodJson(method, params) {
@@ -222,9 +222,14 @@ if (addonZip != null) {
 					|    dest_binary_path = binary_path""".stripMargin()
 			def binaryLine = '    return dest_binary_dir, ensure_exec_perms(dest_binary_path)'
 			def binaryLinePatched = "    return 'N/A', 'N/A'"
+			def stopLine = '    lockfile = os.path.join(ADDON_PATH, ".lockfile")'
+			def stopLinePatched = """
+					|    xbmc.executebuiltin('StartAndroidActivity($stopArgs)')
+					|    lockfile = os.path.join(ADDON_PATH, '.lockfile')
+					|    if os.path.exists(lockfile):
+					|        os.remove(lockfile)""".stripMargin()
 			def startLine = '        return subprocess.Popen(args, **kwargs)'
 			def startLinePatched = """
-					|        xbmc.executebuiltin('StartAndroidActivity($stopArgs)')
 					|        repoAddonId = '$repoAddonId'
 					|        serviceRepoAddonId = '$serviceRepoAddonId'
 					|        repoAddonInfoFormat = "$repoAddonInfoFormat"
@@ -318,6 +323,7 @@ if (addonZip != null) {
 					(file("$addonIdDir/resources/site-packages/elementum/daemon.py"))    : [
 							[versionLine, versionLinePatched],
 							[binaryLine, binaryLinePatched],
+							[stopLine, stopLinePatched],
 							[startLine, startLinePatched]
 					],
 					(file("$addonIdDir/resources/site-packages/elementum/navigation.py")): [

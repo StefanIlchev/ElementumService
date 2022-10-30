@@ -15,7 +15,7 @@ public class ForegroundService extends BaseForegroundService {
 	@Override
 	protected DaemonRunnable getDaemonRunnable(Uri data) {
 		var fragment = data != null ? data.getFragment() : null;
-		return new DaemonRunnable(this, fragment != null ? fragment.split("\0") : null);
+		return new DaemonRunnable(this, MAIN_HANDLER, fragment != null ? fragment.split("\0") : null);
 	}
 
 	@Override
