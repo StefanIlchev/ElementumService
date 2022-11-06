@@ -4,6 +4,21 @@ import groovy.xml.XmlUtil
 
 buildscript {
 
+	ext {
+		localProperties = new Properties()
+		def localPropertiesFile = file 'local.properties'
+		if (localPropertiesFile.isFile()) {
+			localPropertiesFile.withReader { localProperties.load it }
+		}
+		srcGen = "$buildDir.path/src"
+		srcMainGen = "$srcGen/main"
+		srcMainAssetsGen = "$srcMainGen/assets"
+		srcMainJniLibsGen = "$srcMainGen/jniLibs"
+		addonId = 'plugin.video.elementum'
+		addonZip = System.getProperty('addonZip') ?: localProperties.getProperty('addonZip')
+		repoUrl = "https://StefanIlchev.github.io/$project.name/"
+	}
+
 	repositories {
 		google()
 		mavenCentral()
@@ -34,19 +49,6 @@ allprojects {
 	}
 }
 
-def localProperties = new Properties()
-file('local.properties').withReader {
-	localProperties.load(it)
-}
-
-def addonId = 'plugin.video.elementum'
-def repoUrl = "https://StefanIlchev.github.io/$project.name/"
-
-def srcGen = "$buildDir.path/src"
-def srcMainGen = "$srcGen/main"
-def srcMainAssetsGen = "$srcMainGen/assets"
-def srcMainJniLibsGen = "$srcMainGen/jniLibs"
-
 android {
 	compileSdk 33
 	namespace 'service.elementum.android'
@@ -73,17 +75,17 @@ android {
 		variant.outputs.each {
 			def fileName = it.outputFileName
 			def name = fileName - ~/\.[^.]+$/
-			it.outputFileName = "$name-$variant.versionName${fileName.substring(name.length())}"
+			it.outputFileName = "$name-$variant.versionName${fileName.substring name.length()}"
 		}
 	}
 
 	signingConfigs {
 
 		debug {
-			storeFile file('debug.keystore')
-			storePassword 'android'
-			keyAlias 'androiddebugkey'
-			keyPassword 'android'
+			storeFile file(localProperties.getProperty('storeFile') ?: 'debug.keystore')
+			storePassword localProperties.getProperty('storePassword') ?: 'android'
+			keyAlias localProperties.getProperty('keyAlias') ?: 'androiddebugkey'
+			keyPassword localProperties.getProperty('keyPassword') ?: 'android'
 		}
 	}
 
@@ -129,7 +131,12 @@ android {
 }
 
 dependencies {
-	implementation localProperties.getProperty('binaryWrapper') ?: 'com.github.StefanIlchev:binaryWrapper:1.0.9'
+	def binaryWrapperProject = subprojects.find { it.path == ':binaryWrapper' }
+	if (binaryWrapperProject != null) {
+		implementation binaryWrapperProject
+	} else {
+		implementation localProperties.getProperty('binaryWrapper') ?: 'com.github.StefanIlchev:binaryWrapper:1.0.9'
+	}
 }
 
 static def toMethodJson(method, params) {
@@ -144,7 +151,6 @@ static def toSetAddonEnabledJson(addonId, enabled) {
 	return toMethodJson('Addons.SetAddonEnabled', ['addonid': addonId, 'enabled': enabled])
 }
 
-def addonZip = System.getProperty('addonZip') ?: localProperties.getProperty('addonZip')
 if (addonZip != null) {
 	def addonDir = "$buildDir.path/${file(addonZip).name - ~/\.[^.]+$/}"
 	def addonIdDir = "$addonDir/$addonId"
@@ -163,8 +169,8 @@ if (addonZip != null) {
 			}
 			def repoAddonId = 'repository.elementum'
 			def serviceRepoAddonId = 'repository.service.elementum'
-			def addonFile = file("$addonIdDir/addon.xml")
-			def addonInfo = new groovy.xml.XmlSlurper().parse(addonFile)
+			def addonFile = file "$addonIdDir/addon.xml"
+			def addonInfo = new groovy.xml.XmlSlurper().parse addonFile
 			def providerName = addonInfo.@'provider-name'
 			addonInfo.@'version' = addonVersion
 			addonInfo.requires.appendNode {
@@ -335,7 +341,7 @@ if (addonZip != null) {
 					]
 			]
 			patches.forEach { f, patch ->
-				def tmp = file("${f.path}.tmp")
+				def tmp = file "${f.path}.tmp"
 				if (!f.renameTo(tmp)) {
 					throw new GradleException(tmp.path)
 				}
@@ -400,7 +406,7 @@ if (addonZip != null) {
 		it.dependsOn genMainJniLibs
 	}
 
-	def androidClientZip = file("$buildDir.path/$addonId-${addonVersion}.android_client.zip")
+	def androidClientZip = file "$buildDir.path/$addonId-${addonVersion}.android_client.zip"
 
 	task zipAndroidClient(type: Zip, dependsOn: [patchAddon]) {
 		from addonDir
@@ -430,13 +436,13 @@ if (addonZip != null) {
 				from androidClientZip
 				into repoDir
 			}
-			def repoZip = file("$repoDir/$addonId/$addonId-${addonVersion}.zip")
+			def repoZip = file "$repoDir/$addonId/$addonId-${addonVersion}.zip"
 			copy {
 				from androidClientZip
 				into repoZip.parentFile
 				rename { repoZip.name }
 			}
-			def repoInfo = file("$repoDir/$addonId/addons.xml")
+			def repoInfo = file "$repoDir/$addonId/addons.xml"
 			repoInfo.withWriter {
 				XmlUtil.serialize(new StreamingMarkupBuilder().bind {
 					addons {
@@ -444,14 +450,14 @@ if (addonZip != null) {
 					}
 				}, it)
 			}
-			def repoInfoMd5 = file("$repoDir/$addonId/addons.xml.md5")
+			def repoInfoMd5 = file "$repoDir/$addonId/addons.xml.md5"
 			repoInfoMd5.withWriter {
-				it.write(repoInfo.text.md5())
+				it.write repoInfo.text.md5()
 			}
-			def htmlPage = file("$repoDir/index.html")
+			def htmlPage = file "$repoDir/index.html"
 			htmlPage.withWriter {
 				def builder = new StreamingMarkupBuilder()
-				builder.setUseDoubleQuotes(true)
+				builder.setUseDoubleQuotes true
 				it << '<!DOCTYPE html>' << builder.bind {
 					html('lang': 'en') {
 
@@ -466,8 +472,8 @@ if (addonZip != null) {
 
 							table {
 								file(repoDir).listFiles((FileFilter) { it.isFile() && it != htmlPage }).each {
-									def name = XmlUtil.escapeXml(it.name)
-									def date = new Date(it.lastModified()).format('yyyy-MM-dd HH:mm')
+									def name = XmlUtil.escapeXml it.name
+									def date = new Date(it.lastModified()).format 'yyyy-MM-dd HH:mm'
 									def size = "${it.length()}B"
 
 									tr {

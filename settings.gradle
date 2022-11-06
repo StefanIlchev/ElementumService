@@ -1,0 +1,10 @@
+def localProperties = new Properties()
+def localPropertiesFile = file 'local.properties'
+if (localPropertiesFile.isFile()) {
+	localPropertiesFile.withReader { localProperties.load it }
+}
+def binaryWrapperDir = localProperties.getProperty('binaryWrapperDir')?.with { file it }
+if (binaryWrapperDir?.isDirectory()) {
+	include ':binaryWrapper'
+	project(':binaryWrapper').projectDir = binaryWrapperDir
+}
