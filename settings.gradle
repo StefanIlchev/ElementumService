@@ -3,8 +3,8 @@ def localPropertiesFile = file 'local.properties'
 if (localPropertiesFile.isFile()) {
 	localPropertiesFile.withReader { localProperties.load it }
 }
-def binaryWrapperDir = localProperties.getProperty('binaryWrapperDir')?.with { file it }
-if (binaryWrapperDir?.isDirectory()) {
+def binaryWrapperDir = localProperties.getProperty('binaryWrapperDir')
+if (binaryWrapperDir != null) {
 	include ':binaryWrapper'
-	project(':binaryWrapper').projectDir = binaryWrapperDir
+	project(':binaryWrapper').projectDir = file binaryWrapperDir
 }
