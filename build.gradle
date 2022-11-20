@@ -459,7 +459,7 @@ if (addonZip != null) {
 				def builder = new StreamingMarkupBuilder()
 				builder.setUseDoubleQuotes true
 				it << '<!DOCTYPE html>' << builder.bind {
-					html('lang': 'en') {
+					html('lang': 'en', 'style': 'color-scheme: light dark;') {
 
 						head {
 
