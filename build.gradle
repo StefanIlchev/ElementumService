@@ -61,7 +61,7 @@ android {
 	defaultConfig {
 		minSdk 26
 		targetSdk compileSdk
-		versionCode localProperties.getProperty('versionCode') as Integer ?: 51
+		versionCode localProperties.getProperty('versionCode') as Integer ?: 52
 		versionName localProperties.getProperty('versionName') ?: "$versionCode"
 		manifestPlaceholders = [
 				'mainIntentAction': 'android.intent.action.MAIN'
@@ -135,7 +135,7 @@ dependencies {
 	if (binaryWrapperProject != null) {
 		implementation binaryWrapperProject
 	} else {
-		implementation localProperties.getProperty('binaryWrapper') ?: 'com.github.StefanIlchev:binaryWrapper:1.0.11'
+		implementation localProperties.getProperty('binaryWrapper') ?: 'com.github.StefanIlchev:binaryWrapper:1.0.12'
 	}
 }
 
@@ -312,19 +312,16 @@ if (addonZip != null) {
 					|            dataSuffix = '#' + dataFragment if dataFragment != '' else ''
 					|            xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
 					|            notify(getLocalizedString(30116), time = 7000)""".stripMargin()
-			def pathLine = "        info['path'] = ADDON_PATH"
-			def pathLinePatched = """
-					|        pathPattern = '$pathPattern'
-					|        pathReplace = '$pathReplace'
-					|        info['path'] = re.sub(pathPattern, pathReplace, ADDON_PATH, 1)
-					|        info['fanart'] = re.sub(pathPattern, pathReplace, info['fanart'], 1)
-					|        info['icon'] = re.sub(pathPattern, pathReplace, info['icon'], 1)""".stripMargin()
+			def infoLine = '        return info'
+			def infoLinePatched = """
+					|        result = {}
+					|        for key, value in info.items():
+					|            result[key] = re.sub('$pathPattern', '$pathReplace', value, 1)
+					|        return result""".stripMargin()
 			def translateLine = '        return translatePath(*args, **kwargs)'
 			def translateLinePatched = """
-					|        pathPattern = '$pathPattern'
-					|        pathReplace = '$pathReplace'
 					|        result = translatePath(*args, **kwargs)
-					|        return re.sub(pathPattern, pathReplace, result, 1)""".stripMargin()
+					|        return re.sub('$pathPattern', '$pathReplace', result, 1)""".stripMargin()
 			def patches = [
 					(file("$addonIdDir/resources/site-packages/elementum/daemon.py"))    : [
 							[versionLine, versionLinePatched],
@@ -336,7 +333,7 @@ if (addonZip != null) {
 							[retryLine, retryLinePatched]
 					],
 					(file("$addonIdDir/resources/site-packages/elementum/rpc.py"))       : [
-							[pathLine, pathLinePatched],
+							[infoLine, infoLinePatched],
 							[translateLine, translateLinePatched]
 					]
 			]
