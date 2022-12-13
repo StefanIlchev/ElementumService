@@ -44,7 +44,7 @@ allprojects {
 		maven { url 'https://jitpack.io' }
 	}
 
-	tasks.withType(JavaCompile) {
+	tasks.withType(JavaCompile).configureEach {
 		options.deprecation = true
 	}
 }
@@ -71,7 +71,7 @@ android {
 		buildConfigField 'String', 'REPO_URL', "\"$repoUrl\""
 	}
 
-	applicationVariants.all { variant ->
+	applicationVariants.configureEach { variant ->
 		variant.outputs.each {
 			def fileName = it.outputFileName
 			def name = fileName - ~/\.[^.]+$/
@@ -156,7 +156,7 @@ if (addonZip != null) {
 	def addonIdDir = "$addonDir/$addonId"
 	def addonVersion = android.defaultConfig.versionName
 
-	task patchAddon() {
+	tasks.register('patchAddon') {
 
 		doFirst {
 			delete addonDir
@@ -220,22 +220,30 @@ if (addonZip != null) {
 			def pathPattern = '/org\\.xbmc\\.kodi/'
 			def pathReplace = "/$android.namespace/"
 			def versionLine = '    installed_version = read_current_version(binary_dir)'
-			def versionLinePatched = """
+			def versionLinePatched = """    # BEGIN $project.name-patched: version
+					|    # installed_version = read_current_version(binary_dir)
 					|    installed_version = ADDON_VERSION
 					|    binary_dir = ADDON_PATH
 					|    dest_binary_dir = binary_dir
 					|    binary_path = os.path.join(ADDON_PATH, 'fanart.png')
-					|    dest_binary_path = binary_path""".stripMargin()
+					|    dest_binary_path = binary_path
+					|    # END $project.name-patched: version""".stripMargin()
 			def binaryLine = '    return dest_binary_dir, ensure_exec_perms(dest_binary_path)'
-			def binaryLinePatched = "    return 'N/A', 'N/A'"
+			def binaryLinePatched = """    # BEGIN $project.name-patched: binary
+					|    # return dest_binary_dir, ensure_exec_perms(dest_binary_path)
+					|    return 'N/A', 'N/A'
+					|    # END $project.name-patched: binary""".stripMargin()
 			def stopLine = '    lockfile = os.path.join(ADDON_PATH, ".lockfile")'
-			def stopLinePatched = """
+			def stopLinePatched = """    # BEGIN $project.name-patched: stop
+					|    # lockfile = os.path.join(ADDON_PATH, ".lockfile")
 					|    xbmc.executebuiltin('StartAndroidActivity($stopArgs)')
 					|    lockfile = os.path.join(ADDON_PATH, '.lockfile')
 					|    if os.path.exists(lockfile):
-					|        os.remove(lockfile)""".stripMargin()
+					|        os.remove(lockfile)
+					|    # END $project.name-patched: stop""".stripMargin()
 			def startLine = '        return subprocess.Popen(args, **kwargs)'
-			def startLinePatched = """
+			def startLinePatched = """        # BEGIN $project.name-patched: start
+					|        # return subprocess.Popen(args, **kwargs)
 					|        repoAddonId = '$repoAddonId'
 					|        serviceRepoAddonId = '$serviceRepoAddonId'
 					|        repoAddonInfoFormat = "$repoAddonInfoFormat"
@@ -298,9 +306,11 @@ if (addonZip != null) {
 					|                xbmc.executebuiltin('UpdateLocalAddons')
 					|                xbmc.executebuiltin('UpdateAddonRepos')
 					|            except Exception:
-					|                pass""".stripMargin()
+					|                pass
+					|        # END $project.name-patched: start""".stripMargin()
 			def retryLine = '            notify(getLocalizedString(30116), time=7000)'
-			def retryLinePatched = """
+			def retryLinePatched = """            # BEGIN $project.name-patched: retry
+					|            # notify(getLocalizedString(30116), time=7000)
 					|            args = []
 					|            if ADDON.getSetting('local_port') != '':
 					|                args.append('-remotePort=' + ADDON.getSetting('local_port'))
@@ -311,17 +321,22 @@ if (addonZip != null) {
 					|            dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args)
 					|            dataSuffix = '#' + dataFragment if dataFragment != '' else ''
 					|            xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
-					|            notify(getLocalizedString(30116), time = 7000)""".stripMargin()
+					|            notify(getLocalizedString(30116), time = 7000)
+					|            # END $project.name-patched: retry""".stripMargin()
 			def infoLine = '        return info'
-			def infoLinePatched = """
+			def infoLinePatched = """        # BEGIN $project.name-patched: info
+					|        # return info
 					|        result = {}
 					|        for key, value in info.items():
 					|            result[key] = re.sub('$pathPattern', '$pathReplace', value, 1)
-					|        return result""".stripMargin()
+					|        return result
+					|        # END $project.name-patched: info""".stripMargin()
 			def translateLine = '        return translatePath(*args, **kwargs)'
-			def translateLinePatched = """
+			def translateLinePatched = """        # BEGIN $project.name-patched: translate
+					|        # return translatePath(*args, **kwargs)
 					|        result = translatePath(*args, **kwargs)
-					|        return re.sub('$pathPattern', '$pathReplace', result, 1)""".stripMargin()
+					|        return re.sub('$pathPattern', '$pathReplace', result, 1)
+					|        # END $project.name-patched: translate""".stripMargin()
 			def patches = [
 					(file("$addonIdDir/resources/site-packages/elementum/daemon.py"))    : [
 							[versionLine, versionLinePatched],
@@ -361,7 +376,8 @@ if (addonZip != null) {
 		}
 	}
 
-	task genMainAssets(dependsOn: [patchAddon]) {
+	tasks.register('genMainAssets') {
+		dependsOn patchAddon
 
 		doFirst {
 			delete srcMainAssetsGen
@@ -376,7 +392,8 @@ if (addonZip != null) {
 		}
 	}
 
-	task genMainJniLibs(dependsOn: [patchAddon]) {
+	tasks.register('genMainJniLibs') {
+		dependsOn patchAddon
 
 		doFirst {
 			delete srcMainJniLibsGen
@@ -398,14 +415,14 @@ if (addonZip != null) {
 		}
 	}
 
-	tasks.withType(JavaCompile) {
-		it.dependsOn genMainAssets
-		it.dependsOn genMainJniLibs
+	tasks.withType(JavaCompile).configureEach {
+		it.dependsOn genMainAssets, genMainJniLibs
 	}
 
 	def androidClientZip = file "$buildDir.path/$addonId-${addonVersion}.android_client.zip"
 
-	task zipAndroidClient(type: Zip, dependsOn: [patchAddon]) {
+	tasks.register('zipAndroidClient', Zip) {
+		dependsOn patchAddon
 		from addonDir
 		destinationDirectory = androidClientZip.parentFile
 		archiveFileName = androidClientZip.name
@@ -416,7 +433,8 @@ if (addonZip != null) {
 		}
 	}
 
-	task genRepo(dependsOn: ['assembleRelease', patchAddon, zipAndroidClient]) {
+	tasks.register('genRepo') {
+		dependsOn 'assembleRelease', patchAddon, zipAndroidClient
 		def repoDir = "$buildDir.path/$project.name"
 
 		doFirst {
