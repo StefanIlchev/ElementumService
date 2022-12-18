@@ -1,5 +1,6 @@
 import groovy.json.JsonOutput
 import groovy.xml.StreamingMarkupBuilder
+import groovy.xml.XmlSlurper
 import groovy.xml.XmlUtil
 
 buildscript {
@@ -170,7 +171,7 @@ if (addonZip != null) {
 			def repoAddonId = 'repository.elementum'
 			def serviceRepoAddonId = 'repository.service.elementum'
 			def addonFile = file "$addonIdDir/addon.xml"
-			def addonInfo = new groovy.xml.XmlSlurper().parse addonFile
+			def addonInfo = new XmlSlurper().parse addonFile
 			def providerName = addonInfo.@'provider-name'
 			addonInfo.@'version' = addonVersion
 			addonInfo.requires.appendNode {
@@ -362,9 +363,9 @@ if (addonZip != null) {
 					into f.parent
 					include tmp.name
 					rename { f.name }
-					filter {
-						def pair = patch.find { pair -> pair[0] == it }
-						patch.remove(pair) ? pair[1] : it
+					filter { line ->
+						def index = patch.findIndexOf { it[0] == line }
+						index < 0 ? line : patch.removeAt(index)[1]
 					}
 				}
 				if (!patch.isEmpty()) {
@@ -461,7 +462,7 @@ if (addonZip != null) {
 			repoInfo.withWriter {
 				XmlUtil.serialize(new StreamingMarkupBuilder().bind {
 					addons {
-						mkp.yield new groovy.xml.XmlSlurper().parse(file("$addonIdDir/addon.xml"))
+						mkp.yield new XmlSlurper().parse(file("$addonIdDir/addon.xml"))
 					}
 				}, it)
 			}
