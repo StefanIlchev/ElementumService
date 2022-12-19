@@ -174,7 +174,7 @@ if (addonZip != null) {
 			def addonInfo = new XmlSlurper().parse addonFile
 			def providerName = addonInfo.@'provider-name'
 			addonInfo.@'version' = addonVersion
-			addonInfo.requires.appendNode {
+			addonInfo.'requires'.appendNode {
 				'import'('addon': serviceRepoAddonId, 'optional': 'true')
 			}
 			addonFile.withWriter {
@@ -182,33 +182,31 @@ if (addonZip != null) {
 					mkp.yield addonInfo
 				}, it)
 			}
-			def repoAddonInfoFormat = new StreamingMarkupBuilder().bind {
-				addon(
-						'name': '{name}',
-						'id': '{id}',
-						'provider-name': providerName,
-						'version': addonVersion) {
+			def repoAddonInfoFormat = new StreamingMarkupBuilder().with(true) { builder ->
+				builder.setUseDoubleQuotes true
+			}.bind {
+				'addon'('name': '{name}', 'id': '{id}', 'provider-name': providerName, 'version': addonVersion) {
 
-					extension('name': '{name}', 'point': 'xbmc.addon.repository') {
+					'extension'('name': '{name}', 'point': 'xbmc.addon.repository') {
 
-						dir {
+						'dir' {
 
-							checksum("{dataDir}$addonId/addons.xml.md5")
+							'checksum'("{dataDir}$addonId/addons.xml.md5")
 
-							datadir('zip': 'true', '{dataDir}')
+							'datadir'('zip': 'true', '{dataDir}')
 
-							info('compressed': 'false', "{dataDir}$addonId/addons.xml")
+							'info'('compressed': 'false', "{dataDir}$addonId/addons.xml")
 						}
 					}
 
-					extension('point': 'xbmc.addon.metadata') {
+					'extension'('point': 'xbmc.addon.metadata') {
 
-						platform('all')
+						'platform'('all')
 
-						summary('lang': 'en', '{summary}')
+						'summary'('lang': 'en', '{summary}')
 					}
 
-					requires {}
+					'requires' {}
 				}
 			}.toString()
 			def args = [
@@ -247,7 +245,7 @@ if (addonZip != null) {
 					|        # return subprocess.Popen(args, **kwargs)
 					|        repoAddonId = '$repoAddonId'
 					|        serviceRepoAddonId = '$serviceRepoAddonId'
-					|        repoAddonInfoFormat = "$repoAddonInfoFormat"
+					|        repoAddonInfoFormat = '$repoAddonInfoFormat'
 					|        repoAddonInfo = repoAddonInfoFormat.format(
 					|            name = 'Elementum Repository',
 					|            id = repoAddonId,
@@ -378,7 +376,7 @@ if (addonZip != null) {
 	}
 
 	tasks.register('genMainAssets') {
-		dependsOn patchAddon
+		dependsOn 'patchAddon'
 
 		doFirst {
 			delete srcMainAssetsGen
@@ -394,7 +392,7 @@ if (addonZip != null) {
 	}
 
 	tasks.register('genMainJniLibs') {
-		dependsOn patchAddon
+		dependsOn 'patchAddon'
 
 		doFirst {
 			delete srcMainJniLibsGen
@@ -417,13 +415,13 @@ if (addonZip != null) {
 	}
 
 	tasks.withType(JavaCompile).configureEach {
-		it.dependsOn genMainAssets, genMainJniLibs
+		it.dependsOn 'genMainAssets', 'genMainJniLibs'
 	}
 
 	def androidClientZip = file "$buildDir.path/$addonId-${addonVersion}.android_client.zip"
 
 	tasks.register('zipAndroidClient', Zip) {
-		dependsOn patchAddon
+		dependsOn 'patchAddon'
 		from addonDir
 		destinationDirectory = androidClientZip.parentFile
 		archiveFileName = androidClientZip.name
@@ -435,7 +433,7 @@ if (addonZip != null) {
 	}
 
 	tasks.register('genRepo') {
-		dependsOn 'assembleRelease', patchAddon, zipAndroidClient
+		dependsOn 'assembleRelease', 'zipAndroidClient'
 		def repoDir = "$buildDir.path/$project.name"
 
 		doFirst {
@@ -461,7 +459,7 @@ if (addonZip != null) {
 			def repoInfo = file "$repoDir/$addonId/addons.xml"
 			repoInfo.withWriter {
 				XmlUtil.serialize(new StreamingMarkupBuilder().bind {
-					addons {
+					'addons' {
 						mkp.yield new XmlSlurper().parse(file("$addonIdDir/addon.xml"))
 					}
 				}, it)
@@ -472,33 +470,33 @@ if (addonZip != null) {
 			}
 			def htmlPage = file "$repoDir/index.html"
 			htmlPage.withWriter {
-				def builder = new StreamingMarkupBuilder()
-				builder.setUseDoubleQuotes true
-				it << '<!DOCTYPE html>' << builder.bind {
-					html('lang': 'en', 'style': 'color-scheme: light dark;') {
+				it << '<!DOCTYPE html>' << new StreamingMarkupBuilder().with(true) { builder ->
+					builder.setUseDoubleQuotes true
+				}.bind {
+					'html'('lang': 'en', 'style': 'color-scheme: light dark;') {
 
-						head {
+						'head' {
 
-							meta('charset': 'utf-8')
+							'meta'('charset': 'utf-8')
 
-							title(project.name)
+							'title'(project.name)
 						}
 
-						body {
+						'body' {
 
-							table {
+							'table' {
 								file(repoDir).listFiles((FileFilter) { it.isFile() && it != htmlPage }).each {
 									def name = XmlUtil.escapeXml it.name
 									def date = new Date(it.lastModified()).format 'yyyy-MM-dd HH:mm'
 									def size = "${it.length()}B"
 
-									tr {
+									'tr' {
 
-										td { a('href': name, name) }
+										'td' { 'a'('href': name, name) }
 
-										td(date)
+										'td'(date)
 
-										td('style': 'text-align: right;', size)
+										'td'('style': 'text-align: right;', size)
 									}
 								}
 							}
