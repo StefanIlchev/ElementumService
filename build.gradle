@@ -430,31 +430,38 @@ if (addonZip != null) {
 		}
 	}
 
-	tasks.register('genRepo') {
+	tasks.register('genPages') {
 		dependsOn 'assembleRelease', 'zipAndroidClient'
-		def repoDir = "$buildDir.path/$project.name"
+		def pagesDir = "$rootDir.path/docs"
 
 		doFirst {
-			delete repoDir
+			delete pagesDir
 		}
 
 		doLast {
+			def gitignore = file "$rootDir.path/.gitignore"
+			def gitignorePagesLine = "!${file(pagesDir).name}/*"
+			if (!gitignore.any { it == gitignorePagesLine }) {
+				gitignore.withWriterAppend {
+					it.writeLine gitignorePagesLine
+				}
+			}
 			copy {
 				from "$buildDir.path/outputs/apk/release"
-				into repoDir
+				into pagesDir
 				include '*.apk'
 			}
 			copy {
 				from androidClientZip
-				into repoDir
+				into pagesDir
 			}
-			def repoZip = file "$repoDir/$addonId/$addonId-${addonVersion}.zip"
+			def repoZip = file "$pagesDir/$addonId/$addonId-${addonVersion}.zip"
 			copy {
 				from androidClientZip
 				into repoZip.parentFile
 				rename { repoZip.name }
 			}
-			def repoInfo = file "$repoDir/$addonId/addons.xml"
+			def repoInfo = file "$pagesDir/$addonId/addons.xml"
 			repoInfo.withWriter {
 				XmlUtil.serialize(new StreamingMarkupBuilder().bind {
 					'addons' {
@@ -462,11 +469,11 @@ if (addonZip != null) {
 					}
 				}, it)
 			}
-			def repoInfoMd5 = file "$repoDir/$addonId/addons.xml.md5"
+			def repoInfoMd5 = file "$pagesDir/$addonId/addons.xml.md5"
 			repoInfoMd5.withWriter {
 				it.write repoInfo.text.md5()
 			}
-			def htmlPage = file "$repoDir/index.html"
+			def htmlPage = file "$pagesDir/index.html"
 			htmlPage.withWriter {
 				def builder = new StreamingMarkupBuilder()
 				builder.setUseDoubleQuotes true
@@ -483,7 +490,7 @@ if (addonZip != null) {
 						'body' {
 
 							'table' {
-								file(repoDir).listFiles((FileFilter) { it.isFile() && it != htmlPage }).each {
+								file(pagesDir).listFiles((FileFilter) { it.isFile() && it != htmlPage }).each {
 									def name = XmlUtil.escapeXml it.name
 									def date = new Date(it.lastModified()).format 'yyyy-MM-dd HH:mm'
 									def size = "${it.length()}B"
