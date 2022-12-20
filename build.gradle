@@ -182,9 +182,7 @@ if (addonZip != null) {
 					mkp.yield addonInfo
 				}, it)
 			}
-			def repoAddonInfoFormat = new StreamingMarkupBuilder().with(true) { builder ->
-				builder.setUseDoubleQuotes true
-			}.bind {
+			def repoAddonInfoFormat = XmlUtil.serialize(new StreamingMarkupBuilder().bind {
 				'addon'('name': '{name}', 'id': '{id}', 'provider-name': providerName, 'version': addonVersion) {
 
 					'extension'('name': '{name}', 'point': 'xbmc.addon.repository') {
@@ -208,7 +206,7 @@ if (addonZip != null) {
 
 					'requires' {}
 				}
-			}.toString()
+			})
 			def args = [
 					android.namespace,
 					android.defaultConfig.manifestPlaceholders['mainIntentAction'],
@@ -245,7 +243,7 @@ if (addonZip != null) {
 					|        # return subprocess.Popen(args, **kwargs)
 					|        repoAddonId = '$repoAddonId'
 					|        serviceRepoAddonId = '$serviceRepoAddonId'
-					|        repoAddonInfoFormat = '$repoAddonInfoFormat'
+					|        repoAddonInfoFormat = '''$repoAddonInfoFormat'''
 					|        repoAddonInfo = repoAddonInfoFormat.format(
 					|            name = 'Elementum Repository',
 					|            id = repoAddonId,
@@ -470,9 +468,9 @@ if (addonZip != null) {
 			}
 			def htmlPage = file "$repoDir/index.html"
 			htmlPage.withWriter {
-				it << '<!DOCTYPE html>' << new StreamingMarkupBuilder().with(true) { builder ->
-					builder.setUseDoubleQuotes true
-				}.bind {
+				def builder = new StreamingMarkupBuilder()
+				builder.setUseDoubleQuotes true
+				it << '<!DOCTYPE html>' << builder.bind {
 					'html'('lang': 'en', 'style': 'color-scheme: light dark;') {
 
 						'head' {
