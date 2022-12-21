@@ -440,11 +440,9 @@ if (addonZip != null) {
 
 		doLast {
 			def gitignore = file "$rootDir.path/.gitignore"
-			def gitignorePagesLine = "!${file(pagesDir).name}/*"
-			if (!gitignore.any { it == gitignorePagesLine }) {
-				gitignore.withWriterAppend {
-					it.writeLine gitignorePagesLine
-				}
+			def gitignorePages = "!${file(pagesDir).name}/**"
+			if (gitignore.isFile() && !gitignore.any { it == gitignorePages }) {
+				gitignore.withWriterAppend { it.writeLine gitignorePages }
 			}
 			copy {
 				from "$buildDir.path/outputs/apk/release"
