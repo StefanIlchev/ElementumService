@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools">
+
+	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
+	<uses-permission
+		android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+		android:maxSdkVersion="29" />
+
+	<uses-permission
+		android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+		tools:ignore="ScopedStorage" />
 
 	<application
 		android:extractNativeLibs="true"
@@ -16,11 +27,13 @@
 
 			<intent-filter>
 				<action android:name="${mainIntentAction}" />
+
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 
 			<intent-filter>
 				<action android:name="${mainIntentAction}" />
+
 				<category android:name="android.intent.category.DEFAULT" />
 
 				<data android:scheme="stop" />
@@ -39,12 +52,4 @@
 			<action android:name="android.settings.MANAGE_APP_ALL_FILES_ACCESS_PERMISSION" />
 		</intent>
 	</queries>
-
-	<uses-permission-sdk-23 android:name="android.permission.READ_EXTERNAL_STORAGE" />
-
-	<uses-permission-sdk-23
-		android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-		android:maxSdkVersion="29" />
-
-	<uses-permission-sdk-23 android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 </manifest>
