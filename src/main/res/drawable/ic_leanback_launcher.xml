@@ -3,7 +3,8 @@
 	<item
 		android:width="432px"
 		android:height="234px"
-		android:drawable="@android:color/black" />
+		android:drawable="@android:color/black"
+		android:gravity="center" />
 	<item
 		android:width="234px"
 		android:height="234px"
