@@ -2,6 +2,8 @@
 
 A service that executes binaries for [Kodi](https://github.com/xbmc/xbmc)'s addon [Elementum](https://github.com/elgatito/plugin.video.elementum) on [Android](https://www.android.com/) without a [W^X violation](https://developer.android.com/about/versions/10/behavior-changes-10#execute-permission).
 
+**Update:** The service should no longer be necessary for newer versions of [Elementum](https://github.com/elgatito/plugin.video.elementum) as they fallback to [loading](https://en.wikipedia.org/wiki/Dynamic_loading) binaries in the same process if they can't start a new one. This project will be maintained in case something else comes up.
+
 ## Download
 
 Use source [https://StefanIlchev.github.io/ElementumService](https://StefanIlchev.github.io/ElementumService).

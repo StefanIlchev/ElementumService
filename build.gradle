@@ -14,9 +14,22 @@ buildscript {
 		srcGen = "$buildDir.path/src"
 		srcMainGen = "$srcGen/main"
 		srcMainAssetsGen = "$srcMainGen/assets"
+		srcMainAbiHeadsGen = "$srcMainGen/abiHeads"
 		srcMainJniLibsGen = "$srcMainGen/jniLibs"
 		addonId = 'plugin.video.elementum'
 		addonZip = System.getProperty('addonZip') ?: localProperties.getProperty('addonZip')
+		addonDir = addonZip?.with { "$buildDir.path/${file(it).name - ~/\.[^.]+$/}" }
+		addonIdDir = addonDir?.with { "$it/$addonId" }
+		addonBinDir = addonIdDir?.with { "$it/resources/bin" }
+		abiBins = [
+				'arm64-v8a'  : 'android_arm64',
+				'armeabi-v7a': 'android_arm',
+				'x86'        : 'android_x86',
+				'x86_64'     : 'android_x64'
+		]
+		isAddonBinLib = localProperties.getProperty('isAddonBinLib') as Boolean ?: addonBinDir?.with {
+			abiBins.any { abi, bin -> !file("$it/$bin/elementum").isFile() }
+		} ?: false
 		repoUrl = "https://StefanIlchev.github.io/$project.name/"
 	}
 
@@ -28,7 +41,7 @@ buildscript {
 	}
 
 	dependencies {
-		classpath 'com.android.tools.build:gradle:7.3.1'
+		classpath 'com.android.tools.build:gradle:7.4.0'
 	}
 }
 
@@ -51,7 +64,9 @@ allprojects {
 }
 
 android {
+	buildToolsVersion '33.0.1'
 	compileSdk 33
+	ndkVersion '25.1.8937393'
 	namespace 'service.elementum.android'
 
 	compileOptions {
@@ -59,10 +74,20 @@ android {
 		targetCompatibility JavaVersion.VERSION_17
 	}
 
+	if (isAddonBinLib) {
+		externalNativeBuild {
+
+			cmake {
+				version '3.22.1'
+				path 'CMakeLists.txt'
+			}
+		}
+	}
+
 	defaultConfig {
 		minSdk 26
 		targetSdk compileSdk
-		versionCode localProperties.getProperty('versionCode') as Integer ?: 52
+		versionCode localProperties.getProperty('versionCode') as Integer ?: 53
 		versionName localProperties.getProperty('versionName') ?: "$versionCode"
 		manifestPlaceholders = [
 				'mainIntentAction': 'android.intent.action.MAIN'
@@ -70,6 +95,17 @@ android {
 		buildConfigField 'String', 'ADDON_ID', "\"$addonId\""
 		buildConfigField 'String', 'PROJECT_NAME', "\"$project.name\""
 		buildConfigField 'String', 'REPO_URL', "\"$repoUrl\""
+
+		if (isAddonBinLib) {
+			externalNativeBuild {
+
+				cmake {
+					arguments "-DPROJECT_NAME=$project.name",
+							"-DSRC_MAIN_ABI_HEADS_GEN=$srcMainAbiHeadsGen",
+							"-DSRC_MAIN_JNI_LIBS_GEN=$srcMainJniLibsGen"
+				}
+			}
+		}
 	}
 
 	applicationVariants.configureEach { variant ->
@@ -136,7 +172,7 @@ dependencies {
 	if (binaryWrapperProject != null) {
 		implementation binaryWrapperProject
 	} else {
-		implementation localProperties.getProperty('binaryWrapper') ?: 'com.github.StefanIlchev:binaryWrapper:1.0.12'
+		implementation localProperties.getProperty('binaryWrapper') ?: 'com.github.StefanIlchev:binaryWrapper:1.0.13'
 	}
 }
 
@@ -152,9 +188,7 @@ static def toSetAddonEnabledJson(addonId, enabled) {
 	return toMethodJson('Addons.SetAddonEnabled', ['addonid': addonId, 'enabled': enabled])
 }
 
-if (addonZip != null) {
-	def addonDir = "$buildDir.path/${file(addonZip).name - ~/\.[^.]+$/}"
-	def addonIdDir = "$addonDir/$addonId"
+if (addonBinDir != null) {
 	def addonVersion = android.defaultConfig.versionName
 
 	tasks.register('patchAddon') {
@@ -238,9 +272,9 @@ if (addonZip != null) {
 					|    if os.path.exists(lockfile):
 					|        os.remove(lockfile)
 					|    # END $project.name-patched: stop""".stripMargin()
-			def startLine = '        return subprocess.Popen(args, **kwargs)'
+			def startLine = '        proc = subprocess.Popen(args, **kwargs)'
 			def startLinePatched = """        # BEGIN $project.name-patched: start
-					|        # return subprocess.Popen(args, **kwargs)
+					|        # proc = subprocess.Popen(args, **kwargs)
 					|        repoAddonId = '$repoAddonId'
 					|        serviceRepoAddonId = '$serviceRepoAddonId'
 					|        repoAddonInfoFormat = '''$repoAddonInfoFormat'''
@@ -304,6 +338,7 @@ if (addonZip != null) {
 					|                xbmc.executebuiltin('UpdateAddonRepos')
 					|            except Exception:
 					|                pass
+					|        return None
 					|        # END $project.name-patched: start""".stripMargin()
 			def retryLine = '            notify(getLocalizedString(30116), time=7000)'
 			def retryLinePatched = """            # BEGIN $project.name-patched: retry
@@ -393,19 +428,26 @@ if (addonZip != null) {
 		dependsOn 'patchAddon'
 
 		doFirst {
-			delete srcMainJniLibsGen
+			delete srcMainAbiHeadsGen, srcMainJniLibsGen
 		}
 
 		doLast {
-			[
-					'arm64-v8a'  : 'android_arm64',
-					'armeabi-v7a': 'android_arm',
-					'x86'        : 'android_x86',
-					'x86_64'     : 'android_x64'
-			].forEach { abi, bin ->
+			abiBins.forEach { abi, bin ->
+				if (isAddonBinLib) {
+					copy {
+						from "$addonBinDir/$bin"
+						into "$srcMainAbiHeadsGen/$abi"
+						include '*.h'
+					}
+				}
 				copy {
-					from "$addonIdDir/resources/bin/$bin"
+					from "$addonBinDir/$bin"
 					into "$srcMainJniLibsGen/$abi"
+					if (isAddonBinLib) {
+						include '*.so'
+					} else {
+						include 'elementum', 'lib*.so'
+					}
 					rename { it ==~ /^lib.*\.so$/ ? it : "lib${it}.so" }
 				}
 			}

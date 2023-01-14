@@ -15,9 +15,9 @@ import ilchev.stefan.binarywrapper.BaseDaemonRunnable;
 
 public class DaemonRunnable extends BaseDaemonRunnable {
 
-	private static final Set<Integer> SUBPROCESS_EXIT_VALUES_END = Set.of(-9, 1);
+	private static final Set<Integer> SUBPROCESS_EXIT_VALUES_END = Set.of(0, 1, 247);
 
-	private static final Set<Integer> SUBPROCESS_EXIT_VALUES_SKIP = Set.of(-1, 0);
+	private static final Set<Integer> SUBPROCESS_EXIT_VALUES_SKIP = Set.of(255);
 
 	private static final Set<Integer> SUBPROCESS_EXIT_VALUES_START = Set.of(5);
 
