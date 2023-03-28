@@ -191,7 +191,7 @@ static def toSetAddonEnabledJson(addonId, enabled) {
 if (addonBinDir != null) {
 	def addonVersion = android.defaultConfig.versionName
 
-	tasks.register('patchAddon') {
+	def patchAddon = tasks.register('patchAddon') {
 
 		doFirst {
 			delete addonDir
@@ -408,8 +408,8 @@ if (addonBinDir != null) {
 		}
 	}
 
-	tasks.register('genMainAssets') {
-		dependsOn 'patchAddon'
+	def genMainAssets = tasks.register('genMainAssets') {
+		dependsOn patchAddon
 
 		doFirst {
 			delete srcMainAssetsGen
@@ -424,8 +424,8 @@ if (addonBinDir != null) {
 		}
 	}
 
-	tasks.register('genMainJniLibs') {
-		dependsOn 'patchAddon'
+	def genMainJniLibs = tasks.register('genMainJniLibs') {
+		dependsOn patchAddon
 
 		doFirst {
 			delete srcMainAbiHeadsGen, srcMainJniLibsGen
@@ -455,13 +455,13 @@ if (addonBinDir != null) {
 	}
 
 	tasks.withType(JavaCompile).configureEach {
-		it.dependsOn 'genMainAssets', 'genMainJniLibs'
+		it.dependsOn genMainAssets, genMainJniLibs
 	}
 
 	def androidClientZip = file "$buildDir.path/$addonId-${addonVersion}.android_client.zip"
 
-	tasks.register('zipAndroidClient', Zip) {
-		dependsOn 'patchAddon'
+	def zipAndroidClient = tasks.register('zipAndroidClient', Zip) {
+		dependsOn patchAddon
 		from addonDir
 		destinationDirectory = androidClientZip.parentFile
 		archiveFileName = androidClientZip.name
@@ -473,7 +473,7 @@ if (addonBinDir != null) {
 	}
 
 	tasks.register('genPages') {
-		dependsOn 'assembleRelease', 'zipAndroidClient'
+		dependsOn tasks.named('assembleRelease'), zipAndroidClient
 		def pagesDir = "$rootDir.path/docs"
 
 		doFirst {
