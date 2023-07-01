@@ -87,7 +87,7 @@ android {
 	defaultConfig {
 		minSdk 26
 		targetSdk compileSdk
-		versionCode localProperties.getProperty('versionCode') as Integer ?: 53
+		versionCode localProperties.getProperty('versionCode') as Integer ?: 54
 		versionName localProperties.getProperty('versionName') ?: "$versionCode"
 		manifestPlaceholders = [
 				'mainIntentAction': 'android.intent.action.MAIN'
@@ -172,7 +172,7 @@ dependencies {
 	if (binaryWrapperProject != null) {
 		implementation binaryWrapperProject
 	} else {
-		implementation localProperties.getProperty('binaryWrapper') ?: 'com.github.StefanIlchev:binaryWrapper:1.0.13'
+		implementation localProperties.getProperty('binaryWrapper') ?: 'com.github.StefanIlchev:binaryWrapper:1.0.14'
 	}
 }
 
@@ -251,30 +251,30 @@ if (addonBinDir != null) {
 			def pathPattern = '/org\\.xbmc\\.kodi/'
 			def pathReplace = "/$android.namespace/"
 			def versionLine = '    installed_version = read_current_version(binary_dir)'
-			def versionLinePatched = """    # BEGIN $project.name-patched: version
-					|    # installed_version = read_current_version(binary_dir)
+			def versionLinePatched = """# BEGIN $project.name-patched: version
+					|#$versionLine
 					|    installed_version = ADDON_VERSION
 					|    binary_dir = ADDON_PATH
 					|    dest_binary_dir = binary_dir
 					|    binary_path = os.path.join(ADDON_PATH, 'fanart.png')
 					|    dest_binary_path = binary_path
-					|    # END $project.name-patched: version""".stripMargin()
+					|# END $project.name-patched: version""".stripMargin()
 			def binaryLine = '    return dest_binary_dir, ensure_exec_perms(dest_binary_path)'
-			def binaryLinePatched = """    # BEGIN $project.name-patched: binary
-					|    # return dest_binary_dir, ensure_exec_perms(dest_binary_path)
+			def binaryLinePatched = """# BEGIN $project.name-patched: binary
+					|#$binaryLine
 					|    return 'N/A', 'N/A'
-					|    # END $project.name-patched: binary""".stripMargin()
+					|# END $project.name-patched: binary""".stripMargin()
 			def stopLine = '    lockfile = os.path.join(ADDON_PATH, ".lockfile")'
-			def stopLinePatched = """    # BEGIN $project.name-patched: stop
-					|    # lockfile = os.path.join(ADDON_PATH, ".lockfile")
+			def stopLinePatched = """# BEGIN $project.name-patched: stop
+					|#$stopLine
 					|    xbmc.executebuiltin('StartAndroidActivity($stopArgs)')
 					|    lockfile = os.path.join(ADDON_PATH, '.lockfile')
 					|    if os.path.exists(lockfile):
 					|        os.remove(lockfile)
-					|    # END $project.name-patched: stop""".stripMargin()
+					|# END $project.name-patched: stop""".stripMargin()
 			def startLine = '        proc = subprocess.Popen(args, **kwargs)'
-			def startLinePatched = """        # BEGIN $project.name-patched: start
-					|        # proc = subprocess.Popen(args, **kwargs)
+			def startLinePatched = """# BEGIN $project.name-patched: start
+					|#$startLine
 					|        repoAddonId = '$repoAddonId'
 					|        serviceRepoAddonId = '$serviceRepoAddonId'
 					|        repoAddonInfoFormat = '''$repoAddonInfoFormat'''
@@ -339,10 +339,10 @@ if (addonBinDir != null) {
 					|            except Exception:
 					|                pass
 					|        return None
-					|        # END $project.name-patched: start""".stripMargin()
+					|# END $project.name-patched: start""".stripMargin()
 			def retryLine = '            notify(getLocalizedString(30116), time=7000)'
-			def retryLinePatched = """            # BEGIN $project.name-patched: retry
-					|            # notify(getLocalizedString(30116), time=7000)
+			def retryLinePatched = """# BEGIN $project.name-patched: retry
+					|#$retryLine
 					|            args = []
 					|            if ADDON.getSetting('local_port') != '':
 					|                args.append('-remotePort=' + ADDON.getSetting('local_port'))
@@ -354,21 +354,23 @@ if (addonBinDir != null) {
 					|            dataSuffix = '#' + dataFragment if dataFragment != '' else ''
 					|            xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
 					|            notify(getLocalizedString(30116), time = 7000)
-					|            # END $project.name-patched: retry""".stripMargin()
+					|# END $project.name-patched: retry""".stripMargin()
 			def infoLine = '        return info'
-			def infoLinePatched = """        # BEGIN $project.name-patched: info
-					|        # return info
+			def infoLinePatched = """# BEGIN $project.name-patched: info
+					|#$infoLine
+					|        dataDir = re.sub('$pathPattern.*', '', translatePath('special://xbmc'), 1)
 					|        result = {}
 					|        for key, value in info.items():
-					|            result[key] = re.sub('$pathPattern', '$pathReplace', value, 1)
+					|            result[key] = re.sub('.*$pathPattern', dataDir + '$pathReplace', value, 1)
 					|        return result
-					|        # END $project.name-patched: info""".stripMargin()
+					|# END $project.name-patched: info""".stripMargin()
 			def translateLine = '        return translatePath(*args, **kwargs)'
-			def translateLinePatched = """        # BEGIN $project.name-patched: translate
-					|        # return translatePath(*args, **kwargs)
+			def translateLinePatched = """# BEGIN $project.name-patched: translate
+					|#$translateLine
+					|        dataDir = re.sub('$pathPattern.*', '', translatePath('special://xbmc'), 1)
 					|        result = translatePath(*args, **kwargs)
-					|        return re.sub('$pathPattern', '$pathReplace', result, 1)
-					|        # END $project.name-patched: translate""".stripMargin()
+					|        return re.sub('.*$pathPattern', dataDir + '$pathReplace', result, 1)
+					|# END $project.name-patched: translate""".stripMargin()
 			def patches = [
 					(file("$addonIdDir/resources/site-packages/elementum/daemon.py"))    : [
 							[versionLine, versionLinePatched],

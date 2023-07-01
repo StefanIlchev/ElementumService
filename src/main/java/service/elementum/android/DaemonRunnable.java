@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import ilchev.stefan.binarywrapper.BaseDaemonRunnable;
@@ -31,9 +30,7 @@ public class DaemonRunnable extends BaseDaemonRunnable {
 
 	public DaemonRunnable(Context context, Handler mainHandler, String... subprocessArgs) {
 		super(context, mainHandler);
-		var externalFilesDir = Objects.requireNonNull(context.getExternalFilesDir(null));
-		var nativeLibraryDir = context.getApplicationInfo().nativeLibraryDir;
-		var addonDir = new File(externalFilesDir, ".kodi/addons/" + BuildConfig.ADDON_ID);
+		var addonDir = new File(context.getFilesDir(), ".kodi/addons/" + BuildConfig.ADDON_ID);
 		subprocessAssets = Map.of(BuildConfig.ADDON_ID, addonDir);
 		var subprocessCmd = new ArrayList<String>();
 		subprocessCmd.add("./libelementum.so");
@@ -41,7 +38,7 @@ public class DaemonRunnable extends BaseDaemonRunnable {
 			Collections.addAll(subprocessCmd, subprocessArgs);
 		}
 		this.subprocessCmd = Collections.unmodifiableList(subprocessCmd);
-		subprocessEnv = Map.of("LD_LIBRARY_PATH", nativeLibraryDir);
+		subprocessEnv = Map.of("LD_LIBRARY_PATH", context.getApplicationInfo().nativeLibraryDir);
 		lockfile = new File(addonDir, ".lockfile");
 	}
 
