@@ -1,18 +1,29 @@
 package service.elementum.android;
 
 import android.content.Context;
+import android.os.Environment;
 import android.os.Handler;
+import android.util.Log;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
 import java.util.Set;
 
 import ilchev.stefan.binarywrapper.BaseDaemonRunnable;
 
 public class DaemonRunnable extends BaseDaemonRunnable {
+
+	private static final String TAG = "DaemonRunnable";
+
+	private static final String KEY_DATA = "xbmc.data";
 
 	private static final Set<Integer> SUBPROCESS_EXIT_VALUES_END = Set.of(0, 1, 247);
 
@@ -28,9 +39,14 @@ public class DaemonRunnable extends BaseDaemonRunnable {
 
 	private final File lockfile;
 
+	private final String dataDefault;
+
+	private final String dataReplacement;
+
 	public DaemonRunnable(Context context, Handler mainHandler, String... subprocessArgs) {
 		super(context, mainHandler);
-		var addonDir = new File(context.getFilesDir(), ".kodi/addons/" + BuildConfig.ADDON_ID);
+		var filesDir = context.getFilesDir();
+		var addonDir = new File(filesDir, ".kodi/addons/" + BuildConfig.ADDON_ID);
 		subprocessAssets = Map.of(BuildConfig.ADDON_ID, addonDir);
 		var subprocessCmd = new ArrayList<String>();
 		subprocessCmd.add("./libelementum.so");
@@ -40,6 +56,34 @@ public class DaemonRunnable extends BaseDaemonRunnable {
 		this.subprocessCmd = Collections.unmodifiableList(subprocessCmd);
 		subprocessEnv = Map.of("LD_LIBRARY_PATH", context.getApplicationInfo().nativeLibraryDir);
 		lockfile = new File(addonDir, ".lockfile");
+		var externalFilesDir = Objects.requireNonNull(context.getExternalFilesDir(null));
+		dataDefault = externalFilesDir.getPath().replace(context.getPackageName(), BuildConfig.KODI_ID);
+		dataReplacement = filesDir.getPath();
+	}
+
+	@SuppressWarnings({"deprecation", "RedundantSuppression"})
+	private String loadData() throws Exception {
+		var properties = new Properties();
+		var xbmcEnvFile = new File(Environment.getExternalStorageDirectory(), "xbmc_env.properties");
+		properties.setProperty(KEY_DATA, dataDefault);
+		if (xbmcEnvFile.isFile()) {
+			try (var in = new FileInputStream(xbmcEnvFile)) {
+				properties.load(in);
+			}
+		}
+		return properties.getProperty(KEY_DATA);
+	}
+
+	private void writeData() {
+		try {
+			var data = loadData();
+			var dataDir = new File(data.replace(BuildConfig.KODI_DATA_DIR, BuildConfig.DATA_DIR));
+			var dataPath = Paths.get(dataDir.getPath(), BuildConfig.PROJECT_NAME);
+			dataDir.mkdirs();
+			Files.write(dataPath, List.of(data, dataReplacement));
+		} catch (Throwable t) {
+			Log.w(TAG, t);
+		}
 	}
 
 	@Override
@@ -89,6 +133,7 @@ public class DaemonRunnable extends BaseDaemonRunnable {
 
 	@Override
 	public void run() {
+		writeData();
 		lockfile.delete();
 		super.run();
 	}

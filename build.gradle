@@ -30,6 +30,9 @@ buildscript {
 		isAddonBinLib = localProperties.getProperty('isAddonBinLib') as Boolean ?: addonBinDir?.with {
 			abiBins.any { abi, bin -> !file("$it/$bin/elementum").isFile() }
 		} ?: false
+		kodiId = 'org.xbmc.kodi'
+		dataDir = '/Elementum'
+		kodiDataDir = "/Android/data/$kodiId/files"
 		repoUrl = "https://StefanIlchev.github.io/$project.name/"
 	}
 
@@ -87,12 +90,15 @@ android {
 	defaultConfig {
 		minSdk 26
 		targetSdk compileSdk
-		versionCode localProperties.getProperty('versionCode') as Integer ?: 54
+		versionCode localProperties.getProperty('versionCode') as Integer ?: 55
 		versionName localProperties.getProperty('versionName') ?: "$versionCode"
 		manifestPlaceholders = [
 				'mainIntentAction': 'android.intent.action.MAIN'
 		]
 		buildConfigField 'String', 'ADDON_ID', "\"$addonId\""
+		buildConfigField 'String', 'DATA_DIR', "\"$dataDir\""
+		buildConfigField 'String', 'KODI_DATA_DIR', "\"$kodiDataDir\""
+		buildConfigField 'String', 'KODI_ID', "\"$kodiId\""
 		buildConfigField 'String', 'PROJECT_NAME', "\"$project.name\""
 		buildConfigField 'String', 'REPO_URL', "\"$repoUrl\""
 
@@ -248,8 +254,6 @@ if (addonBinDir != null) {
 			].join ', '
 			def stopArgs = "$args, stop:$addonVersion"
 			def startArgs = "$args, version:$addonVersion%s"
-			def pathPattern = '/org\\.xbmc\\.kodi/'
-			def pathReplace = "/$android.namespace/"
 			def versionLine = '    installed_version = read_current_version(binary_dir)'
 			def versionLinePatched = """# BEGIN $project.name-patched: version
 					|#$versionLine
@@ -358,18 +362,28 @@ if (addonBinDir != null) {
 			def infoLine = '        return info'
 			def infoLinePatched = """# BEGIN $project.name-patched: info
 					|#$infoLine
-					|        dataDir = re.sub('$pathPattern.*', '', translatePath('special://xbmc'), 1)
 					|        result = {}
-					|        for key, value in info.items():
-					|            result[key] = re.sub('.*$pathPattern', dataDir + '$pathReplace', value, 1)
+					|        try:
+					|            if globals().get('$project.name') is None:
+					|                homeDir = translatePath('special://home')
+					|                kodiDataDir = os.path.abspath(os.path.join(homeDir, '..'))
+					|                dataDir = str.replace(kodiDataDir, '$kodiDataDir', '$dataDir')
+					|                with open(os.path.join(dataDir, '$project.name'), 'r') as f:
+					|                    globals()['$project.name'] = f.read()
+					|            data, dataReplacement, _ = globals()['$project.name'].split('\\n')
+					|            for key, value in info.items():
+					|                result[key] = str.replace(value, data, dataReplacement)
+					|        except Exception as e:
+					|            log.error('Unable to read data: %s' % e)
+					|            pass
 					|        return result
 					|# END $project.name-patched: info""".stripMargin()
 			def translateLine = '        return translatePath(*args, **kwargs)'
 			def translateLinePatched = """# BEGIN $project.name-patched: translate
 					|#$translateLine
-					|        dataDir = re.sub('$pathPattern.*', '', translatePath('special://xbmc'), 1)
+					|        data, dataReplacement, _ = globals()['$project.name'].split('\\n')
 					|        result = translatePath(*args, **kwargs)
-					|        return re.sub('.*$pathPattern', dataDir + '$pathReplace', result, 1)
+					|        return str.replace(result, data, dataReplacement)
 					|# END $project.name-patched: translate""".stripMargin()
 			def patches = [
 					(file("$addonIdDir/resources/site-packages/elementum/daemon.py"))    : [
