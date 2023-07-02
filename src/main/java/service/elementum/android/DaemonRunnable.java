@@ -3,7 +3,6 @@ package service.elementum.android;
 import android.content.Context;
 import android.os.Environment;
 import android.os.Handler;
-import android.util.Log;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,8 +19,6 @@ import java.util.Set;
 import ilchev.stefan.binarywrapper.BaseDaemonRunnable;
 
 public class DaemonRunnable extends BaseDaemonRunnable {
-
-	private static final String TAG = "DaemonRunnable";
 
 	private static final String KEY_DATA = "xbmc.data";
 
@@ -81,8 +78,7 @@ public class DaemonRunnable extends BaseDaemonRunnable {
 			var dataPath = Paths.get(dataDir.getPath(), BuildConfig.PROJECT_NAME);
 			dataDir.mkdirs();
 			Files.write(dataPath, List.of(data, dataReplacement));
-		} catch (Throwable t) {
-			Log.w(TAG, t);
+		} catch (Throwable ignore) {
 		}
 	}
 

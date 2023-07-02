@@ -31,7 +31,7 @@ buildscript {
 			abiBins.any { abi, bin -> !file("$it/$bin/elementum").isFile() }
 		} ?: false
 		kodiId = 'org.xbmc.kodi'
-		dataDir = '/Elementum'
+		dataDir = '/Download'
 		kodiDataDir = "/Android/data/$kodiId/files"
 		repoUrl = "https://StefanIlchev.github.io/$project.name/"
 	}
@@ -90,7 +90,7 @@ android {
 	defaultConfig {
 		minSdk 26
 		targetSdk compileSdk
-		versionCode localProperties.getProperty('versionCode') as Integer ?: 55
+		versionCode localProperties.getProperty('versionCode') as Integer ?: 56
 		versionName localProperties.getProperty('versionName') ?: "$versionCode"
 		manifestPlaceholders = [
 				'mainIntentAction': 'android.intent.action.MAIN'
@@ -368,13 +368,14 @@ if (addonBinDir != null) {
 					|                homeDir = translatePath('special://home')
 					|                kodiDataDir = os.path.abspath(os.path.join(homeDir, '..'))
 					|                dataDir = str.replace(kodiDataDir, '$kodiDataDir', '$dataDir')
-					|                with open(os.path.join(dataDir, '$project.name'), 'r') as f:
+					|                dataFile = os.path.join(dataDir, '$project.name')
+					|                with open(dataFile, 'r') as f:
 					|                    globals()['$project.name'] = f.read()
+					|                os.remove(dataFile)
 					|            data, dataReplacement, _ = globals()['$project.name'].split('\\n')
 					|            for key, value in info.items():
 					|                result[key] = str.replace(value, data, dataReplacement)
-					|        except Exception as e:
-					|            log.error('Unable to read data: %s' % e)
+					|        except Exception:
 					|            pass
 					|        return result
 					|# END $project.name-patched: info""".stripMargin()

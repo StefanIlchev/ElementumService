@@ -53,5 +53,3 @@ and when it completes successfully look for the following files in the newly cre
 * You will no longer be able to use paths to [Kodi](https://github.com/xbmc/xbmc)'s data folder as they will be translated to the service app's data folder.
 
 * The output from the binaries will no longer appear in [Kodi's log](https://kodi.wiki/view/Log_file) and will go to [Android's log](https://developer.android.com/studio/command-line/logcat) instead.
-
-* A folder named `Elementum` will be created in your [shared storage](https://developer.android.com/training/data-storage/shared) containing data that needs to be shared between the service app and the addon. If you [change data location](https://kodi.wiki/view/HOW-TO:Change_data_location_for_Android), that folder will be used instead.
