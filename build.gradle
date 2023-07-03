@@ -90,7 +90,7 @@ android {
 	defaultConfig {
 		minSdk 26
 		targetSdk compileSdk
-		versionCode localProperties.getProperty('versionCode') as Integer ?: 57
+		versionCode localProperties.getProperty('versionCode') as Integer ?: 58
 		versionName localProperties.getProperty('versionName') ?: "$versionCode"
 		manifestPlaceholders = [
 				'mainIntentAction': 'android.intent.action.MAIN'
@@ -178,7 +178,7 @@ dependencies {
 	if (binaryWrapperProject != null) {
 		implementation binaryWrapperProject
 	} else {
-		implementation localProperties.getProperty('binaryWrapper') ?: 'com.github.StefanIlchev:binaryWrapper:1.0.14'
+		implementation localProperties.getProperty('binaryWrapper') ?: 'com.github.StefanIlchev:binaryWrapper:1.0.15'
 	}
 }
 
@@ -367,14 +367,16 @@ if (addonBinDir != null) {
 					|            if globals().get('$project.name') is None:
 					|                homeDir = translatePath('special://home')
 					|                kodiDataDir = os.path.abspath(os.path.join(homeDir, '..'))
-					|                dataDir = str.replace(kodiDataDir, '$kodiDataDir', '$dataDir')
+					|                dataDir = str.replace(kodiDataDir, '$kodiDataDir', '$dataDir', 1)
 					|                dataFile = os.path.join(dataDir, '$project.name')
 					|                with open(dataFile, 'r') as f:
 					|                    globals()['$project.name'] = f.read()
 					|                os.remove(dataFile)
 					|            data, dataReplacement, _ = globals()['$project.name'].split('\\n')
+					|            filesDir = re.sub('$kodiId.*', '$kodiId', translatePath('special://xbmc'), 1)
 					|            for key, value in info.items():
-					|                result[key] = str.replace(value, data, dataReplacement)
+					|                valueReplacement = str.replace(value, data, dataReplacement, 1)
+					|                result[key] = str.replace(valueReplacement, filesDir, dataReplacement, 1)
 					|        except Exception:
 					|            pass
 					|        return result
@@ -383,8 +385,10 @@ if (addonBinDir != null) {
 			def translateLinePatched = """# BEGIN $project.name-patched: translate
 					|#$translateLine
 					|        data, dataReplacement, _ = globals()['$project.name'].split('\\n')
+					|        filesDir = re.sub('$kodiId.*', '$kodiId', translatePath('special://xbmc'), 1)
 					|        result = translatePath(*args, **kwargs)
-					|        return str.replace(result, data, dataReplacement)
+					|        resultReplacement = str.replace(result, data, dataReplacement, 1)
+					|        return str.replace(resultReplacement, filesDir, dataReplacement, 1)
 					|# END $project.name-patched: translate""".stripMargin()
 			def patches = [
 					(file("$addonIdDir/resources/site-packages/elementum/daemon.py"))    : [
