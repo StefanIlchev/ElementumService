@@ -194,10 +194,35 @@ static def toSetAddonEnabledJson(addonId, enabled) {
 	return toMethodJson('Addons.SetAddonEnabled', ['addonid': addonId, 'enabled': enabled])
 }
 
+def addonVersion = android.defaultConfig.versionName
+def mainIntentAction = android.defaultConfig.manifestPlaceholders['mainIntentAction']
+
+tasks.register('startApplication') {
+	group = project.name
+
+	doLast {
+		exec {
+			executable 'adb'
+			args 'shell', 'am', 'start', '-a', mainIntentAction, '-d', "version:$addonVersion", android.namespace
+		}
+	}
+}
+
+tasks.register('changeDataLocation') {
+	group = project.name
+
+	doLast {
+		exec {
+			executable 'adb'
+			args 'shell', 'echo', "xbmc.data=/sdcard$kodiDataDir/", '>/sdcard/xbmc_env.properties'
+		}
+	}
+}
+
 if (addonBinDir != null) {
-	def addonVersion = android.defaultConfig.versionName
 
 	def patchAddon = tasks.register('patchAddon') {
+		group = project.name
 
 		doFirst {
 			delete addonDir
@@ -247,13 +272,8 @@ if (addonBinDir != null) {
 					'requires' {}
 				}
 			})
-			def args = [
-					android.namespace,
-					android.defaultConfig.manifestPlaceholders['mainIntentAction'],
-					'',
-			].join ', '
-			def stopArgs = "$args, stop:$addonVersion"
-			def startArgs = "$args, version:$addonVersion%s"
+			def stopArgs = "$android.namespace, $mainIntentAction, , stop:$addonVersion"
+			def startArgs = "$android.namespace, $mainIntentAction, , version:$addonVersion%s"
 			def versionLine = '    installed_version = read_current_version(binary_dir)'
 			def versionLinePatched = """# BEGIN $project.name-patched: version
 					|#$versionLine
@@ -430,6 +450,7 @@ if (addonBinDir != null) {
 	}
 
 	def genMainAssets = tasks.register('genMainAssets') {
+		group = project.name
 		dependsOn patchAddon
 
 		doFirst {
@@ -446,6 +467,7 @@ if (addonBinDir != null) {
 	}
 
 	def genMainJniLibs = tasks.register('genMainJniLibs') {
+		group = project.name
 		dependsOn patchAddon
 
 		doFirst {
@@ -482,6 +504,7 @@ if (addonBinDir != null) {
 	def androidClientZip = file "$buildDir.path/$addonId-${addonVersion}.android_client.zip"
 
 	def zipAndroidClient = tasks.register('zipAndroidClient', Zip) {
+		group = project.name
 		dependsOn patchAddon
 		from addonDir
 		destinationDirectory = androidClientZip.parentFile
@@ -493,7 +516,28 @@ if (addonBinDir != null) {
 		}
 	}
 
+	tasks.register('pushAndroidClient') {
+		group = project.name
+		dependsOn zipAndroidClient
+		def destinationDir = "/sdcard$dataDir/"
+
+		doFirst {
+			exec {
+				executable 'adb'
+				args 'shell', 'rm', '-f', "$destinationDir$androidClientZip.name"
+			}
+		}
+
+		doLast {
+			exec {
+				executable 'adb'
+				args 'push', androidClientZip.path, destinationDir
+			}
+		}
+	}
+
 	tasks.register('genPages') {
+		group = project.name
 		dependsOn tasks.named('assembleRelease'), zipAndroidClient
 		def pagesDir = "$rootDir.path/docs"
 
