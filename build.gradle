@@ -90,7 +90,7 @@ android {
 	defaultConfig {
 		minSdk 26
 		targetSdk compileSdk
-		versionCode localProperties.getProperty('versionCode') as Integer ?: 59
+		versionCode localProperties.getProperty('versionCode') as Integer ?: 60
 		versionName localProperties.getProperty('versionName') ?: "$versionCode"
 		manifestPlaceholders = [
 				'mainIntentAction': 'android.intent.action.MAIN'
@@ -296,73 +296,77 @@ if (addonBinDir != null) {
 					|    if os.path.exists(lockfile):
 					|        os.remove(lockfile)
 					|# END $project.name-patched: stop""".stripMargin()
-			def startLine = '        proc = subprocess.Popen(args, **kwargs)'
+			def startLine = '            proc = subprocess.Popen(args, **kwargs)'
 			def startLinePatched = """# BEGIN $project.name-patched: start
 					|#$startLine
-					|        repoAddonId = '$repoAddonId'
-					|        serviceRepoAddonId = '$serviceRepoAddonId'
-					|        repoAddonInfoFormat = '''$repoAddonInfoFormat'''
-					|        repoAddonInfo = repoAddonInfoFormat.format(
-					|            name = 'Elementum Repository',
-					|            id = repoAddonId,
-					|            dataDir = ELEMENTUMD_HOST + '/repository/$providerName/',
-					|            summary = 'GitHub repository for Elementum updates'
-					|        )
-					|        serviceRepoAddonInfo = repoAddonInfoFormat.format(
-					|            name = 'Elementum Service Repository',
-					|            id = serviceRepoAddonId,
-					|            dataDir = '$repoUrl',
-					|            summary = 'GitHub repository for Elementum Service updates'
-					|        )
-					|        fanartPng = os.path.join(ADDON_PATH, 'fanart.png')
-					|        iconPng = os.path.join(ADDON_PATH, 'icon.png')
-					|        for id, info in [(repoAddonId, repoAddonInfo), (serviceRepoAddonId, serviceRepoAddonInfo)]:
-					|            idDir = os.path.join(ADDON_PATH, '..', id)
-					|            infoFile = os.path.join(idDir, 'addon.xml')
-					|            if os.path.exists(infoFile):
+					|            repoAddonId = '$repoAddonId'
+					|            serviceRepoAddonId = '$serviceRepoAddonId'
+					|            repoAddonInfoFormat = '''$repoAddonInfoFormat'''
+					|            repoAddonInfo = repoAddonInfoFormat.format(
+					|                name = 'Elementum Repository',
+					|                id = repoAddonId,
+					|                dataDir = ELEMENTUMD_HOST + '/repository/$providerName/',
+					|                summary = 'GitHub repository for Elementum updates'
+					|            )
+					|            serviceRepoAddonInfo = repoAddonInfoFormat.format(
+					|                name = 'Elementum Service Repository',
+					|                id = serviceRepoAddonId,
+					|                dataDir = '$repoUrl',
+					|                summary = 'GitHub repository for Elementum Service updates'
+					|            )
+					|            fanartPng = os.path.join(ADDON_PATH, 'fanart.png')
+					|            iconPng = os.path.join(ADDON_PATH, 'icon.png')
+					|            repoAddons = [
+					|                (repoAddonId, repoAddonInfo),
+					|                (serviceRepoAddonId, serviceRepoAddonInfo)
+					|            ]
+					|            for id, info in repoAddons:
+					|                idDir = os.path.join(ADDON_PATH, '..', id)
+					|                infoFile = os.path.join(idDir, 'addon.xml')
+					|                if os.path.exists(infoFile):
+					|                    try:
+					|                        with open(infoFile, 'r') as f:
+					|                            if info == f.read():
+					|                                continue
+					|                    except Exception:
+					|                        pass
 					|                try:
-					|                    with open(infoFile, 'r') as f:
-					|                        if info == f.read():
-					|                            continue
+					|                    shutil.rmtree(idDir, True)
+					|                    os.makedirs(idDir)
+					|                    with open(infoFile, 'w') as f:
+					|                        f.write(info)
+					|                    shutil.copy(fanartPng, os.path.join(idDir, 'fanart.png'))
+					|                    shutil.copy(iconPng, os.path.join(idDir, 'icon.png'))
 					|                except Exception:
 					|                    pass
-					|            try:
-					|                shutil.rmtree(idDir, True)
-					|                os.makedirs(idDir)
-					|                with open(infoFile, 'w') as f:
-					|                    f.write(info)
-					|                shutil.copy(fanartPng, os.path.join(idDir, 'fanart.png'))
-					|                shutil.copy(iconPng, os.path.join(idDir, 'icon.png'))
-					|            except Exception:
-					|                pass
-					|        dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args[1:])
-					|        dataSuffix = '#' + dataFragment if dataFragment != '' else ''
-					|        xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
-					|        for id in [serviceRepoAddonId]:
-					|            try:
-					|                from elementum.provider import parse_json
-					|                detailsJson = '${toGetAddonDetailsJson('%s', ['installed', 'enabled'])}' % id
-					|                enableJson = '${toSetAddonEnabledJson('%s', true)}' % id
-					|                addon = parse_json(xbmc.executeJSONRPC(detailsJson)) \\
-					|                    .get('result', {}).get('addon', {})
-					|                if addon.get('installed', False):
-					|                    if not addon.get('enabled', False):
-					|                        xbmc.executeJSONRPC(enableJson)
-					|                    continue
-					|                xbmc.executebuiltin('UpdateLocalAddons')
-					|                xbmc.executebuiltin('InstallAddon(%s)' % id)
-					|                for attempt in range(10):
+					|            dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args[1:])
+					|            dataSuffix = '#' + dataFragment if dataFragment != '' else ''
+					|            xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
+					|            for id in [serviceRepoAddonId]:
+					|                try:
+					|                    from elementum.provider import parse_json
+					|                    detailsJson = '${toGetAddonDetailsJson('%s', ['installed', 'enabled'])}' % id
+					|                    enableJson = '${toSetAddonEnabledJson('%s', true)}' % id
 					|                    addon = parse_json(xbmc.executeJSONRPC(detailsJson)) \\
 					|                        .get('result', {}).get('addon', {})
 					|                    if addon.get('installed', False):
-					|                        break
-					|                    time.sleep(1)
-					|                xbmc.executeJSONRPC(enableJson)
-					|                xbmc.executebuiltin('UpdateLocalAddons')
-					|                xbmc.executebuiltin('UpdateAddonRepos')
-					|            except Exception:
-					|                pass
-					|        return None
+					|                        if not addon.get('enabled', False):
+					|                            xbmc.executeJSONRPC(enableJson)
+					|                        continue
+					|                    xbmc.executebuiltin('UpdateLocalAddons')
+					|                    xbmc.executebuiltin('InstallAddon(%s)' % id)
+					|                    for attempt in range(10):
+					|                        addon = parse_json(xbmc.executeJSONRPC(detailsJson)) \\
+					|                            .get('result', {}).get('addon', {})
+					|                        if addon.get('installed', False):
+					|                            break
+					|                        time.sleep(1)
+					|                    xbmc.executeJSONRPC(enableJson)
+					|                    xbmc.executebuiltin('UpdateLocalAddons')
+					|                    xbmc.executebuiltin('UpdateAddonRepos')
+					|                except Exception:
+					|                    pass
+					|            return None
 					|# END $project.name-patched: start""".stripMargin()
 			def retryLine = '            notify(getLocalizedString(30116), time=7000)'
 			def retryLinePatched = """# BEGIN $project.name-patched: retry
