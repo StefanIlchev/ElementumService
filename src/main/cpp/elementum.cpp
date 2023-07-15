@@ -1,6 +1,6 @@
 #include "elementum.h"
 
-#include <cstring>
+#include <string>
 
 class Args {
 
@@ -8,16 +8,12 @@ class Args {
 
 public:
 	Args(int argc, char *argv[]) {
-		auto len = 1U;
+		std::string str;
 		for (auto i = 1; i < argc; ++i) {
-			++len;
-			len += strlen(argv[i]);
+			str += ' ';
+			str += argv[i];
 		}
-		args = new char[len]{};
-		for (auto i = 1; i < argc; ++i) {
-			strcat(args, " ");
-			strcat(args, argv[i]);
-		}
+		args = strcpy(new char[str.length() + 1], str.c_str());
 	}
 
 	~Args() {
