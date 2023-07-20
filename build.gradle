@@ -90,7 +90,7 @@ android {
 	defaultConfig {
 		minSdk 26
 		targetSdk compileSdk
-		versionCode localProperties.getProperty('versionCode') as Integer ?: 60
+		versionCode localProperties.getProperty('versionCode') as Integer ?: 61
 		versionName localProperties.getProperty('versionName') ?: "$versionCode"
 		manifestPlaceholders = [
 				'mainIntentAction': 'android.intent.action.MAIN'
@@ -233,7 +233,7 @@ if (addonBinDir != null) {
 				from zipTree(addonZip)
 				into addonDir
 			}
-			def repoAddonId = 'repository.elementum'
+			def repoAddonId = 'repository.elementumorg'
 			def serviceRepoAddonId = 'repository.service.elementum'
 			def addonFile = file "$addonIdDir/addon.xml"
 			def addonInfo = new XmlSlurper().parse addonFile
@@ -303,10 +303,10 @@ if (addonBinDir != null) {
 					|            serviceRepoAddonId = '$serviceRepoAddonId'
 					|            repoAddonInfoFormat = '''$repoAddonInfoFormat'''
 					|            repoAddonInfo = repoAddonInfoFormat.format(
-					|                name = 'Elementum Repository',
+					|                name = 'ElementumOrg repository',
 					|                id = repoAddonId,
 					|                dataDir = ELEMENTUMD_HOST + '/repository/$providerName/',
-					|                summary = 'GitHub repository for Elementum updates'
+					|                summary = 'GitHub virtual Add-on repository'
 					|            )
 					|            serviceRepoAddonInfo = repoAddonInfoFormat.format(
 					|                name = 'Elementum Service Repository',
