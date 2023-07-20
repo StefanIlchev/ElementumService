@@ -599,7 +599,7 @@ if (addonBinDir != null) {
 						'body' {
 
 							'table' {
-								file(pagesDir).listFiles((FileFilter) { it.isFile() && it != htmlPage }).each {
+								file(pagesDir).listFiles((FileFilter) { it.isFile() && it != htmlPage }).sort().each {
 									def name = XmlUtil.escapeXml it.name
 									def date = new Date(it.lastModified()).format 'yyyy-MM-dd HH:mm'
 									def size = "${it.length()}B"
