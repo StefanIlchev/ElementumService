@@ -1,3 +1,4 @@
+import com.android.build.gradle.tasks.MergeSourceSetFolders
 import groovy.json.JsonOutput
 import groovy.xml.StreamingMarkupBuilder
 import groovy.xml.XmlSlurper
@@ -223,6 +224,8 @@ if (addonBinDir != null) {
 
 	def patchAddon = tasks.register('patchAddon') {
 		group = project.name
+		inputs.file addonZip
+		outputs.dir addonDir
 
 		doFirst {
 			delete addonDir
@@ -455,6 +458,8 @@ if (addonBinDir != null) {
 
 	def genMainAssets = tasks.register('genMainAssets') {
 		group = project.name
+		inputs.dir addonDir
+		outputs.dir srcMainAssetsGen
 		dependsOn patchAddon
 
 		doFirst {
@@ -472,6 +477,9 @@ if (addonBinDir != null) {
 
 	def genMainJniLibs = tasks.register('genMainJniLibs') {
 		group = project.name
+		inputs.dir addonDir
+		outputs.dir srcMainAbiHeadsGen
+		outputs.dir srcMainJniLibsGen
 		dependsOn patchAddon
 
 		doFirst {
@@ -501,7 +509,7 @@ if (addonBinDir != null) {
 		}
 	}
 
-	tasks.withType(JavaCompile).configureEach {
+	tasks.withType(MergeSourceSetFolders).configureEach {
 		it.dependsOn genMainAssets, genMainJniLibs
 	}
 
@@ -509,6 +517,8 @@ if (addonBinDir != null) {
 
 	def zipAndroidClient = tasks.register('zipAndroidClient', Zip) {
 		group = project.name
+		inputs.dir addonDir
+		outputs.file androidClientZip
 		dependsOn patchAddon
 		from addonDir
 		destinationDirectory = androidClientZip.parentFile
