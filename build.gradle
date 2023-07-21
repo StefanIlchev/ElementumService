@@ -28,9 +28,7 @@ buildscript {
 				'x86'        : 'android_x86',
 				'x86_64'     : 'android_x64'
 		]
-		isAddonBinLib = localProperties.getProperty('isAddonBinLib') as Boolean ?: addonBinDir?.with {
-			abiBins.any { abi, bin -> !file("$it/$bin/elementum").isFile() }
-		} ?: false
+		isAddonBinLib = localProperties.getProperty('isAddonBinLib') as Boolean ?: false
 		kodiId = 'org.xbmc.kodi'
 		dataDir = '/Download'
 		kodiDataDir = "/Android/data/$kodiId/files"
