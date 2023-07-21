@@ -509,8 +509,12 @@ if (addonBinDir != null) {
 		}
 	}
 
-	tasks.withType(MergeSourceSetFolders).configureEach {
+	tasks.withType(JavaCompile).configureEach {
 		it.dependsOn genMainAssets, genMainJniLibs
+	}
+
+	tasks.withType(MergeSourceSetFolders).configureEach {
+		it.mustRunAfter genMainAssets, genMainJniLibs
 	}
 
 	def androidClientZip = file "$buildDir.path/$addonId-${addonVersion}.android_client.zip"
