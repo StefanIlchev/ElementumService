@@ -4,6 +4,8 @@ import groovy.xml.StreamingMarkupBuilder
 import groovy.xml.XmlSlurper
 import groovy.xml.XmlUtil
 
+import java.util.zip.ZipFile
+
 buildscript {
 
 	ext {
@@ -28,7 +30,13 @@ buildscript {
 				'x86'        : 'android_x86',
 				'x86_64'     : 'android_x64'
 		]
-		isAddonBinLib = localProperties.getProperty('isAddonBinLib') as Boolean ?: false
+		isAddonBinLib = localProperties.getProperty('isAddonBinLib') as Boolean ?: addonZip?.with {
+			new ZipFile(it)
+		}?.withCloseable {
+			abiBins.any { abi, bin ->
+				it.getEntry("$addonId/resources/bin/$bin/elementum")?.isDirectory() != false
+			}
+		} ?: false
 		kodiId = 'org.xbmc.kodi'
 		dataDir = '/Download'
 		kodiDataDir = "/Android/data/$kodiId/files"
@@ -476,8 +484,11 @@ if (addonBinDir != null) {
 	def genMainJniLibs = tasks.register('genMainJniLibs') {
 		group = project.name
 		inputs.dir addonDir
-		outputs.dir srcMainAbiHeadsGen
-		outputs.dir srcMainJniLibsGen
+		if (isAddonBinLib) {
+			outputs.dirs srcMainAbiHeadsGen, srcMainJniLibsGen
+		} else {
+			outputs.dir srcMainJniLibsGen
+		}
 		dependsOn patchAddon
 
 		doFirst {
