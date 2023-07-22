@@ -252,7 +252,7 @@ if (addonBinDir != null) {
 				'import'('addon': serviceRepoAddonId, 'optional': 'true')
 			}
 			addonFile.withWriter {
-				XmlUtil.serialize(new StreamingMarkupBuilder().bind {
+				XmlUtil.serialize((Writable) new StreamingMarkupBuilder().bind {
 					mkp.yield addonInfo
 				}, it)
 			}
@@ -595,7 +595,7 @@ if (addonBinDir != null) {
 			}
 			def repoInfo = file "$pagesDir/$addonId/addons.xml"
 			repoInfo.withWriter {
-				XmlUtil.serialize(new StreamingMarkupBuilder().bind {
+				XmlUtil.serialize((Writable) new StreamingMarkupBuilder().bind {
 					'addons' {
 						mkp.yield new XmlSlurper().parse(file("$addonIdDir/addon.xml"))
 					}
