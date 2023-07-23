@@ -593,6 +593,10 @@ if (addonBinDir != null) {
 				into repoZip.parentFile
 				rename { repoZip.name }
 			}
+			copy {
+				from "$addonIdDir/icon.png"
+				into "$pagesDir/$addonId"
+			}
 			def repoInfo = file "$pagesDir/$addonId/addons.xml"
 			repoInfo.withWriter {
 				XmlUtil.serialize((Writable) new StreamingMarkupBuilder().bind {
