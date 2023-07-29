@@ -192,7 +192,7 @@ tasks.register('startApplication') {
 
 	doLast {
 		exec {
-			executable 'adb'
+			executable android.adbExecutable
 			args 'shell', 'am', 'start', '-a', mainIntentAction, '-d', "version:$addonVersion", android.namespace
 		}
 	}
@@ -203,7 +203,7 @@ tasks.register('changeDataLocation') {
 
 	doLast {
 		exec {
-			executable 'adb'
+			executable android.adbExecutable
 			args 'shell', 'echo', "xbmc.data=/sdcard$kodiDataDir/", '>/sdcard/xbmc_env.properties'
 		}
 	}
@@ -533,14 +533,14 @@ if (addonBinDir != null) {
 
 		doFirst {
 			exec {
-				executable 'adb'
+				executable android.adbExecutable
 				args 'shell', 'rm', '-f', "$destinationDir$androidClientZip.name"
 			}
 		}
 
 		doLast {
 			exec {
-				executable 'adb'
+				executable android.adbExecutable
 				args 'push', androidClientZip.path, destinationDir
 			}
 		}
