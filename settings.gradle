@@ -1,3 +1,23 @@
+pluginManagement {
+
+	repositories {
+		google()
+		mavenCentral()
+		mavenLocal()
+		maven { url 'https://jitpack.io' }
+		gradlePluginPortal()
+	}
+
+	plugins {
+
+		// https://mvnrepository.com/artifact/com.android.tools.build/gradle?repo=google
+		id 'com.android.application' version '8.1.0'
+
+		// https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib
+		id 'org.jetbrains.kotlin.android' version '1.9.0'
+	}
+}
+
 def localProperties = new Properties()
 def localPropertiesFile = file 'local.properties'
 if (localPropertiesFile.isFile()) {

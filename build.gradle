@@ -6,78 +6,56 @@ import groovy.xml.XmlUtil
 
 import java.util.zip.ZipFile
 
-buildscript {
-
-	ext {
-		localProperties = new Properties()
-		def localPropertiesFile = file 'local.properties'
-		if (localPropertiesFile.isFile()) {
-			localPropertiesFile.withReader { localProperties.load it }
-		}
-		srcGen = "$buildDir.path/src"
-		srcMainGen = "$srcGen/main"
-		srcMainAssetsGen = "$srcMainGen/assets"
-		srcMainAbiHeadsGen = "$srcMainGen/abiHeads"
-		srcMainJniLibsGen = "$srcMainGen/jniLibs"
-		addonId = 'plugin.video.elementum'
-		addonZip = System.getProperty('addonZip') ?: localProperties.getProperty('addonZip')
-		addonDir = addonZip?.with { "$buildDir.path/${file(it).name - ~/\.[^.]+$/}" }
-		addonIdDir = addonDir?.with { "$it/$addonId" }
-		addonBinDir = addonIdDir?.with { "$it/resources/bin" }
-		abiBins = [
-				'arm64-v8a'  : 'android_arm64',
-				'armeabi-v7a': 'android_arm',
-				'x86'        : 'android_x86',
-				'x86_64'     : 'android_x64'
-		]
-		isAddonBinLib = localProperties.getProperty('isAddonBinLib') as Boolean ?: addonZip?.with {
-			new ZipFile(it)
-		}?.withCloseable {
-			abiBins.any { abi, bin ->
-				it.getEntry("$addonId/resources/bin/$bin/elementum")?.isDirectory() != false
-			}
-		} ?: false
-		kodiId = 'org.xbmc.kodi'
-		dataDir = '/Download'
-		kodiDataDir = "/Android/data/$kodiId/files"
-		repoUrl = "https://StefanIlchev.github.io/$project.name/"
-	}
-
-	repositories {
-		google()
-		mavenCentral()
-		mavenLocal()
-		maven { url 'https://jitpack.io' }
-	}
-
-	dependencies {
-		classpath 'com.android.tools.build:gradle:8.0.2'
-	}
+plugins {
+	id 'com.android.application'
+	id 'org.jetbrains.kotlin.android'
 }
 
-apply {
-	plugin 'com.android.application'
+repositories {
+	google()
+	mavenCentral()
+	mavenLocal()
+	maven { url 'https://jitpack.io' }
 }
 
-allprojects {
-
-	repositories {
-		google()
-		mavenCentral()
-		mavenLocal()
-		maven { url 'https://jitpack.io' }
-	}
-
-	tasks.withType(JavaCompile).configureEach {
-		it.options.deprecation = true
-	}
+def localProperties = new Properties()
+def localPropertiesFile = file 'local.properties'
+if (localPropertiesFile.isFile()) {
+	localPropertiesFile.withReader { localProperties.load it }
 }
+def srcGen = "$buildDir.path/src"
+def srcMainGen = "$srcGen/main"
+def srcMainAssetsGen = "$srcMainGen/assets"
+def srcMainAbiHeadsGen = "$srcMainGen/abiHeads"
+def srcMainJniLibsGen = "$srcMainGen/jniLibs"
+def addonId = 'plugin.video.elementum'
+def addonZip = System.getProperty('addonZip') ?: localProperties.getProperty('addonZip')
+def addonDir = addonZip?.with { "$buildDir.path/${file(it).name - ~/\.[^.]+$/}" }
+def addonIdDir = addonDir?.with { "$it/$addonId" }
+def addonBinDir = addonIdDir?.with { "$it/resources/bin" }
+def abiBins = [
+		'arm64-v8a'  : 'android_arm64',
+		'armeabi-v7a': 'android_arm',
+		'x86'        : 'android_x86',
+		'x86_64'     : 'android_x64'
+]
+def isAddonBinLib = localProperties.getProperty('isAddonBinLib') as Boolean ?: addonZip?.with {
+	new ZipFile(it)
+}?.withCloseable {
+	abiBins.any { abi, bin ->
+		it.getEntry("$addonId/resources/bin/$bin/elementum")?.isDirectory() != false
+	}
+} ?: false
+def kodiId = 'org.xbmc.kodi'
+def dataDir = '/Download'
+def kodiDataDir = "/Android/data/$kodiId/files"
+def repoUrl = "https://StefanIlchev.github.io/$project.name/"
 
 android {
 	buildToolsVersion = '33.0.2'
-	compileSdk 33
-	ndkVersion '25.2.9519653'
-	namespace 'service.elementum.android'
+	compileSdk = 33
+	ndkVersion = '25.2.9519653'
+	namespace = 'service.elementum.android'
 
 	compileOptions {
 		sourceCompatibility = JavaVersion.VERSION_17
@@ -88,17 +66,17 @@ android {
 		externalNativeBuild {
 
 			cmake {
-				version '3.22.1'
-				path 'CMakeLists.txt'
+				version = '3.22.1'
+				path = 'CMakeLists.txt'
 			}
 		}
 	}
 
 	defaultConfig {
-		minSdk 26
-		targetSdk compileSdk
-		versionCode localProperties.getProperty('versionCode') as Integer ?: 62
-		versionName localProperties.getProperty('versionName') ?: "$versionCode"
+		minSdk = 26
+		targetSdk = compileSdk
+		versionCode = localProperties.getProperty('versionCode') as Integer ?: 62
+		versionName = localProperties.getProperty('versionName') ?: "$versionCode"
 		manifestPlaceholders = [
 				'mainIntentAction': 'android.intent.action.MAIN'
 		]
@@ -132,20 +110,20 @@ android {
 	signingConfigs {
 
 		debug {
-			storeFile file(localProperties.getProperty('storeFile') ?: 'debug.keystore')
-			storePassword localProperties.getProperty('storePassword') ?: 'android'
-			keyAlias localProperties.getProperty('keyAlias') ?: 'androiddebugkey'
-			keyPassword localProperties.getProperty('keyPassword') ?: 'android'
+			storeFile = file(localProperties.getProperty('storeFile') ?: 'debug.keystore')
+			storePassword = localProperties.getProperty('storePassword') ?: 'android'
+			keyAlias = localProperties.getProperty('keyAlias') ?: 'androiddebugkey'
+			keyPassword = localProperties.getProperty('keyPassword') ?: 'android'
 		}
 	}
 
 	buildTypes {
 
 		release {
-			minifyEnabled true
-			shrinkResources true
-			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
-			signingConfig signingConfigs.debug
+			minifyEnabled = true
+			shrinkResources = true
+			proguardFiles += getDefaultProguardFile('proguard-android-optimize.txt')
+			signingConfig = signingConfigs.debug
 		}
 	}
 
@@ -166,8 +144,8 @@ android {
 	splits {
 
 		abi {
-			enable true
-			universalApk true
+			enable = true
+			universalApk = true
 		}
 	}
 
@@ -175,7 +153,7 @@ android {
 
 		jniLibs {
 			keepDebugSymbols += '**/lib*.so'
-			useLegacyPackaging true
+			useLegacyPackaging = true
 		}
 	}
 }
@@ -185,6 +163,7 @@ dependencies {
 	if (binaryWrapperProject != null) {
 		implementation binaryWrapperProject
 	} else {
+		// https://github.com/StefanIlchev/binaryWrapper/releases
 		implementation localProperties.getProperty('binaryWrapper') ?: 'com.github.StefanIlchev:binaryWrapper:1.0.15'
 	}
 }
@@ -199,6 +178,10 @@ static def toGetAddonDetailsJson(addonId, properties) {
 
 static def toSetAddonEnabledJson(addonId, enabled) {
 	return toMethodJson('Addons.SetAddonEnabled', ['addonid': addonId, 'enabled': enabled])
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.deprecation = true
 }
 
 def addonVersion = android.defaultConfig.versionName
