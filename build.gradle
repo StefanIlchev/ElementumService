@@ -75,7 +75,7 @@ android {
 	defaultConfig {
 		minSdk = 26
 		targetSdk = compileSdk
-		versionCode = localProperties.getProperty('versionCode') as Integer ?: 63
+		versionCode = localProperties.getProperty('versionCode') as Integer ?: 64
 		versionName = localProperties.getProperty('versionName') ?: "$versionCode"
 		manifestPlaceholders = [
 				'mainIntentAction': 'android.intent.action.MAIN'
