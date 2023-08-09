@@ -8,9 +8,9 @@ class ForegroundService : BaseForegroundService() {
 
 	override val mainActivityClass = MainActivity::class.java
 
-	override fun getDaemonRunnable(
+	override fun getDaemonInvoker(
 		data: Uri?
-	) = DaemonRunnable(this, mainHandler, *data?.fragment?.split("\u0000")?.toTypedArray() ?: emptyArray())
+	) = DaemonInvoker(this, mainHandler, *data?.fragment?.split("\u0000")?.toTypedArray() ?: emptyArray())
 
 	override fun getVersionName(
 		data: Uri?

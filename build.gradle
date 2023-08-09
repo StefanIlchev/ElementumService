@@ -75,7 +75,7 @@ android {
 	defaultConfig {
 		minSdk = 26
 		targetSdk = compileSdk
-		versionCode = localProperties.getProperty('versionCode') as Integer ?: 64
+		versionCode = localProperties.getProperty('versionCode') as Integer ?: 65
 		versionName = localProperties.getProperty('versionName') ?: "$versionCode"
 		manifestPlaceholders = [
 				'mainIntentAction': 'android.intent.action.MAIN'
@@ -164,7 +164,7 @@ dependencies {
 		implementation binaryWrapperProject
 	} else {
 		// https://github.com/StefanIlchev/binaryWrapper/releases
-		implementation localProperties.getProperty('binaryWrapper') ?: 'com.github.StefanIlchev:binaryWrapper:1.0.16'
+		implementation localProperties.getProperty('binaryWrapper') ?: 'com.github.StefanIlchev:binaryWrapper:1.0.17'
 	}
 }
 

@@ -3,17 +3,17 @@ package service.elementum.android
 import android.content.Context
 import android.os.Environment
 import android.os.Handler
-import ilchev.stefan.binarywrapper.BaseDaemonRunnable
+import ilchev.stefan.binarywrapper.BaseDaemonInvoker
 import java.io.File
 import java.nio.file.Paths
 import java.util.Properties
 import kotlin.io.path.writeLines
 
-class DaemonRunnable(
+class DaemonInvoker(
 	context: Context,
 	mainHandler: Handler,
 	vararg subprocessArgs: String
-) : BaseDaemonRunnable(context, mainHandler) {
+) : BaseDaemonInvoker(context, mainHandler) {
 
 	override val subprocessAssets: Map<String, File>
 
@@ -66,13 +66,13 @@ class DaemonRunnable(
 		dataPath.writeLines(listOf(data, dataReplacement))
 	}
 
-	override fun run() {
+	override fun invoke(): Long {
 		try {
 			writeData()
 		} catch (ignored: Throwable) {
 		}
 		lockfile.delete()
-		super.run()
+		return super.invoke()
 	}
 
 	companion object {
