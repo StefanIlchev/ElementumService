@@ -23,6 +23,7 @@ def localPropertiesFile = file 'local.properties'
 if (localPropertiesFile.isFile()) {
 	localPropertiesFile.withReader { localProperties.load it }
 }
+def buildDir = layout.buildDirectory.asFile.get()
 def srcGen = "$buildDir.path/src"
 def srcMainGen = "$srcGen/main"
 def srcMainAssetsGen = "$srcMainGen/assets"
