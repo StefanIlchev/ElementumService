@@ -629,10 +629,6 @@ if (addonBinDir != null) {
 					}
 				}
 			}
-			copy {
-				from "$addonIdDir/resources/web/favicon.ico"
-				into pagesDir
-			}
 		}
 	}
 }
