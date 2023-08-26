@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"Laat toe"</string>
+	<string name="allow_cmd_allow_msg">"Jy moet dit met die hand doen"</string>
+	<string name="close_app">"Maak program toe"</string>
+	<string name="deny">"Weier"</string>
+	<string name="stop">"Stop"</string>
+</resources>

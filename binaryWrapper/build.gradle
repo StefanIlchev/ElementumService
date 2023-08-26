@@ -1,0 +1,59 @@
+plugins {
+	id 'com.android.library'
+	id 'org.jetbrains.kotlin.android'
+	id 'maven-publish'
+}
+
+android {
+	buildToolsVersion = libs.versions.buildToolsVersion.get()
+	compileSdk = libs.versions.compileSdk.get() as int
+	namespace = 'ilchev.stefan.binarywrapper'
+
+	compileOptions {
+		sourceCompatibility = JavaVersion.VERSION_17
+		targetCompatibility = JavaVersion.VERSION_17
+	}
+
+	defaultConfig {
+		minSdk = libs.versions.minSdk.get() as int
+
+		aarMetadata {
+			minCompileSdk = minSdk
+		}
+	}
+
+	buildTypes {
+
+		release {
+			minifyEnabled = false
+			proguardFiles += getDefaultProguardFile('proguard-android-optimize.txt')
+		}
+	}
+
+	publishing {
+
+		singleVariant('release') {
+			withSourcesJar()
+		}
+	}
+}
+
+publishing {
+
+	publications {
+
+		register('release', MavenPublication) {
+			groupId = 'ilchev.stefan'
+			artifactId = 'binary-wrapper'
+			version = '1.0.17'
+
+			afterEvaluate {
+				from components.release
+			}
+		}
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.deprecation = true
+}

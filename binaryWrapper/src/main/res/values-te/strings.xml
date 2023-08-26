@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"అనుమతించండి"</string>
+	<string name="allow_cmd_allow_msg">"మీరు దీన్ని మాన్యువల్‌గా చేయాలి"</string>
+	<string name="close_app">"యాప్‌ను మూసివేయి"</string>
+	<string name="deny">"తిరస్కరించండి"</string>
+	<string name="stop">"ఆపివేయి"</string>
+</resources>

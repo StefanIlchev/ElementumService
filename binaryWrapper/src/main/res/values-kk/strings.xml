@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"Рұқсат беру"</string>
+	<string name="allow_cmd_allow_msg">"Мұны қолмен жасау керек"</string>
+	<string name="close_app">"Қолданбаны жабу"</string>
+	<string name="deny">"Тыйым салу"</string>
+	<string name="stop">"Тоқтату"</string>
+</resources>

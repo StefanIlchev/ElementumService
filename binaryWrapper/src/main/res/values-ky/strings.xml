@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"Уруксат берүү"</string>
+	<string name="allow_cmd_allow_msg">"Муну кол менен жасашыңыз керек"</string>
+	<string name="close_app">"Колдонмону жабуу"</string>
+	<string name="deny">"Уруксат берилбейт"</string>
+	<string name="stop">"Токтотуу"</string>
+</resources>

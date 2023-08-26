@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"Zezwól"</string>
+	<string name="allow_cmd_allow_msg">"Musisz to zrobić ręcznie"</string>
+	<string name="close_app">"Zamknij aplikację"</string>
+	<string name="deny">"Odmów"</string>
+	<string name="stop">"Zatrzymaj"</string>
+</resources>

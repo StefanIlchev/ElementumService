@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"ອະນຸຍາດ"</string>
+	<string name="allow_cmd_allow_msg">"ທ່ານຕ້ອງເຮັດສິ່ງນີ້ດ້ວຍຕົນເອງ"</string>
+	<string name="close_app">"ປິດແອັບ"</string>
+	<string name="deny">"ປະ​ຕິ​ເສດ"</string>
+	<string name="stop">"ຢຸດ"</string>
+</resources>

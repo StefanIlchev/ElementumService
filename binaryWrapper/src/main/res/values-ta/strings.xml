@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"அனுமதி"</string>
+	<string name="allow_cmd_allow_msg">"நீங்கள் இதை கைமுறையாக செய்ய வேண்டும்"</string>
+	<string name="close_app">"ஆப்ஸை மூடு"</string>
+	<string name="deny">"நிராகரி"</string>
+	<string name="stop">"நிறுத்து"</string>
+</resources>

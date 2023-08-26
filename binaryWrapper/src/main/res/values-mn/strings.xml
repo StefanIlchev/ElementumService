@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"Зөвшөөрөх"</string>
+	<string name="allow_cmd_allow_msg">"Та үүнийг гараар хийх хэрэгтэй"</string>
+	<string name="close_app">"Аппыг хаах"</string>
+	<string name="deny">"Татгалзах"</string>
+	<string name="stop">"Зогсоох"</string>
+</resources>

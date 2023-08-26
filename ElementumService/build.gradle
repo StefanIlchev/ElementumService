@@ -1,0 +1,621 @@
+import com.android.build.gradle.tasks.MergeSourceSetFolders
+import groovy.json.JsonOutput
+import groovy.xml.StreamingMarkupBuilder
+import groovy.xml.XmlSlurper
+import groovy.xml.XmlUtil
+
+import java.util.zip.ZipFile
+
+plugins {
+	id 'com.android.application'
+	id 'org.jetbrains.kotlin.android'
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = file "$rootDir.path/local.properties"
+if (localPropertiesFile.isFile()) {
+	localPropertiesFile.withReader { localProperties.load it }
+}
+def buildDir = layout.buildDirectory.asFile.get()
+def srcGen = "$buildDir.path/src"
+def srcMainGen = "$srcGen/main"
+def srcMainAssetsGen = "$srcMainGen/assets"
+def srcMainAbiHeadsGen = "$srcMainGen/abiHeads"
+def srcMainJniLibsGen = "$srcMainGen/jniLibs"
+def addonId = 'plugin.video.elementum'
+def addonZip = System.getProperty('elementum.addon.zip') ?: localProperties.getProperty('elementum.addon.zip')
+def addonDir = addonZip?.with { "$buildDir.path/${file(it).name - ~/\.[^.]+$/}" }
+def addonIdDir = addonDir?.with { "$it/$addonId" }
+def addonBinDir = addonIdDir?.with { "$it/resources/bin" }
+def abiBins = [
+		'arm64-v8a'  : 'android_arm64',
+		'armeabi-v7a': 'android_arm',
+		'x86'        : 'android_x86',
+		'x86_64'     : 'android_x64'
+]
+def isAddonBinLib = localProperties.getProperty('is.addon.bin.lib') as Boolean ?: addonZip?.with {
+	new ZipFile(it)
+}?.withCloseable {
+	abiBins.any { abi, bin ->
+		it.getEntry("$addonId/resources/bin/$bin/elementum")?.isDirectory() != false
+	}
+} ?: false
+def kodiId = 'org.xbmc.kodi'
+def dataDir = '/Download'
+def kodiDataDir = "/Android/data/$kodiId/files"
+def repoUrl = "https://StefanIlchev.github.io/$rootProject.name/"
+
+android {
+	buildToolsVersion = libs.versions.buildToolsVersion.get()
+	compileSdk = libs.versions.compileSdk.get() as int
+	ndkVersion = libs.versions.ndkVersion.get()
+	namespace = 'service.elementum.android'
+
+	compileOptions {
+		sourceCompatibility = JavaVersion.VERSION_17
+		targetCompatibility = JavaVersion.VERSION_17
+	}
+
+	if (isAddonBinLib) {
+		externalNativeBuild {
+
+			cmake {
+				version = libs.versions.cmake.get()
+				path = 'CMakeLists.txt'
+			}
+		}
+	}
+
+	defaultConfig {
+		minSdk = libs.versions.minSdk.get() as int
+		targetSdk = compileSdk
+		versionCode = localProperties.getProperty('elementum.version.code') as Integer ?: 65
+		versionName = localProperties.getProperty('elementum.version.name') ?: "$versionCode"
+		manifestPlaceholders = [
+				'mainIntentAction': 'android.intent.action.MAIN'
+		]
+		buildConfigField 'String', 'ADDON_ID', "\"$addonId\""
+		buildConfigField 'String', 'DATA_DIR', "\"$dataDir\""
+		buildConfigField 'String', 'KODI_DATA_DIR', "\"$kodiDataDir\""
+		buildConfigField 'String', 'KODI_ID', "\"$kodiId\""
+		buildConfigField 'String', 'PROJECT_NAME', "\"$project.name\""
+		buildConfigField 'String', 'REPO_URL', "\"$repoUrl\""
+
+		if (isAddonBinLib) {
+			externalNativeBuild {
+
+				cmake {
+					arguments "-DPROJECT_NAME=$project.name",
+							"-DSRC_MAIN_ABI_HEADS_GEN=$srcMainAbiHeadsGen",
+							"-DSRC_MAIN_JNI_LIBS_GEN=$srcMainJniLibsGen"
+				}
+			}
+		}
+	}
+
+	applicationVariants.configureEach { variant ->
+		variant.outputs.each {
+			def fileName = it.outputFileName
+			def name = fileName - ~/\.[^.]+$/
+			it.outputFileName = "$name-$variant.versionName${fileName.substring name.length()}"
+		}
+	}
+
+	signingConfigs {
+
+		debug {
+			storeFile = file(localProperties.getProperty('store.file') ?: "$rootDir.path/debug.keystore")
+			storePassword = localProperties.getProperty('store.password') ?: 'android'
+			keyAlias = localProperties.getProperty('key.alias') ?: 'androiddebugkey'
+			keyPassword = localProperties.getProperty('key.password') ?: 'android'
+		}
+	}
+
+	buildTypes {
+
+		release {
+			minifyEnabled = true
+			shrinkResources = true
+			proguardFiles += getDefaultProguardFile('proguard-android-optimize.txt')
+			signingConfig = signingConfigs.debug
+		}
+	}
+
+	sourceSets {
+
+		main {
+
+			assets {
+				srcDir srcMainAssetsGen
+			}
+
+			jniLibs {
+				srcDir srcMainJniLibsGen
+			}
+		}
+	}
+
+	splits {
+
+		abi {
+			enable = true
+			universalApk = true
+		}
+	}
+
+	packagingOptions {
+
+		jniLibs {
+			keepDebugSymbols += '**/lib*.so'
+			useLegacyPackaging = true
+		}
+	}
+}
+
+dependencies {
+	implementation project(':binaryWrapper')
+}
+
+static String toMethodJson(method, params) {
+	JsonOutput.toJson(['jsonrpc': '2.0', 'id': '1', 'method': method, 'params': params])
+}
+
+static String toGetAddonDetailsJson(addonId, properties) {
+	toMethodJson('Addons.GetAddonDetails', ['addonid': addonId, 'properties': properties])
+}
+
+static String toSetAddonEnabledJson(addonId, enabled) {
+	toMethodJson('Addons.SetAddonEnabled', ['addonid': addonId, 'enabled': enabled])
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.deprecation = true
+}
+
+def addonVersion = android.defaultConfig.versionName
+def mainIntentAction = android.defaultConfig.manifestPlaceholders['mainIntentAction']
+
+tasks.register('startApplication') {
+	group = project.name
+
+	doLast {
+		exec {
+			executable = android.adbExecutable
+			args 'shell', 'am', 'start', '-a', mainIntentAction, '-d', "version:$addonVersion", android.namespace
+		}
+	}
+}
+
+tasks.register('changeDataLocation') {
+	group = project.name
+
+	doLast {
+		exec {
+			executable = android.adbExecutable
+			args 'shell', 'echo', "xbmc.data=/sdcard$kodiDataDir/", '>/sdcard/xbmc_env.properties'
+		}
+	}
+}
+
+if (addonBinDir != null) {
+
+	def patchAddon = tasks.register('patchAddon') {
+		group = project.name
+		inputs.file addonZip
+		outputs.dir addonDir
+
+		doFirst {
+			delete addonDir
+		}
+
+		doLast {
+			copy {
+				from zipTree(addonZip)
+				into addonDir
+			}
+			def repoAddonId = 'repository.elementumorg'
+			def serviceRepoAddonId = 'repository.service.elementum'
+			def addonFile = file "$addonIdDir/addon.xml"
+			def addonInfo = new XmlSlurper().parse addonFile
+			def providerName = addonInfo.@'provider-name'
+			addonInfo.@'version' = addonVersion
+			addonInfo.'requires'.appendNode {
+				'import'('addon': serviceRepoAddonId, 'optional': 'true')
+			}
+			addonFile.withWriter {
+				XmlUtil.serialize((Writable) new StreamingMarkupBuilder().bind {
+					mkp.yield addonInfo
+				}, it)
+			}
+			def repoAddonInfoFormat = XmlUtil.serialize(new StreamingMarkupBuilder().bind {
+				'addon'('name': '{name}', 'id': '{id}', 'provider-name': providerName, 'version': addonVersion) {
+
+					'extension'('name': '{name}', 'point': 'xbmc.addon.repository') {
+
+						'dir' {
+
+							'checksum'("{dataDir}$addonId/addons.xml.md5")
+
+							'datadir'('zip': 'true', '{dataDir}')
+
+							'info'('compressed': 'false', "{dataDir}$addonId/addons.xml")
+						}
+					}
+
+					'extension'('point': 'xbmc.addon.metadata') {
+
+						'platform'('all')
+
+						'summary'('lang': 'en', '{summary}')
+					}
+
+					'requires' {}
+				}
+			})
+			def stopArgs = "$android.namespace, $mainIntentAction, , stop:$addonVersion"
+			def startArgs = "$android.namespace, $mainIntentAction, , version:$addonVersion%s"
+			def versionLine = '    installed_version = read_current_version(binary_dir)'
+			def versionLinePatched = """# BEGIN $project.name-patched: version
+					|#$versionLine
+					|    installed_version = ADDON_VERSION
+					|    binary_dir = ADDON_PATH
+					|    dest_binary_dir = binary_dir
+					|    binary_path = os.path.join(ADDON_PATH, 'fanart.png')
+					|    dest_binary_path = binary_path
+					|# END $project.name-patched: version""".stripMargin()
+			def binaryLine = '    return dest_binary_dir, ensure_exec_perms(dest_binary_path)'
+			def binaryLinePatched = """# BEGIN $project.name-patched: binary
+					|#$binaryLine
+					|    return 'N/A', 'N/A'
+					|# END $project.name-patched: binary""".stripMargin()
+			def stopLine = '    lockfile = os.path.join(ADDON_PATH, ".lockfile")'
+			def stopLinePatched = """# BEGIN $project.name-patched: stop
+					|#$stopLine
+					|    xbmc.executebuiltin('StartAndroidActivity($stopArgs)')
+					|    lockfile = os.path.join(ADDON_PATH, '.lockfile')
+					|    if os.path.exists(lockfile):
+					|        os.remove(lockfile)
+					|# END $project.name-patched: stop""".stripMargin()
+			def startLine = '            proc = subprocess.Popen(args, **kwargs)'
+			def startLinePatched = """# BEGIN $project.name-patched: start
+					|#$startLine
+					|            repoAddonId = '$repoAddonId'
+					|            serviceRepoAddonId = '$serviceRepoAddonId'
+					|            repoAddonInfoFormat = '''$repoAddonInfoFormat'''
+					|            repoAddonInfo = repoAddonInfoFormat.format(
+					|                name = 'ElementumOrg repository',
+					|                id = repoAddonId,
+					|                dataDir = ELEMENTUMD_HOST + '/repository/$providerName/',
+					|                summary = 'GitHub virtual Add-on repository'
+					|            )
+					|            serviceRepoAddonInfo = repoAddonInfoFormat.format(
+					|                name = 'Elementum Service Repository',
+					|                id = serviceRepoAddonId,
+					|                dataDir = '$repoUrl',
+					|                summary = 'GitHub repository for Elementum Service updates'
+					|            )
+					|            fanartPng = os.path.join(ADDON_PATH, 'fanart.png')
+					|            iconPng = os.path.join(ADDON_PATH, 'icon.png')
+					|            repoAddons = [
+					|                (repoAddonId, repoAddonInfo),
+					|                (serviceRepoAddonId, serviceRepoAddonInfo)
+					|            ]
+					|            for id, info in repoAddons:
+					|                idDir = os.path.join(ADDON_PATH, '..', id)
+					|                infoFile = os.path.join(idDir, 'addon.xml')
+					|                if os.path.exists(infoFile):
+					|                    try:
+					|                        with open(infoFile, 'r') as f:
+					|                            if info == f.read():
+					|                                continue
+					|                    except Exception:
+					|                        pass
+					|                try:
+					|                    shutil.rmtree(idDir, True)
+					|                    os.makedirs(idDir)
+					|                    with open(infoFile, 'w') as f:
+					|                        f.write(info)
+					|                    shutil.copy(fanartPng, os.path.join(idDir, 'fanart.png'))
+					|                    shutil.copy(iconPng, os.path.join(idDir, 'icon.png'))
+					|                except Exception:
+					|                    pass
+					|            dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args[1:])
+					|            dataSuffix = '#' + dataFragment if dataFragment != '' else ''
+					|            xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
+					|            for id in [serviceRepoAddonId]:
+					|                try:
+					|                    from elementum.provider import parse_json
+					|                    detailsJson = '${toGetAddonDetailsJson('%s', ['installed', 'enabled'])}' % id
+					|                    enableJson = '${toSetAddonEnabledJson('%s', true)}' % id
+					|                    addon = parse_json(xbmc.executeJSONRPC(detailsJson)) \\
+					|                        .get('result', {}).get('addon', {})
+					|                    if addon.get('installed', False):
+					|                        if not addon.get('enabled', False):
+					|                            xbmc.executeJSONRPC(enableJson)
+					|                        continue
+					|                    xbmc.executebuiltin('UpdateLocalAddons')
+					|                    xbmc.executebuiltin('InstallAddon(%s)' % id)
+					|                    for attempt in range(10):
+					|                        addon = parse_json(xbmc.executeJSONRPC(detailsJson)) \\
+					|                            .get('result', {}).get('addon', {})
+					|                        if addon.get('installed', False):
+					|                            break
+					|                        time.sleep(1)
+					|                    xbmc.executeJSONRPC(enableJson)
+					|                    xbmc.executebuiltin('UpdateLocalAddons')
+					|                    xbmc.executebuiltin('UpdateAddonRepos')
+					|                except Exception:
+					|                    pass
+					|            return None
+					|# END $project.name-patched: start""".stripMargin()
+			def retryLine = '            notify(getLocalizedString(30116), time=7000)'
+			def retryLinePatched = """# BEGIN $project.name-patched: retry
+					|#$retryLine
+					|            args = []
+					|            if ADDON.getSetting('local_port') != '':
+					|                args.append('-remotePort=' + ADDON.getSetting('local_port'))
+					|            if ADDON.getSetting('remote_host') != '':
+					|                args.append('-localHost=' + ADDON.getSetting('remote_host'))
+					|            if ADDON.getSetting('remote_port') != '':
+					|                args.append('-localPort=' + ADDON.getSetting('remote_port'))
+					|            dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args)
+					|            dataSuffix = '#' + dataFragment if dataFragment != '' else ''
+					|            xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
+					|            notify(getLocalizedString(30116), time = 7000)
+					|# END $project.name-patched: retry""".stripMargin()
+			def infoLine = '        return info'
+			def infoLinePatched = """# BEGIN $project.name-patched: info
+					|#$infoLine
+					|        result = {}
+					|        try:
+					|            if globals().get('$project.name') is None:
+					|                homeDir = translatePath('special://home')
+					|                kodiDataDir = os.path.abspath(os.path.join(homeDir, '..'))
+					|                dataDir = str.replace(kodiDataDir, '$kodiDataDir', '$dataDir', 1)
+					|                dataFile = os.path.join(dataDir, '$project.name')
+					|                with open(dataFile, 'r') as f:
+					|                    globals()['$project.name'] = f.read()
+					|                os.remove(dataFile)
+					|            data, dataReplacement, _ = globals()['$project.name'].split('\\n')
+					|            filesDir = re.sub('$kodiId.*', '$kodiId', translatePath('special://xbmc'), 1)
+					|            for key, value in info.items():
+					|                valueReplacement = str.replace(value, data, dataReplacement, 1)
+					|                result[key] = str.replace(valueReplacement, filesDir, dataReplacement, 1)
+					|        except Exception:
+					|            pass
+					|        return result
+					|# END $project.name-patched: info""".stripMargin()
+			def translateLine = '        return translatePath(*args, **kwargs)'
+			def translateLinePatched = """# BEGIN $project.name-patched: translate
+					|#$translateLine
+					|        data, dataReplacement, _ = globals()['$project.name'].split('\\n')
+					|        filesDir = re.sub('$kodiId.*', '$kodiId', translatePath('special://xbmc'), 1)
+					|        result = translatePath(*args, **kwargs)
+					|        resultReplacement = str.replace(result, data, dataReplacement, 1)
+					|        return str.replace(resultReplacement, filesDir, dataReplacement, 1)
+					|# END $project.name-patched: translate""".stripMargin()
+			def patches = [
+					(file("$addonIdDir/resources/site-packages/elementum/daemon.py"))    : [
+							[versionLine, versionLinePatched],
+							[binaryLine, binaryLinePatched],
+							[stopLine, stopLinePatched],
+							[startLine, startLinePatched]
+					],
+					(file("$addonIdDir/resources/site-packages/elementum/navigation.py")): [
+							[retryLine, retryLinePatched]
+					],
+					(file("$addonIdDir/resources/site-packages/elementum/rpc.py"))       : [
+							[infoLine, infoLinePatched],
+							[translateLine, translateLinePatched]
+					]
+			]
+			patches.forEach { f, patch ->
+				def tmp = file "${f.path}.tmp"
+				if (!f.renameTo(tmp)) {
+					throw new GradleException(tmp.path)
+				}
+				copy {
+					from f.parent
+					into f.parent
+					include tmp.name
+					rename { f.name }
+					filter { line ->
+						def index = patch.findIndexOf { it[0] == line }
+						index < 0 ? line : patch.removeAt(index)[1]
+					}
+				}
+				if (!patch.isEmpty()) {
+					def missing = patch.collect { it.join '\n\n' } join '\n\n\n\n'
+					throw new GradleException("$f.path missing:\n$missing")
+				}
+				delete tmp
+			}
+		}
+	}
+
+	def genMainAssets = tasks.register('genMainAssets') {
+		group = project.name
+		inputs.dir addonDir
+		outputs.dir srcMainAssetsGen
+		dependsOn patchAddon
+
+		doFirst {
+			delete srcMainAssetsGen
+		}
+
+		doLast {
+			copy {
+				from addonDir
+				into srcMainAssetsGen
+				exclude '**/.*', "$addonId/resources/bin"
+			}
+		}
+	}
+
+	def genMainJniLibs = tasks.register('genMainJniLibs') {
+		group = project.name
+		inputs.dir addonDir
+		if (isAddonBinLib) {
+			outputs.dirs srcMainAbiHeadsGen, srcMainJniLibsGen
+		} else {
+			outputs.dir srcMainJniLibsGen
+		}
+		dependsOn patchAddon
+
+		doFirst {
+			delete srcMainAbiHeadsGen, srcMainJniLibsGen
+		}
+
+		doLast {
+			abiBins.forEach { abi, bin ->
+				if (isAddonBinLib) {
+					copy {
+						from "$addonBinDir/$bin"
+						into "$srcMainAbiHeadsGen/$abi"
+						include '*.h'
+					}
+				}
+				copy {
+					from "$addonBinDir/$bin"
+					into "$srcMainJniLibsGen/$abi"
+					if (isAddonBinLib) {
+						include '*.so'
+					} else {
+						include 'elementum', 'lib*.so'
+					}
+					rename { it ==~ /^lib.*\.so$/ ? it : "lib${it}.so" }
+				}
+			}
+		}
+	}
+
+	tasks.withType(JavaCompile).configureEach {
+		dependsOn genMainAssets, genMainJniLibs
+	}
+
+	tasks.withType(MergeSourceSetFolders).configureEach {
+		mustRunAfter genMainAssets, genMainJniLibs
+	}
+
+	def androidClientZip = file "$buildDir.path/$addonId-${addonVersion}.android_client.zip"
+
+	def zipAndroidClient = tasks.register('zipAndroidClient', Zip) {
+		group = project.name
+		inputs.dir addonDir
+		outputs.file androidClientZip
+		dependsOn patchAddon
+		from addonDir
+		destinationDirectory = androidClientZip.parentFile
+		archiveFileName = androidClientZip.name
+		exclude '**/.*', "$addonId/resources/bin"
+
+		doFirst {
+			delete androidClientZip
+		}
+	}
+
+	tasks.register('pushAndroidClient') {
+		group = project.name
+		dependsOn zipAndroidClient
+		def destinationDir = "/sdcard$dataDir/"
+
+		doFirst {
+			exec {
+				executable = android.adbExecutable
+				args 'shell', 'rm', '-f', "$destinationDir$androidClientZip.name"
+			}
+		}
+
+		doLast {
+			exec {
+				executable = android.adbExecutable
+				args 'push', androidClientZip.path, destinationDir
+			}
+		}
+	}
+
+	tasks.register('genPages') {
+		group = project.name
+		dependsOn tasks.named('assembleRelease'), zipAndroidClient
+		def pagesDir = "$rootDir.path/docs"
+
+		doFirst {
+			delete pagesDir
+		}
+
+		doLast {
+			def gitignore = file "$rootDir.path/.gitignore"
+			def gitignorePages = "!${file(pagesDir).name}/**"
+			if (gitignore.isFile() && !gitignore.any { it == gitignorePages }) {
+				gitignore.withWriterAppend { it.writeLine gitignorePages }
+			}
+			copy {
+				from "$buildDir.path/outputs/apk/release"
+				into pagesDir
+				include '*.apk'
+			}
+			copy {
+				from androidClientZip
+				into pagesDir
+			}
+			def repoZip = file "$pagesDir/$addonId/$addonId-${addonVersion}.zip"
+			copy {
+				from androidClientZip
+				into repoZip.parentFile
+				rename { repoZip.name }
+			}
+			copy {
+				from "$addonIdDir/icon.png"
+				into "$pagesDir/$addonId"
+			}
+			def repoInfo = file "$pagesDir/$addonId/addons.xml"
+			repoInfo.withWriter {
+				XmlUtil.serialize((Writable) new StreamingMarkupBuilder().bind {
+					'addons' {
+						mkp.yield new XmlSlurper().parse(file("$addonIdDir/addon.xml"))
+					}
+				}, it)
+			}
+			def repoInfoMd5 = file "$pagesDir/$addonId/addons.xml.md5"
+			repoInfoMd5.withWriter {
+				it.write repoInfo.text.md5()
+			}
+			def htmlPage = file "$pagesDir/index.html"
+			htmlPage.withWriter {
+				def builder = new StreamingMarkupBuilder()
+				builder.setUseDoubleQuotes true
+				it << '<!DOCTYPE html>' << builder.bind {
+					'html'('lang': 'en', 'style': 'color-scheme: light dark;') {
+
+						'head' {
+
+							'meta'('charset': 'utf-8')
+
+							'title'(rootProject.name)
+						}
+
+						'body' {
+
+							'table' {
+								file(pagesDir).listFiles((FileFilter) { it.isFile() && it != htmlPage }).sort().each {
+									def name = XmlUtil.escapeXml it.name
+									def date = new Date(it.lastModified()).format 'yyyy-MM-dd HH:mm'
+									def size = "${it.length()}B"
+
+									'tr' {
+
+										'td' { 'a'('href': name, name) }
+
+										'td'(date)
+
+										'td'('style': 'text-align: right;', size)
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

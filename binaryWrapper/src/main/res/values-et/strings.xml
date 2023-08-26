@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"Luba"</string>
+	<string name="allow_cmd_allow_msg">"Peate seda tegema käsitsi"</string>
+	<string name="close_app">"Sule rakendus"</string>
+	<string name="deny">"Keela"</string>
+	<string name="stop">"Peata"</string>
+</resources>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"Leisti"</string>
+	<string name="allow_cmd_allow_msg">"Turite tai padaryti rankiniu būdu"</string>
+	<string name="close_app">"Uždaryti programą"</string>
+	<string name="deny">"Atmesti"</string>
+	<string name="stop">"Stabdyti"</string>
+</resources>

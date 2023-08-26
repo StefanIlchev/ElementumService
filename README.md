@@ -37,14 +37,14 @@ Prepare an [Elementum](https://github.com/elgatito/plugin.video.elementum) addon
 Assuming you already have [Android Studio](https://developer.android.com/studio) setup, execute the following command in a terminal:
 
 ```bat
-gradlew clean assembleRelease zipAndroidClient -DaddonZip="path/to/plugin.video.elementum-<version>.zip"
+gradlew clean assembleRelease zipAndroidClient -p ElementumService -Delementum.addon.zip="path/to/plugin.video.elementum-<version>.zip"
 ```
 
-and when it completes successfully look for the following files in the newly created `build` folder:
+and when it completes successfully look for the following files in the newly created `ElementumService/build` folder:
 
-1. `plugin.video.elementum-<version>.android_client.zip` found directly in the `build` folder is the addon `.zip` you provided with its binaries removed and scripts modified to work with the service app;
+1. `plugin.video.elementum-<version>.android_client.zip` found directly in the `ElementumService/build` folder is the addon `.zip` you provided with its binaries removed and scripts modified to work with the service app;
 
-2. `ElementumService-<ABI>-release-<version>.apk` found in the `build/outputs/apk/release` subfolder are one or more `.apk` files containing the binaries from the addon `.zip` you provided.
+2. `ElementumService-<ABI>-release-<version>.apk` found in the `ElementumService/build/outputs/apk/release` subfolder are one or more `.apk` files containing the binaries from the addon `.zip` you provided.
 
 ## Notes
 

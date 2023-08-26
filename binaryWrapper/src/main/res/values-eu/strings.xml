@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"Eman baimena"</string>
+	<string name="allow_cmd_allow_msg">"Hau eskuz egin behar duzu"</string>
+	<string name="close_app">"Itxi aplikazioa"</string>
+	<string name="deny">"Ukatu"</string>
+	<string name="stop">"Gelditu"</string>
+</resources>

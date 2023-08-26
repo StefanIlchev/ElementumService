@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"允许"</string>
+	<string name="allow_cmd_allow_msg">"您必须手动执行此操作"</string>
+	<string name="close_app">"关闭应用"</string>
+	<string name="deny">"拒绝"</string>
+	<string name="stop">"停止"</string>
+</resources>

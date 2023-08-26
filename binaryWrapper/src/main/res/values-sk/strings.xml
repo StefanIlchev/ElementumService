@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"Povoliť"</string>
+	<string name="allow_cmd_allow_msg">"Musíte to urobiť ručne"</string>
+	<string name="close_app">"Zavrieť aplikáciu"</string>
+	<string name="deny">"Zamietnuť"</string>
+	<string name="stop">"Zastaviť"</string>
+</resources>

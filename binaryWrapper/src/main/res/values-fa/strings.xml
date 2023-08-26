@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"ارزیابی‌شده"</string>
+	<string name="allow_cmd_allow_msg">"شما باید این کار را به صورت دستی انجام دهید"</string>
+	<string name="close_app">"بستن برنامه"</string>
+	<string name="deny">"مجاز نبودن"</string>
+	<string name="stop">"توقف"</string>
+</resources>

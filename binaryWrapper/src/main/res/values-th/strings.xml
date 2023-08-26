@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"อนุญาต"</string>
+	<string name="allow_cmd_allow_msg">"คุณต้องทำสิ่งนี้ด้วยตนเอง"</string>
+	<string name="close_app">"ปิดแอป"</string>
+	<string name="deny">"ปฏิเสธ"</string>
+	<string name="stop">"หยุด"</string>
+</resources>

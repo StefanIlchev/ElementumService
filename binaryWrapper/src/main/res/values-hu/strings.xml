@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"Engedélyezés"</string>
+	<string name="allow_cmd_allow_msg">"Ezt manuálisan kell megtennie"</string>
+	<string name="close_app">"Alkalmazás bezárása"</string>
+	<string name="deny">"Elutasítás"</string>
+	<string name="stop">"Leállítás"</string>
+</resources>

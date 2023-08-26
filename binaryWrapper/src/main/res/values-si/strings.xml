@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"අවසර දෙන්න"</string>
+	<string name="allow_cmd_allow_msg">"ඔබ මෙය අතින් කළ යුතුය"</string>
+	<string name="close_app">"යෙදුම වසන්න"</string>
+	<string name="deny">"ප්‍රතික්ෂේප කරන්න"</string>
+	<string name="stop">"නතර කරන්න"</string>
+</resources>

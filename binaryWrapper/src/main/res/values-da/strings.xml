@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"Tillad"</string>
+	<string name="allow_cmd_allow_msg">"Du skal gøre dette manuelt"</string>
+	<string name="close_app">"Luk app"</string>
+	<string name="deny">"Afvis"</string>
+	<string name="stop">"Stop"</string>
+</resources>

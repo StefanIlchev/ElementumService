@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"Permet"</string>
+	<string name="allow_cmd_allow_msg">"Ho heu de fer manualment"</string>
+	<string name="close_app">"Tanca l\'aplicació"</string>
+	<string name="deny">"Denega"</string>
+	<string name="stop">"Atura"</string>
+</resources>

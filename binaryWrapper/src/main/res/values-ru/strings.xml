@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"Разрешить"</string>
+	<string name="allow_cmd_allow_msg">"Вам следует сделать это вручную"</string>
+	<string name="close_app">"Закрыть приложение"</string>
+	<string name="deny">"Отклонить"</string>
+	<string name="stop">"Остановить"</string>
+</resources>

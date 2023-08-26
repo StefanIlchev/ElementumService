@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"כן, זה בסדר"</string>
+	<string name="allow_cmd_allow_msg">"אתה צריך לעשות זאת באופן ידני"</string>
+	<string name="close_app">"סגירת האפליקציה"</string>
+	<string name="deny">"עדיף שלא"</string>
+	<string name="stop">"הפסקה"</string>
+</resources>

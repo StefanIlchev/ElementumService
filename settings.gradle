@@ -12,19 +12,35 @@ pluginManagement {
 
 		// https://mvnrepository.com/artifact/com.android.tools.build/gradle?repo=google
 		id 'com.android.application' version '8.1.1'
+		id 'com.android.library' version '8.1.1'
 
 		// https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib
 		id 'org.jetbrains.kotlin.android' version '1.9.10'
 	}
 }
 
-def localProperties = new Properties()
-def localPropertiesFile = file 'local.properties'
-if (localPropertiesFile.isFile()) {
-	localPropertiesFile.withReader { localProperties.load it }
+dependencyResolutionManagement {
+
+	versionCatalogs {
+
+		libs {
+
+			// https://developer.android.com/tools/releases/build-tools
+			version 'buildToolsVersion', '33.0.2'
+
+			// https://developer.android.com/tools/releases/platforms
+			version 'compileSdk', '33'
+			version 'minSdk', '26'
+
+			// https://developer.android.com/ndk/downloads
+			version 'ndkVersion', '25.2.9519653'
+
+			// https://developer.android.com/ndk/guides/cmake
+			version 'cmake', '3.22.1'
+		}
+	}
 }
-def binaryWrapperDir = localProperties.getProperty('binaryWrapperDir')
-if (binaryWrapperDir != null) {
-	include ':binaryWrapper'
-	project(':binaryWrapper').projectDir = file binaryWrapperDir
-}
+
+include ':binaryWrapper',
+		':ElementumService',
+		':Lt2httpService'

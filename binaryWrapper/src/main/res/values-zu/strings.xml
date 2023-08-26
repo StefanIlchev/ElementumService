@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"Vumela"</string>
+	<string name="allow_cmd_allow_msg">"Kufanele ukwenze lokhu ngesandla"</string>
+	<string name="close_app">"Vala uhlelo lokusebenza"</string>
+	<string name="deny">"Yala"</string>
+	<string name="stop">"Misa"</string>
+</resources>

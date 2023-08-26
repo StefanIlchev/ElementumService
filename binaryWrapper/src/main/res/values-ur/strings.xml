@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"اجازت دیں"</string>
+	<string name="allow_cmd_allow_msg">"آپ کو یہ دستی طور پر کرنا ہوگا۔"</string>
+	<string name="close_app">"ایپ بند کریں"</string>
+	<string name="deny">"مسترد کریں"</string>
+	<string name="stop">"روکیں"</string>
+</resources>

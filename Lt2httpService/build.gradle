@@ -1,0 +1,386 @@
+import com.android.build.gradle.tasks.MergeSourceSetFolders
+import groovy.xml.StreamingMarkupBuilder
+import groovy.xml.XmlSlurper
+import groovy.xml.XmlUtil
+
+plugins {
+	id 'com.android.application'
+	id 'org.jetbrains.kotlin.android'
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = file "$rootDir.path/local.properties"
+if (localPropertiesFile.isFile()) {
+	localPropertiesFile.withReader { localProperties.load it }
+}
+def buildDir = layout.buildDirectory.asFile.get()
+def srcGen = "$buildDir.path/src"
+def srcMainGen = "$srcGen/main"
+def srcMainAssetsGen = "$srcMainGen/assets"
+def srcMainJniLibsGen = "$srcMainGen/jniLibs"
+def addonId = 'service.lt2http'
+def addonZip = System.getProperty('lt2http.addon.zip') ?: localProperties.getProperty('lt2http.addon.zip')
+def addonDir = addonZip?.with { "$buildDir.path/${file(it).name - ~/\.[^.]+$/}" }
+def addonIdDir = addonDir?.with { "$it/$addonId" }
+def binariesZip = System.getProperty('lt2http.binaries.zip') ?: localProperties.getProperty('lt2http.binaries.zip')
+def binariesDir = binariesZip?.with { "$buildDir.path/${file(it).name - ~/\.[^.]+$/}" }
+def binariesIdDir = binariesDir?.with { "$it/${file(it).name}" }
+def abiBins = [
+		'arm64-v8a'  : 'android-arm64',
+		'armeabi-v7a': 'android-arm',
+		'x86'        : 'android-x86',
+		'x86_64'     : 'android-x64'
+]
+def kodiId = 'org.xbmc.kodi'
+def dataDir = '/Download'
+def kodiDataDir = "/Android/data/$kodiId/files"
+
+android {
+	buildToolsVersion = libs.versions.buildToolsVersion.get()
+	compileSdk = libs.versions.compileSdk.get() as int
+	namespace = 'service.lt2http.android'
+
+	compileOptions {
+		sourceCompatibility = JavaVersion.VERSION_17
+		targetCompatibility = JavaVersion.VERSION_17
+	}
+
+	defaultConfig {
+		minSdk = libs.versions.minSdk.get() as int
+		targetSdk = compileSdk
+		versionCode = localProperties.getProperty('lt2http.version.code') as Integer ?: 22
+		versionName = localProperties.getProperty('lt2http.version.name') ?: "$versionCode"
+		manifestPlaceholders = [
+				'mainIntentAction': 'android.intent.action.MAIN'
+		]
+		buildConfigField 'String', 'ADDON_ID', "\"$addonId\""
+		buildConfigField 'String', 'DATA_DIR', "\"$dataDir\""
+		buildConfigField 'String', 'KODI_DATA_DIR', "\"$kodiDataDir\""
+		buildConfigField 'String', 'KODI_ID', "\"$kodiId\""
+		buildConfigField 'String', 'PROJECT_NAME', "\"$project.name\""
+	}
+
+	applicationVariants.configureEach { variant ->
+		variant.outputs.each {
+			def fileName = it.outputFileName
+			def name = fileName - ~/\.[^.]+$/
+			it.outputFileName = "$name-$variant.versionName${fileName.substring name.length()}"
+		}
+	}
+
+	signingConfigs {
+
+		debug {
+			storeFile = file(localProperties.getProperty('store.file') ?: "$rootDir.path/debug.keystore")
+			storePassword = localProperties.getProperty('store.password') ?: 'android'
+			keyAlias = localProperties.getProperty('key.alias') ?: 'androiddebugkey'
+			keyPassword = localProperties.getProperty('key.password') ?: 'android'
+		}
+	}
+
+	buildTypes {
+
+		release {
+			minifyEnabled = true
+			shrinkResources = true
+			proguardFiles += getDefaultProguardFile('proguard-android-optimize.txt')
+			signingConfig = signingConfigs.debug
+		}
+	}
+
+	sourceSets {
+
+		main {
+
+			assets {
+				srcDir srcMainAssetsGen
+			}
+
+			jniLibs {
+				srcDir srcMainJniLibsGen
+			}
+		}
+	}
+
+	splits {
+
+		abi {
+			enable = true
+			universalApk = true
+		}
+	}
+
+	packagingOptions {
+
+		jniLibs {
+			keepDebugSymbols += '**/lib*.so'
+			useLegacyPackaging = true
+		}
+	}
+}
+
+dependencies {
+	implementation project(':binaryWrapper')
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.deprecation = true
+}
+
+def addonVersion = android.defaultConfig.versionName
+def mainIntentAction = android.defaultConfig.manifestPlaceholders['mainIntentAction']
+
+tasks.register('startApplication') {
+	group = project.name
+
+	doLast {
+		exec {
+			executable = android.adbExecutable
+			args 'shell', 'am', 'start', '-a', mainIntentAction, '-d', "version:$addonVersion", android.namespace
+		}
+	}
+}
+
+tasks.register('changeDataLocation') {
+	group = project.name
+
+	doLast {
+		exec {
+			executable = android.adbExecutable
+			args 'shell', 'echo', "xbmc.data=/sdcard$kodiDataDir/", '>/sdcard/xbmc_env.properties'
+		}
+	}
+}
+
+if (addonIdDir != null && binariesIdDir != null) {
+
+	def patchAddon = tasks.register('patchAddon') {
+		group = project.name
+		inputs.files addonZip, binariesZip
+		outputs.dirs addonDir, binariesDir
+
+		doFirst {
+			delete addonDir
+			delete binariesDir
+		}
+
+		doLast {
+			copy {
+				from zipTree(addonZip)
+				into addonDir
+			}
+			copy {
+				from zipTree(binariesZip)
+				into binariesDir
+			}
+			def addonFile = file "$addonIdDir/addon.xml"
+			def addonInfo = new XmlSlurper().parse addonFile
+			addonInfo.@'version' = addonVersion
+			addonFile.withWriter {
+				XmlUtil.serialize((Writable) new StreamingMarkupBuilder().bind {
+					mkp.yield addonInfo
+				}, it)
+			}
+			def stopArgs = "$android.namespace, $mainIntentAction, , stop:$addonVersion"
+			def startArgs = "$android.namespace, $mainIntentAction, , version:$addonVersion%s"
+			def configLine = 'config_path = os.path.join(translatePath("special://temp/"), "lt2http-config.json")'
+			def configLinePatched = """# BEGIN $project.name-patched: config
+					|#$configLine
+					|config_path = translatePath('special://lt2http-config.json')
+					|# END $project.name-patched: config""".stripMargin()
+			def versionLine = '    installed_version = read_current_version(binary_dir)'
+			def versionLinePatched = """# BEGIN $project.name-patched: version
+					|#$versionLine
+					|    installed_version = ADDON_VERSION
+					|    binary_dir = ADDON_PATH
+					|    dest_binary_dir = binary_dir
+					|    binary_path = os.path.join(ADDON_PATH, 'fanart.png')
+					|    dest_binary_path = binary_path
+					|# END $project.name-patched: version""".stripMargin()
+			def binaryLine = '    return dest_binary_dir, ensure_exec_perms(dest_binary_path)'
+			def binaryLinePatched = """# BEGIN $project.name-patched: binary
+					|#$binaryLine
+					|    return 'N/A', 'N/A'
+					|# END $project.name-patched: binary""".stripMargin()
+			def stopLine = '    lockfile = os.path.join(ADDON_PATH, ".lockfile")'
+			def stopLinePatched = """# BEGIN $project.name-patched: stop
+					|#$stopLine
+					|    xbmc.executebuiltin('StartAndroidActivity($stopArgs)')
+					|    lockfile = os.path.join(ADDON_PATH, '.lockfile')
+					|    if os.path.exists(lockfile):
+					|        os.remove(lockfile)
+					|# END $project.name-patched: stop""".stripMargin()
+			def startLine = '        return subprocess.Popen(args, **kwargs)'
+			def startLinePatched = """# BEGIN $project.name-patched: start
+					|#$startLine
+					|        dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args[1:])
+					|        dataSuffix = '#' + dataFragment if dataFragment != '' else ''
+					|        xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
+					|# END $project.name-patched: start""".stripMargin()
+			def retryLine = '            notify(getLocalizedString(30116), time=7000)'
+			def retryLinePatched = """# BEGIN $project.name-patched: retry
+					|#$retryLine
+					|            from lt2http.util import translatePath
+					|            config_path = translatePath('special://lt2http-config.json')
+					|            args = ['--config=' + config_path]
+					|            dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args)
+					|            dataSuffix = '#' + dataFragment if dataFragment != '' else ''
+					|            xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
+					|            notify(getLocalizedString(30116), time = 7000)
+					|# END $project.name-patched: retry""".stripMargin()
+			def translateLine = '    return translatePath(path)'
+			def translateLinePatched = """# BEGIN $project.name-patched: translate
+					|#$translateLine
+					|    if path == 'special://lt2http-config.json':
+					|        homeDir = translatePath('special://home')
+					|        kodiDataDir = os.path.abspath(os.path.join(homeDir, '..'))
+					|        dataDir = str.replace(kodiDataDir, '$kodiDataDir', '$dataDir', 1)
+					|        return os.path.join(dataDir, 'lt2http-config.json')
+					|    try:
+					|        if globals().get('$project.name') is None:
+					|            import time
+					|            xbmc.executebuiltin('StartAndroidActivity($startArgs)' % '')
+					|            homeDir = translatePath('special://home')
+					|            kodiDataDir = os.path.abspath(os.path.join(homeDir, '..'))
+					|            dataDir = str.replace(kodiDataDir, '$kodiDataDir', '$dataDir', 1)
+					|            dataFile = os.path.join(dataDir, '$project.name')
+					|            for i in range(5):
+					|                if os.path.exists(dataFile):
+					|                    break
+					|                time.sleep(1)
+					|            with open(dataFile, 'r') as f:
+					|                globals()['$project.name'] = f.read()
+					|            os.remove(dataFile)
+					|        data, dataReplacement, _ = globals()['$project.name'].split('\\n')
+					|        filesDir = re.sub('$kodiId.*', '$kodiId', translatePath('special://xbmc'), 1)
+					|        result = translatePath(path)
+					|        resultReplacement = str.replace(result, data, dataReplacement, 1)
+					|        return str.replace(resultReplacement, filesDir, dataReplacement, 1)
+					|    except Exception:
+					|        pass
+					|    return None
+					|# END $project.name-patched: translate""".stripMargin()
+			def patches = [
+					(file("$addonIdDir/resources/site-packages/lt2http/daemon.py"))    : [
+							[configLine, configLinePatched],
+							[versionLine, versionLinePatched],
+							[binaryLine, binaryLinePatched],
+							[stopLine, stopLinePatched],
+							[startLine, startLinePatched]
+					],
+					(file("$addonIdDir/resources/site-packages/lt2http/navigation.py")): [
+							[retryLine, retryLinePatched]
+					],
+					(file("$addonIdDir/resources/site-packages/lt2http/util.py"))      : [
+							[translateLine, translateLinePatched]
+					]
+			]
+			patches.forEach { f, patch ->
+				def tmp = file "${f.path}.tmp"
+				if (!f.renameTo(tmp)) {
+					throw new GradleException(tmp.path)
+				}
+				copy {
+					from f.parent
+					into f.parent
+					include tmp.name
+					rename { f.name }
+					filter { line ->
+						def index = patch.findIndexOf { it[0] == line }
+						index < 0 ? line : patch.removeAt(index)[1]
+					}
+				}
+				if (!patch.isEmpty()) {
+					def missing = patch.collect { it.join '\n\n' } join '\n\n\n\n'
+					throw new GradleException("$f.path missing:\n$missing")
+				}
+				delete tmp
+			}
+		}
+	}
+
+	def genMainAssets = tasks.register('genMainAssets') {
+		group = project.name
+		inputs.dir addonDir
+		outputs.dir srcMainAssetsGen
+		dependsOn patchAddon
+
+		doFirst {
+			delete srcMainAssetsGen
+		}
+
+		doLast {
+			copy {
+				from addonDir
+				into srcMainAssetsGen
+				exclude '**/.*'
+			}
+		}
+	}
+
+	def genMainJniLibs = tasks.register('genMainJniLibs') {
+		group = project.name
+		inputs.dir binariesDir
+		outputs.dir srcMainJniLibsGen
+		dependsOn patchAddon
+
+		doFirst {
+			delete srcMainJniLibsGen
+		}
+
+		doLast {
+			abiBins.forEach { abi, bin ->
+				copy {
+					from "$binariesIdDir/$bin"
+					into "$srcMainJniLibsGen/$abi"
+					rename { it ==~ /^lib.*\.so$/ ? it : "lib${it}.so" }
+				}
+			}
+		}
+	}
+
+	tasks.withType(JavaCompile).configureEach {
+		dependsOn genMainAssets, genMainJniLibs
+	}
+
+	tasks.withType(MergeSourceSetFolders).configureEach {
+		mustRunAfter genMainAssets, genMainJniLibs
+	}
+
+	def androidClientZip = file "$buildDir.path/$addonId-${addonVersion}.android_client.zip"
+
+	def zipAndroidClient = tasks.register('zipAndroidClient', Zip) {
+		group = project.name
+		inputs.dir addonDir
+		outputs.file androidClientZip
+		dependsOn patchAddon
+		from addonDir
+		destinationDirectory = androidClientZip.parentFile
+		archiveFileName = androidClientZip.name
+		exclude '**/.*'
+
+		doFirst {
+			delete androidClientZip
+		}
+	}
+
+	tasks.register('pushAndroidClient') {
+		group = project.name
+		dependsOn zipAndroidClient
+		def destinationDir = "/sdcard$dataDir/"
+
+		doFirst {
+			exec {
+				executable = android.adbExecutable
+				args 'shell', 'rm', '-f', "$destinationDir$androidClientZip.name"
+			}
+		}
+
+		doLast {
+			exec {
+				executable = android.adbExecutable
+				args 'push', androidClientZip.path, destinationDir
+			}
+		}
+	}
+}

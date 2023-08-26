@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"ፍቀድ"</string>
+	<string name="allow_cmd_allow_msg">"ይህንን በእጅዎ ማድረግ አለብዎት"</string>
+	<string name="close_app">"መተግበሪያን ዝጋ"</string>
+	<string name="deny">"ያስተባብሉ"</string>
+	<string name="stop">"አቁም"</string>
+</resources>

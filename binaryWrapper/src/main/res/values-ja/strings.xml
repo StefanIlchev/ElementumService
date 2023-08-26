@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"許可"</string>
+	<string name="allow_cmd_allow_msg">"これは手動で行う必要があります"</string>
+	<string name="close_app">"アプリを閉じる"</string>
+	<string name="deny">"拒否"</string>
+	<string name="stop">"停止"</string>
+</resources>

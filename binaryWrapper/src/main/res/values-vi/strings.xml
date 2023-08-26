@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"Cho phép"</string>
+	<string name="allow_cmd_allow_msg">"Bạn phải thao tác việc này bằng tay rồi"</string>
+	<string name="close_app">"Đóng ứng dụng"</string>
+	<string name="deny">"Từ chối"</string>
+	<string name="stop">"Ngừng"</string>
+</resources>

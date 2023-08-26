@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"허용"</string>
+	<string name="allow_cmd_allow_msg">"이 작업을 수동으로 수행해야 합니다."</string>
+	<string name="close_app">"앱 닫기"</string>
+	<string name="deny">"거부"</string>
+	<string name="stop">"중지"</string>
+</resources>

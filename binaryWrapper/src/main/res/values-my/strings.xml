@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"ခွင့်ပြုရန်"</string>
+	<string name="allow_cmd_allow_msg">"ဒါကို သင်ကိုယ်တိုင်လုပ်ရမယ်။"</string>
+	<string name="close_app">"အက်ပ်ကိုပိတ်ပါ"</string>
+	<string name="deny">"ငြင်းပယ်ရန်"</string>
+	<string name="stop">"ရပ်ရန်"</string>
+</resources>

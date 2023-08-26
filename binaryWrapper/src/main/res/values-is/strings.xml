@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"Leyfa"</string>
+	<string name="allow_cmd_allow_msg">"Þú verður að gera þetta handvirkt"</string>
+	<string name="close_app">"Loka forriti"</string>
+	<string name="deny">"Hafna"</string>
+	<string name="stop">"Stöðva"</string>
+</resources>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"ਆਗਿਆ ਦਿਓ"</string>
+	<string name="allow_cmd_allow_msg">"ਤੁਹਾਨੂੰ ਇਹ ਹੱਥੀਂ ਕਰਨਾ ਪਵੇਗਾ"</string>
+	<string name="close_app">"ਐਪ ਬੰਦ ਕਰੋ"</string>
+	<string name="deny">"ਅਸਵੀਕਾਰ ਕਰੋ"</string>
+	<string name="stop">"ਰੋਕੋ"</string>
+</resources>

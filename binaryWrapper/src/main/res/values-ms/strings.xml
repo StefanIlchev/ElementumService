@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"Benarkan"</string>
+	<string name="allow_cmd_allow_msg">"Anda perlu melakukan ini secara manual"</string>
+	<string name="close_app">"Tutup apl"</string>
+	<string name="deny">"Nafi"</string>
+	<string name="stop">"Berhenti"</string>
+</resources>

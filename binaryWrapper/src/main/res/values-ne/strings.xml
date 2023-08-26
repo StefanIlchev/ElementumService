@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"अनुमति दिनुहोस्"</string>
+	<string name="allow_cmd_allow_msg">"तपाईंले यो म्यानुअल रूपमा गर्नुपर्छ"</string>
+	<string name="close_app">"एप बन्द गर्नुहोस्"</string>
+	<string name="deny">"अस्वीकार गर्नुहोस्"</string>
+	<string name="stop">"रोक्नुहोस्"</string>
+</resources>

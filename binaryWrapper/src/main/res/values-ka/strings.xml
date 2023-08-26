@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"უფლების მიცემა"</string>
+	<string name="allow_cmd_allow_msg">"თქვენ უნდა გააკეთოთ ეს ხელით"</string>
+	<string name="close_app">"აპის დახურვა"</string>
+	<string name="deny">"აკრძალვა"</string>
+	<string name="stop">"შეწყვეტა"</string>
+</resources>

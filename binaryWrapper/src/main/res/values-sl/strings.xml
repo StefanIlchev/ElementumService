@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"Dovoli"</string>
+	<string name="allow_cmd_allow_msg">"To morate storiti ročno"</string>
+	<string name="close_app">"Zapri aplikacijo"</string>
+	<string name="deny">"Zavrni"</string>
+	<string name="stop">"Ustavi"</string>
+</resources>

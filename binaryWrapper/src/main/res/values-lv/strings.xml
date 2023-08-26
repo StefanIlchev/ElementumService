@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"Atļaut"</string>
+	<string name="allow_cmd_allow_msg">"Jums tas jādara manuāli"</string>
+	<string name="close_app">"Aizvērt lietotni"</string>
+	<string name="deny">"Noraidīt"</string>
+	<string name="stop">"Apturēt"</string>
+</resources>

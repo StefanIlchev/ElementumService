@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="allow">"ಅನುಮತಿಸಿ"</string>
+	<string name="allow_cmd_allow_msg">"ನೀವು ಇದನ್ನು ಕೈಯಾರೆ ಮಾಡಬೇಕು"</string>
+	<string name="close_app">"ಅಪ್ಲಿಕೇಶನ್ ಅನ್ನು ಮುಚ್ಚಿ"</string>
+	<string name="deny">"ನಿರಾಕರಿಸಿ"</string>
+	<string name="stop">"ನಿಲ್ಲಿಸಿ"</string>
+</resources>
