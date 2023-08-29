@@ -6,4 +6,16 @@ allprojects {
 		mavenLocal()
 		maven { url 'https://jitpack.io' }
 	}
+
+	ext {
+		localProperties = new Properties()
+		def localPropertiesFile = file "$rootDir.path/local.properties"
+		if (localPropertiesFile.isFile()) {
+			localPropertiesFile.withReader { localProperties.load it }
+		}
+	}
+
+	tasks.withType(JavaCompile).configureEach {
+		options.deprecation = true
+	}
 }

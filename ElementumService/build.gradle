@@ -11,11 +11,6 @@ plugins {
 	id 'org.jetbrains.kotlin.android'
 }
 
-def localProperties = new Properties()
-def localPropertiesFile = file "$rootDir.path/local.properties"
-if (localPropertiesFile.isFile()) {
-	localPropertiesFile.withReader { localProperties.load it }
-}
 def buildDir = layout.buildDirectory.asFile.get()
 def srcGen = "$buildDir.path/src"
 def srcMainGen = "$srcGen/main"
@@ -33,7 +28,7 @@ def abiBins = [
 		'x86'        : 'android_x86',
 		'x86_64'     : 'android_x64'
 ]
-def isAddonBinLib = localProperties.getProperty('is.addon.bin.lib') as Boolean ?: addonZip?.with {
+def isAddonBinLib = localProperties.getProperty('is.elementum.addon.bin.lib') as Boolean ?: addonZip?.with {
 	new ZipFile(it)
 }?.withCloseable {
 	abiBins.any { abi, bin ->
@@ -166,10 +161,6 @@ static String toGetAddonDetailsJson(addonId, properties) {
 
 static String toSetAddonEnabledJson(addonId, enabled) {
 	toMethodJson('Addons.SetAddonEnabled', ['addonid': addonId, 'enabled': enabled])
-}
-
-tasks.withType(JavaCompile).configureEach {
-	options.deprecation = true
 }
 
 def addonVersion = android.defaultConfig.versionName

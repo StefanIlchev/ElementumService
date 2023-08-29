@@ -8,11 +8,6 @@ plugins {
 	id 'org.jetbrains.kotlin.android'
 }
 
-def localProperties = new Properties()
-def localPropertiesFile = file "$rootDir.path/local.properties"
-if (localPropertiesFile.isFile()) {
-	localPropertiesFile.withReader { localProperties.load it }
-}
 def buildDir = layout.buildDirectory.asFile.get()
 def srcGen = "$buildDir.path/src"
 def srcMainGen = "$srcGen/main"
@@ -121,10 +116,6 @@ android {
 
 dependencies {
 	implementation project(':binaryWrapper')
-}
-
-tasks.withType(JavaCompile).configureEach {
-	options.deprecation = true
 }
 
 def addonVersion = android.defaultConfig.versionName
