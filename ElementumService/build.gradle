@@ -214,9 +214,9 @@ if (addonBinDir != null) {
 				'import'('addon': serviceRepoAddonId, 'optional': 'true')
 			}
 			addonFile.withWriter {
-				XmlUtil.serialize((Writable) new StreamingMarkupBuilder().bind {
+				XmlUtil.serialize(new StreamingMarkupBuilder().bind {
 					mkp.yield addonInfo
-				}, it)
+				} as Writable, it)
 			}
 			def repoAddonInfoFormat = XmlUtil.serialize(new StreamingMarkupBuilder().bind {
 				'addon'('name': '{name}', 'id': '{id}', 'provider-name': providerName, 'version': addonVersion) {
@@ -416,7 +416,7 @@ if (addonBinDir != null) {
 					}
 				}
 				if (!patch.isEmpty()) {
-					def missing = patch.collect { it.join '\n\n' } join '\n\n\n\n'
+					def missing = patch*.join '\n\n' join '\n\n\n\n'
 					throw new GradleException("$f.path missing:\n$missing")
 				}
 				delete tmp
@@ -561,18 +561,18 @@ if (addonBinDir != null) {
 			}
 			def repoInfo = file "$pagesDir/$addonId/addons.xml"
 			repoInfo.withWriter {
-				XmlUtil.serialize((Writable) new StreamingMarkupBuilder().bind {
+				XmlUtil.serialize(new StreamingMarkupBuilder().bind {
 					'addons' {
 						mkp.yield new XmlSlurper().parse(file("$addonIdDir/addon.xml"))
 					}
-				}, it)
+				} as Writable, it)
 			}
 			def repoInfoMd5 = file "$pagesDir/$addonId/addons.xml.md5"
 			repoInfoMd5.withWriter {
 				it.write repoInfo.text.md5()
 			}
-			def htmlPage = file "$pagesDir/index.html"
-			htmlPage.withWriter {
+			def indexPage = file "$pagesDir/index.html"
+			indexPage.withWriter {
 				def builder = new StreamingMarkupBuilder()
 				builder.setUseDoubleQuotes true
 				it << '<!DOCTYPE html>' << builder.bind {
@@ -588,7 +588,9 @@ if (addonBinDir != null) {
 						'body' {
 
 							'table' {
-								file(pagesDir).listFiles((FileFilter) { it.isFile() && it != htmlPage }).sort().each {
+								file(pagesDir).listFiles({
+									it.isFile() && it != indexPage
+								} as FileFilter).sort().each {
 									def name = XmlUtil.escapeXml it.name
 									def date = new Date(it.lastModified()).format 'yyyy-MM-dd HH:mm'
 									def size = "${it.length()}B"

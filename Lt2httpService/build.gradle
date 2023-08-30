@@ -168,9 +168,9 @@ if (addonIdDir != null && binariesIdDir != null) {
 			def addonInfo = new XmlSlurper().parse addonFile
 			addonInfo.@'version' = addonVersion
 			addonFile.withWriter {
-				XmlUtil.serialize((Writable) new StreamingMarkupBuilder().bind {
+				XmlUtil.serialize(new StreamingMarkupBuilder().bind {
 					mkp.yield addonInfo
-				}, it)
+				} as Writable, it)
 			}
 			def stopArgs = "$android.namespace, $mainIntentAction, , stop:$addonVersion"
 			def startArgs = "$android.namespace, $mainIntentAction, , version:$addonVersion%s"
@@ -282,7 +282,7 @@ if (addonIdDir != null && binariesIdDir != null) {
 					}
 				}
 				if (!patch.isEmpty()) {
-					def missing = patch.collect { it.join '\n\n' } join '\n\n\n\n'
+					def missing = patch*.join '\n\n' join '\n\n\n\n'
 					throw new GradleException("$f.path missing:\n$missing")
 				}
 				delete tmp
