@@ -266,7 +266,7 @@ if (addonIdDir != null && binariesIdDir != null) {
 							[translateLine, translateLinePatched]
 					]
 			]
-			patches.forEach { f, patch ->
+			patches.each { f, patch ->
 				def tmp = file "${f.path}.tmp"
 				if (!f.renameTo(tmp)) {
 					throw new GradleException(tmp.path)
@@ -320,7 +320,7 @@ if (addonIdDir != null && binariesIdDir != null) {
 		}
 
 		doLast {
-			abiBins.forEach { abi, bin ->
+			abiBins.each { abi, bin ->
 				copy {
 					from "$binariesIdDir/$bin"
 					into "$srcMainJniLibsGen/$abi"

@@ -400,7 +400,7 @@ if (addonBinDir != null) {
 							[translateLine, translateLinePatched]
 					]
 			]
-			patches.forEach { f, patch ->
+			patches.each { f, patch ->
 				def tmp = file "${f.path}.tmp"
 				if (!f.renameTo(tmp)) {
 					throw new GradleException(tmp.path)
@@ -458,7 +458,7 @@ if (addonBinDir != null) {
 		}
 
 		doLast {
-			abiBins.forEach { abi, bin ->
+			abiBins.each { abi, bin ->
 				if (isAddonBinLib) {
 					copy {
 						from "$addonBinDir/$bin"
