@@ -568,9 +568,7 @@ if (addonBinDir != null) {
 				} as Writable, it)
 			}
 			def repoInfoMd5 = file "$pagesDir/$addonId/addons.xml.md5"
-			repoInfoMd5.withWriter {
-				it.write repoInfo.text.md5()
-			}
+			repoInfoMd5.text = repoInfo.text.md5()
 			def indexPage = file "$pagesDir/index.html"
 			indexPage.withWriter {
 				def builder = new StreamingMarkupBuilder()
