@@ -555,15 +555,18 @@ if (addonBinDir != null) {
 				into repoZip.parentFile
 				rename { repoZip.name }
 			}
+			def addonFile = file "$addonIdDir/addon.xml"
+			def addonInfo = new XmlSlurper().parse addonFile
 			copy {
-				from "$addonIdDir/icon.png"
+				from addonIdDir
 				into "$pagesDir/$addonId"
+				include addonInfo.'extension'.'assets'.'*'*.text()
 			}
 			def repoInfo = file "$pagesDir/$addonId/addons.xml"
 			repoInfo.withWriter {
 				XmlUtil.serialize(new StreamingMarkupBuilder().bind {
 					'addons' {
-						mkp.yield new XmlSlurper().parse(file("$addonIdDir/addon.xml"))
+						mkp.yield addonInfo
 					}
 				} as Writable, it)
 			}
