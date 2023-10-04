@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.22.1)
 set(CMAKE_CXX_STANDARD 20)
+set(ANDROID_STL c++_shared)
 project(${PROJECT_NAME})
 
 include_directories(${SRC_MAIN_ABI_HEADS_GEN}/${CMAKE_ANDROID_ARCH_ABI})
