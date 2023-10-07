@@ -26,9 +26,10 @@ def abiBins = [
 		'x86'        : 'android-x86',
 		'x86_64'     : 'android-x64'
 ]
+def argTranslatePath = '-translatePath'
 def kodiId = 'org.xbmc.kodi'
-def dataDir = '/Download'
-def kodiDataDir = "/Android/data/$kodiId/files"
+def dataDir = '/Download/'
+def kodiDataDir = "/Android/data/$kodiId/files/"
 
 android {
 	buildToolsVersion = libs.versions.buildToolsVersion.get()
@@ -49,10 +50,7 @@ android {
 				'mainIntentAction': 'android.intent.action.MAIN'
 		]
 		buildConfigField 'String', 'ADDON_ID', "\"$addonId\""
-		buildConfigField 'String', 'DATA_DIR', "\"$dataDir\""
-		buildConfigField 'String', 'KODI_DATA_DIR', "\"$kodiDataDir\""
-		buildConfigField 'String', 'KODI_ID', "\"$kodiId\""
-		buildConfigField 'String', 'PROJECT_NAME', "\"$project.name\""
+		buildConfigField 'String', 'ARG_TRANSLATE_PATH', "\"$argTranslatePath\""
 	}
 
 	applicationVariants.configureEach { variant ->
@@ -138,7 +136,7 @@ tasks.register('changeDataLocation') {
 	doLast {
 		exec {
 			executable = android.adbExecutable
-			args 'shell', 'echo', "xbmc.data=/sdcard$kodiDataDir/", '>/sdcard/xbmc_env.properties'
+			args 'shell', 'echo', "xbmc.data=/sdcard$kodiDataDir", '>/sdcard/xbmc_env.properties'
 		}
 	}
 }
@@ -175,6 +173,12 @@ if (addonIdDir != null && binariesIdDir != null) {
 			def stopArgs = "$android.namespace, $mainIntentAction, , stop:$addonVersion"
 			def startArgs = "$android.namespace, $mainIntentAction, , version:$addonVersion%s"
 			def configLine = 'config_path = os.path.join(translatePath("special://temp/"), "lt2http-config.json")'
+			def globalsLine = 'ADDON_VERSION = ADDON.getAddonInfo("version")'
+			def globalsLinePatched = """# BEGIN $project.name-patched: globals
+					|#$globalsLine
+					|ADDON_VERSION = ADDON.getAddonInfo('version')
+					|GLOBALS = {}
+					|# END $project.name-patched: globals""".stripMargin()
 			def configLinePatched = """# BEGIN $project.name-patched: config
 					|#$configLine
 					|config_path = translatePath('special://lt2http-config.json')
@@ -222,36 +226,49 @@ if (addonIdDir != null && binariesIdDir != null) {
 			def translateLine = '    return translatePath(path)'
 			def translateLinePatched = """# BEGIN $project.name-patched: translate
 					|#$translateLine
+					|    from lt2http.addon import GLOBALS
+					|    homeDir = translatePath('special://home')
 					|    if path == 'special://lt2http-config.json':
-					|        homeDir = translatePath('special://home')
-					|        kodiDataDir = os.path.abspath(os.path.join(homeDir, '..'))
-					|        dataDir = str.replace(kodiDataDir, '$kodiDataDir', '$dataDir', 1)
-					|        return os.path.join(dataDir, 'lt2http-config.json')
-					|    try:
-					|        if globals().get('$project.name') is None:
-					|            import time
-					|            xbmc.executebuiltin('StartAndroidActivity($startArgs)' % '')
-					|            homeDir = translatePath('special://home')
-					|            kodiDataDir = os.path.abspath(os.path.join(homeDir, '..'))
-					|            dataDir = str.replace(kodiDataDir, '$kodiDataDir', '$dataDir', 1)
-					|            dataFile = os.path.join(dataDir, '$project.name')
-					|            for i in range(5):
-					|                if os.path.exists(dataFile):
+					|        result = os.path.abspath(os.path.join(homeDir, '..', 'lt2http-config.json'))
+					|        return result.replace('$kodiDataDir', '$dataDir', 1)
+					|    if GLOBALS.get('special://home') is None or GLOBALS.get('special://xbmc') is None:
+					|        import socket
+					|        import time
+					|        remotePort = ADDON.getSetting('remote_port')
+					|        portSuffix = '%00' + remotePort if remotePort != '' else ''
+					|        translateSuffix = '#$argTranslatePath' + portSuffix
+					|        xbmc.executebuiltin('StartAndroidActivity($startArgs)' % translateSuffix)
+					|        port = int(remotePort) if remotePort != '' else 65225
+					|        for attempt in range(10):
+					|            try:
+					|                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
+					|                    client.connect(('127.0.0.1', port))
+					|                    chunks = []
+					|                    while True:
+					|                        chunk = client.recv(0x2000)
+					|                        if not chunk:
+					|                            break
+					|                        chunks.append(chunk)
+					|                    data = ''.join(chunk.decode() for chunk in chunks)
+					|                    homeDirReplacement, xbmcDirReplacement = data.split('\\0')
+					|                    GLOBALS['special://home'] = homeDirReplacement
+					|                    GLOBALS['special://xbmc'] = xbmcDirReplacement
 					|                    break
-					|                time.sleep(1)
-					|            with open(dataFile, 'r') as f:
-					|                globals()['$project.name'] = f.read()
-					|            os.remove(dataFile)
-					|        data, dataReplacement, _ = globals()['$project.name'].split('\\n')
-					|        filesDir = re.sub('$kodiId.*', '$kodiId', translatePath('special://xbmc'), 1)
-					|        result = translatePath(path)
-					|        resultReplacement = str.replace(result, data, dataReplacement, 1)
-					|        return str.replace(resultReplacement, filesDir, dataReplacement, 1)
-					|    except Exception:
-					|        pass
-					|    return None
+					|            except Exception:
+					|                pass
+					|            time.sleep(1)
+					|    result = translatePath(path)
+					|    if result.startswith(homeDir):
+					|        return result.replace(homeDir, GLOBALS['special://home'], 1)
+					|    xbmcDir = translatePath('special://xbmc')
+					|    if result.startswith(xbmcDir):
+					|        return result.replace(xbmcDir, GLOBALS['special://xbmc'], 1)
+					|    return result
 					|# END $project.name-patched: translate""".stripMargin()
 			def patches = [
+					(file("$addonIdDir/resources/site-packages/lt2http/addon.py"))     : [
+							[globalsLine, globalsLinePatched]
+					],
 					(file("$addonIdDir/resources/site-packages/lt2http/daemon.py"))    : [
 							[configLine, configLinePatched],
 							[versionLine, versionLinePatched],
@@ -358,7 +375,7 @@ if (addonIdDir != null && binariesIdDir != null) {
 	tasks.register('pushAndroidClient') {
 		group = project.name
 		dependsOn zipAndroidClient
-		def destinationDir = "/sdcard$dataDir/"
+		def destinationDir = "/sdcard$dataDir"
 
 		doFirst {
 			exec {

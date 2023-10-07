@@ -1,17 +1,17 @@
 package service.lt2http.android
 
 import android.content.Context
-import android.os.Environment
 import android.os.Handler
+import android.os.Looper
 import ilchev.stefan.binarywrapper.BaseDaemonInvoker
 import java.io.File
-import java.nio.file.Paths
-import java.util.Properties
-import kotlin.io.path.writeLines
+import java.net.InetSocketAddress
+import java.nio.ByteBuffer
+import java.nio.channels.ServerSocketChannel
 
 class DaemonInvoker(
 	context: Context,
-	mainHandler: Handler,
+	private val mainHandler: Handler,
 	vararg subprocessArgs: String
 ) : BaseDaemonInvoker(context, mainHandler) {
 
@@ -37,38 +37,75 @@ class DaemonInvoker(
 
 	private val lockfile = File(addonDir, ".lockfile")
 
-	private val dataDefault = context.getExternalFilesDir(null)!!.path.replace(context.packageName, BuildConfig.KODI_ID)
+	private val homeDir = File(context.filesDir, ".kodi")
 
-	@Suppress("deprecation", "KotlinRedundantDiagnosticSuppress")
-	private fun loadData(): String {
-		val properties = Properties()
-		val xbmcEnvFile = File(Environment.getExternalStorageDirectory(), "xbmc_env.properties")
-		properties.setProperty(KEY_DATA, dataDefault)
-		xbmcEnvFile.takeIf(File::isFile)?.bufferedReader()?.use(properties::load)
-		return properties.getProperty(KEY_DATA)
-	}
+	private val xbmcDir = File(context.cacheDir, "apk/assets")
 
-	private fun writeData() {
-		val data = loadData()
-		val dataDir = File(data.replace(BuildConfig.KODI_DATA_DIR, BuildConfig.DATA_DIR))
-		val dataPath = Paths.get(dataDir.path, BuildConfig.PROJECT_NAME)
-		dataDir.mkdirs()
-		dataPath.writeLines(listOf(data, addonDir.parent))
-	}
+	private var channel: ServerSocketChannel? = null
 
-	override fun invoke() = if (subprocessCmd.size < 2) {
-		try {
-			writeData()
-		} catch (ignored: Throwable) {
+	private val closeChannelRunnable = Runnable {
+		channel?.apply {
+			channel = null
+			try {
+				close()
+			} catch (ignored: Throwable) {
+			}
 		}
-		-1L
-	} else {
-		lockfile.delete()
-		super.invoke()
 	}
 
-	companion object {
+	private val clearChannelRunnable = Runnable {
+		channel = null
+	}
 
-		private const val KEY_DATA = "xbmc.data"
+	override fun destroy() {
+		super.destroy()
+		if (Looper.myLooper() == mainHandler.looper) {
+			closeChannelRunnable.run()
+		} else {
+			mainHandler.post(closeChannelRunnable)
+		}
+	}
+
+	private fun toSetChannelRunnable(
+		value: ServerSocketChannel
+	) = Runnable {
+		if (isDestroyed) {
+			try {
+				value.close()
+			} catch (ignored: Throwable) {
+			}
+		} else {
+			channel = value
+		}
+	}
+
+	private fun translatePath() {
+		if (isDestroyed) return
+		val regex = "-localPort=(\\d+)".toRegex()
+		val port = subprocessCmd.firstNotNullOfOrNull {
+			regex.matchEntire(it)?.groupValues?.get(1)?.toIntOrNull()
+		} ?: 65225
+		ServerSocketChannel.open().bind(InetSocketAddress(port)).use { channel ->
+			if (mainHandler.post(toSetChannelRunnable(channel))) {
+				channel.accept().use {
+					it.write(ByteBuffer.wrap("${homeDir.path}/\u0000${xbmcDir.path}/".toByteArray()))
+				}
+				if (!isDestroyed) {
+					mainHandler.post(clearChannelRunnable)
+				}
+			}
+		}
+	}
+
+	override fun invoke(): Long {
+		if (subprocessCmd.contains(BuildConfig.ARG_TRANSLATE_PATH)) {
+			try {
+				translatePath()
+			} catch (ignored: Throwable) {
+			}
+			return -1L
+		}
+		lockfile.delete()
+		return super.invoke()
 	}
 }

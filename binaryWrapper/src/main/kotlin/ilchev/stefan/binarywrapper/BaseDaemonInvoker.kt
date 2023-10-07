@@ -112,7 +112,7 @@ abstract class BaseDaemonInvoker(
 
 	private fun extract(src: String, dst: File) {
 		if (dst.exists()) {
-			if (assetsMarker.exists() || isDestroyed()) return
+			if (assetsMarker.exists() || isDestroyed) return
 			dst.deleteRecursively()
 		} else {
 			assetsMarker.delete()
@@ -121,7 +121,7 @@ abstract class BaseDaemonInvoker(
 		val deque = ArrayDeque<String>()
 		var node: String? = src
 		var name: String? = dst.name
-		while (!isDestroyed()) {
+		while (!isDestroyed) {
 			node ?: break
 			name ?: break
 			for (child in assetManager.list(node) ?: emptyArray()) {
@@ -141,7 +141,7 @@ abstract class BaseDaemonInvoker(
 	private fun extract() {
 		for ((key, value) in subprocessAssets) {
 			extract(key, value)
-			if (isDestroyed()) return
+			if (isDestroyed) return
 		}
 		assetsMarker.mkdirs()
 	}
@@ -149,7 +149,7 @@ abstract class BaseDaemonInvoker(
 	private fun toSetProcessRunnable(
 		value: Process
 	) = Runnable {
-		if (isDestroyed()) {
+		if (isDestroyed) {
 			value.destroy()
 		} else {
 			process = value
@@ -161,7 +161,7 @@ abstract class BaseDaemonInvoker(
 			extract()
 			attempt = 0
 		}
-		if (isDestroyed()) return -1L
+		if (isDestroyed) return -1L
 		val process = builder.start()
 		if (!mainHandler.post(toSetProcessRunnable(process))) {
 			process.destroy()
@@ -175,7 +175,7 @@ abstract class BaseDaemonInvoker(
 		}
 		val exitValue = process.waitFor()
 		Log.v(TAG, "SUBPROCESS_EXIT_VALUE = $exitValue")
-		if (isDestroyed() ||
+		if (isDestroyed ||
 			!mainHandler.post(clearProcessRunnable) ||
 			subprocessExitValuesEnd.contains(exitValue)
 		) return -1L
