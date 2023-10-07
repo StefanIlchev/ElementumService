@@ -473,7 +473,7 @@ abstract class BaseForegroundService : Service() {
 
 		val mainHandler = Handler(Looper.getMainLooper())
 
-		@Suppress("deprecation")
+		@Suppress("deprecation", "KotlinRedundantDiagnosticSuppress")
 		fun getPackageInfo(context: Context, flags: Int): PackageInfo {
 			val packageManager = context.packageManager
 			val packageName = context.packageName
