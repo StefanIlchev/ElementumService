@@ -184,30 +184,38 @@ if (addonIdDir != null && binariesIdDir != null) {
 					|    import time
 					|    from kodi_six import xbmc
 					|    remotePort = ADDON.getSetting('remote_port')
-					|    args = ['$argTranslatePath', remotePort]
+					|    port = 65225
+					|    args = ['$argTranslatePath']
+					|    if remotePort != '':
+					|        port = int(remotePort)
+					|        args.append('-localPort=' + remotePort)
 					|    dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args)
 					|    dataSuffix = '#' + dataFragment if dataFragment != '' else ''
 					|    xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
-					|    port = int(remotePort) if remotePort != '' else 65225
 					|    for attempt in range(10):
 					|        try:
 					|            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
 					|                client.connect(('127.0.0.1', port))
-					|                chunks = []
-					|                while True:
-					|                    chunk = client.recv(0x2000)
-					|                    if not chunk:
-					|                        break
-					|                    chunks.append(chunk)
-					|                data = ''.join(chunk.decode() for chunk in chunks)
-					|                homeDirReplacement, xbmcDirReplacement = data.split('\\0')
-					|                GLOBALS['special://home'] = homeDirReplacement
-					|                GLOBALS['special://xbmc'] = xbmcDirReplacement
-					|                return True
+					|                with open(os.path.join(ADDON_PATH, '.globals'), 'w') as f:
+					|                    while True:
+					|                        chunk = client.recv(0x2000)
+					|                        if not chunk:
+					|                            break
+					|                        f.write(chunk.decode())
+					|            return True
 					|        except Exception:
 					|            pass
 					|        time.sleep(1)
 					|    return False
+					|
+					|def getGlobals():
+					|    if GLOBALS:
+					|        return GLOBALS
+					|    with open(os.path.join(ADDON_PATH, '.globals'), 'r') as f:
+					|        homeDirReplacement, xbmcDirReplacement = f.read().split('\\0')
+					|        GLOBALS['special://home'] = homeDirReplacement
+					|        GLOBALS['special://xbmc'] = xbmcDirReplacement
+					|    return GLOBALS
 					|# END $project.name-patched: globals""".stripMargin()
 			def configLine = 'config_path = os.path.join(translatePath("special://temp/"), "lt2http-config.json")'
 			def configLinePatched = """# BEGIN $project.name-patched: config
@@ -262,17 +270,17 @@ if (addonIdDir != null && binariesIdDir != null) {
 			def translateLine = '    return translatePath(path)'
 			def translateLinePatched = """# BEGIN $project.name-patched: translate
 					|#$translateLine
-					|    from lt2http.addon import GLOBALS
+					|    from lt2http.addon import getGlobals
 					|    if path == 'special://lt2http-config.json':
 					|        result = os.path.join(translatePath('special://temp'), 'lt2http-config.json')
 					|        return result.replace('$kodiDataDir/.kodi/temp/', '$dataDir/', 1)
 					|    result = translatePath(path)
 					|    homeDir = translatePath('special://home')
 					|    if result.startswith(homeDir):
-					|        return result.replace(homeDir, GLOBALS['special://home'], 1)
+					|        return result.replace(homeDir, getGlobals()['special://home'], 1)
 					|    xbmcDir = translatePath('special://xbmc')
 					|    if result.startswith(xbmcDir):
-					|        return result.replace(xbmcDir, GLOBALS['special://xbmc'], 1)
+					|        return result.replace(xbmcDir, getGlobals()['special://xbmc'], 1)
 					|    return result
 					|# END $project.name-patched: translate""".stripMargin()
 			def patches = [

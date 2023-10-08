@@ -256,30 +256,38 @@ if (addonBinDir != null) {
 					|    import time
 					|    from kodi_six import xbmc
 					|    remotePort = ADDON.getSetting('remote_port')
-					|    args = ['$argTranslatePath', remotePort]
+					|    port = 65220
+					|    args = ['$argTranslatePath']
+					|    if remotePort != '':
+					|        port = int(remotePort)
+					|        args.append('-localPort=' + remotePort)
 					|    dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args)
 					|    dataSuffix = '#' + dataFragment if dataFragment != '' else ''
 					|    xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
-					|    port = int(remotePort) if remotePort != '' else 65220
 					|    for attempt in range(10):
 					|        try:
 					|            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
 					|                client.connect(('127.0.0.1', port))
-					|                chunks = []
-					|                while True:
-					|                    chunk = client.recv(0x2000)
-					|                    if not chunk:
-					|                        break
-					|                    chunks.append(chunk)
-					|                data = ''.join(chunk.decode() for chunk in chunks)
-					|                homeDirReplacement, xbmcDirReplacement = data.split('\\0')
-					|                GLOBALS['special://home'] = homeDirReplacement
-					|                GLOBALS['special://xbmc'] = xbmcDirReplacement
-					|                return True
+					|                with open(os.path.join(ADDON_PATH, '.globals'), 'w') as f:
+					|                    while True:
+					|                        chunk = client.recv(0x2000)
+					|                        if not chunk:
+					|                            break
+					|                        f.write(chunk.decode())
+					|            return True
 					|        except Exception:
 					|            pass
 					|        time.sleep(1)
 					|    return False
+					|
+					|def getGlobals():
+					|    if GLOBALS:
+					|        return GLOBALS
+					|    with open(os.path.join(ADDON_PATH, '.globals'), 'r') as f:
+					|        homeDirReplacement, xbmcDirReplacement = f.read().split('\\0')
+					|        GLOBALS['special://home'] = homeDirReplacement
+					|        GLOBALS['special://xbmc'] = xbmcDirReplacement
+					|    return GLOBALS
 					|# END $project.name-patched: globals""".stripMargin()
 			def versionLine = '    installed_version = read_current_version(binary_dir)'
 			def versionLinePatched = """# BEGIN $project.name-patched: version
@@ -397,12 +405,12 @@ if (addonBinDir != null) {
 			def infoLine = '        return info'
 			def infoLinePatched = """# BEGIN $project.name-patched: info
 					|#$infoLine
-					|        from elementum.addon import GLOBALS
+					|        from elementum.addon import getGlobals
 					|        result = {}
 					|        homeDir = translatePath('special://home')
-					|        homeDirReplacement = GLOBALS['special://home']
+					|        homeDirReplacement = getGlobals()['special://home']
 					|        xbmcDir = translatePath('special://xbmc')
-					|        xbmcDirReplacement = GLOBALS['special://xbmc']
+					|        xbmcDirReplacement = getGlobals()['special://xbmc']
 					|        for key, value in info.items():
 					|            if value.startswith(homeDir):
 					|                result[key] = value.replace(homeDir, homeDirReplacement, 1)
@@ -415,14 +423,14 @@ if (addonBinDir != null) {
 			def translateLine = '        return translatePath(*args, **kwargs)'
 			def translateLinePatched = """# BEGIN $project.name-patched: translate
 					|#$translateLine
-					|        from elementum.addon import GLOBALS
+					|        from elementum.addon import getGlobals
 					|        result = translatePath(*args, **kwargs)
 					|        homeDir = translatePath('special://home')
 					|        if result.startswith(homeDir):
-					|            return result.replace(homeDir, GLOBALS['special://home'], 1)
+					|            return result.replace(homeDir, getGlobals()['special://home'], 1)
 					|        xbmcDir = translatePath('special://xbmc')
 					|        if result.startswith(xbmcDir):
-					|            return result.replace(xbmcDir, GLOBALS['special://xbmc'], 1)
+					|            return result.replace(xbmcDir, getGlobals()['special://xbmc'], 1)
 					|        return result
 					|# END $project.name-patched: translate""".stripMargin()
 			def patches = [
