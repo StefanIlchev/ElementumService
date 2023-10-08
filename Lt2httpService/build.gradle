@@ -44,7 +44,7 @@ android {
 	defaultConfig {
 		minSdk = libs.versions.minSdk.get() as int
 		targetSdk = compileSdk
-		versionCode = localProperties.getProperty('lt2http.version.code') as Integer ?: 27
+		versionCode = localProperties.getProperty('lt2http.version.code') as Integer ?: 28
 		versionName = localProperties.getProperty('lt2http.version.name') ?: "$versionCode"
 		manifestPlaceholders = [
 				'mainIntentAction': 'android.intent.action.MAIN'
