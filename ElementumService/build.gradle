@@ -65,7 +65,7 @@ android {
 	defaultConfig {
 		minSdk = libs.versions.minSdk.get() as int
 		targetSdk = compileSdk
-		versionCode = localProperties.getProperty('elementum.version.code') as Integer ?: 71
+		versionCode = localProperties.getProperty('elementum.version.code') as Integer ?: 72
 		versionName = localProperties.getProperty('elementum.version.name') ?: "$versionCode"
 		manifestPlaceholders = [
 				'mainIntentAction': 'android.intent.action.MAIN'
