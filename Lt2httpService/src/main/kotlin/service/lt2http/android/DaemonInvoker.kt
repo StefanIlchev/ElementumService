@@ -85,14 +85,12 @@ class DaemonInvoker(
 		val port = subprocessCmd.firstNotNullOfOrNull {
 			regex.matchEntire(it)?.groupValues?.get(1)?.toIntOrNull()
 		} ?: 65225
-		ServerSocketChannel.open().bind(InetSocketAddress(port)).use { channel ->
-			if (mainHandler.post(toSetChannelRunnable(channel))) {
-				channel.accept().use {
-					it.write(ByteBuffer.wrap("${homeDir.path}/\u0000${xbmcDir.path}/".toByteArray()))
-				}
-				if (!isDestroyed) {
-					mainHandler.post(clearChannelRunnable)
-				}
+		ServerSocketChannel.open().use { channel ->
+			if (!mainHandler.post(toSetChannelRunnable(channel))) return
+			channel.bind(InetSocketAddress(port))
+			channel.accept().use { it.write(ByteBuffer.wrap("${homeDir.path}/\u0000${xbmcDir.path}/".toByteArray())) }
+			if (!isDestroyed) {
+				mainHandler.post(clearChannelRunnable)
 			}
 		}
 	}
