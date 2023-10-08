@@ -37,8 +37,8 @@ def isAddonBinLib = localProperties.getProperty('is.elementum.addon.bin.lib') as
 } ?: false
 def argTranslatePath = '-translatePath'
 def kodiId = 'org.xbmc.kodi'
-def dataDir = '/Download/'
-def kodiDataDir = "/Android/data/$kodiId/files/"
+def dataDir = '/Download'
+def kodiDataDir = "/Android/data/$kodiId/files"
 def repoUrl = "https://StefanIlchev.github.io/$rootProject.name/"
 
 android {
@@ -249,6 +249,37 @@ if (addonBinDir != null) {
 					|#$globalsLine
 					|ADDON_VERSION = ADDON.getAddonInfo('version')
 					|GLOBALS = {}
+					|
+					|def populateGlobals():
+					|    import six
+					|    import socket
+					|    import time
+					|    from kodi_six import xbmc
+					|    remotePort = ADDON.getSetting('remote_port')
+					|    args = ['$argTranslatePath', remotePort]
+					|    dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args)
+					|    dataSuffix = '#' + dataFragment if dataFragment != '' else ''
+					|    xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
+					|    port = int(remotePort) if remotePort != '' else 65220
+					|    for attempt in range(10):
+					|        try:
+					|            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
+					|                client.connect(('127.0.0.1', port))
+					|                chunks = []
+					|                while True:
+					|                    chunk = client.recv(0x2000)
+					|                    if not chunk:
+					|                        break
+					|                    chunks.append(chunk)
+					|                data = ''.join(chunk.decode() for chunk in chunks)
+					|                homeDirReplacement, xbmcDirReplacement = data.split('\\0')
+					|                GLOBALS['special://home'] = homeDirReplacement
+					|                GLOBALS['special://xbmc'] = xbmcDirReplacement
+					|                return True
+					|        except Exception:
+					|            pass
+					|        time.sleep(1)
+					|    return False
 					|# END $project.name-patched: globals""".stripMargin()
 			def versionLine = '    installed_version = read_current_version(binary_dir)'
 			def versionLinePatched = """# BEGIN $project.name-patched: version
@@ -275,30 +306,7 @@ if (addonBinDir != null) {
 			def startLine = '            proc = subprocess.Popen(args, **kwargs)'
 			def startLinePatched = """# BEGIN $project.name-patched: start
 					|#$startLine
-					|            from elementum.addon import GLOBALS
-					|            remotePort = ADDON.getSetting('remote_port')
-					|            portSuffix = '%00' + remotePort if remotePort != '' else ''
-					|            translateSuffix = '#$argTranslatePath' + portSuffix
-					|            xbmc.executebuiltin('StartAndroidActivity($startArgs)' % translateSuffix)
-					|            port = int(remotePort) if remotePort != '' else 65220
-					|            for attempt in range(10):
-					|                try:
-					|                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
-					|                        client.connect(('127.0.0.1', port))
-					|                        chunks = []
-					|                        while True:
-					|                            chunk = client.recv(0x2000)
-					|                            if not chunk:
-					|                                break
-					|                            chunks.append(chunk)
-					|                        data = ''.join(chunk.decode() for chunk in chunks)
-					|                        homeDirReplacement, xbmcDirReplacement = data.split('\\0')
-					|                        GLOBALS['special://home'] = homeDirReplacement
-					|                        GLOBALS['special://xbmc'] = xbmcDirReplacement
-					|                        break
-					|                except Exception:
-					|                    pass
-					|                time.sleep(1)
+					|            from elementum.addon import populateGlobals
 					|            repoAddonId = '$repoAddonId'
 					|            serviceRepoAddonId = '$serviceRepoAddonId'
 					|            repoAddonInfoFormat = '''$repoAddonInfoFormat'''
@@ -341,7 +349,8 @@ if (addonBinDir != null) {
 					|                    pass
 					|            dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args[1:])
 					|            dataSuffix = '#' + dataFragment if dataFragment != '' else ''
-					|            xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
+					|            if populateGlobals():
+					|                xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
 					|            for id in [serviceRepoAddonId]:
 					|                try:
 					|                    from elementum.provider import parse_json
@@ -371,6 +380,7 @@ if (addonBinDir != null) {
 			def retryLine = '            notify(getLocalizedString(30116), time=7000)'
 			def retryLinePatched = """# BEGIN $project.name-patched: retry
 					|#$retryLine
+					|            from elementum.addon import populateGlobals
 					|            args = []
 					|            if ADDON.getSetting('local_port') != '':
 					|                args.append('-remotePort=' + ADDON.getSetting('local_port'))
@@ -380,7 +390,8 @@ if (addonBinDir != null) {
 					|                args.append('-localPort=' + ADDON.getSetting('remote_port'))
 					|            dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args)
 					|            dataSuffix = '#' + dataFragment if dataFragment != '' else ''
-					|            xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
+					|            if populateGlobals():
+					|                xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
 					|            notify(getLocalizedString(30116), time = 7000)
 					|# END $project.name-patched: retry""".stripMargin()
 			def infoLine = '        return info'
@@ -545,7 +556,7 @@ if (addonBinDir != null) {
 		doFirst {
 			exec {
 				executable = android.adbExecutable
-				args 'shell', 'rm', '-f', "$destinationDir$androidClientZip.name"
+				args 'shell', 'rm', '-f', "$destinationDir/$androidClientZip.name"
 			}
 		}
 

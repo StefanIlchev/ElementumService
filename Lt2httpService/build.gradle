@@ -28,8 +28,8 @@ def abiBins = [
 ]
 def argTranslatePath = '-translatePath'
 def kodiId = 'org.xbmc.kodi'
-def dataDir = '/Download/'
-def kodiDataDir = "/Android/data/$kodiId/files/"
+def dataDir = '/Download'
+def kodiDataDir = "/Android/data/$kodiId/files"
 
 android {
 	buildToolsVersion = libs.versions.buildToolsVersion.get()
@@ -172,13 +172,44 @@ if (addonIdDir != null && binariesIdDir != null) {
 			}
 			def stopArgs = "$android.namespace, $mainIntentAction, , stop:$addonVersion"
 			def startArgs = "$android.namespace, $mainIntentAction, , version:$addonVersion%s"
-			def configLine = 'config_path = os.path.join(translatePath("special://temp/"), "lt2http-config.json")'
 			def globalsLine = 'ADDON_VERSION = ADDON.getAddonInfo("version")'
 			def globalsLinePatched = """# BEGIN $project.name-patched: globals
 					|#$globalsLine
 					|ADDON_VERSION = ADDON.getAddonInfo('version')
 					|GLOBALS = {}
+					|
+					|def populateGlobals():
+					|    import six
+					|    import socket
+					|    import time
+					|    from kodi_six import xbmc
+					|    remotePort = ADDON.getSetting('remote_port')
+					|    args = ['$argTranslatePath', remotePort]
+					|    dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args)
+					|    dataSuffix = '#' + dataFragment if dataFragment != '' else ''
+					|    xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
+					|    port = int(remotePort) if remotePort != '' else 65225
+					|    for attempt in range(10):
+					|        try:
+					|            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
+					|                client.connect(('127.0.0.1', port))
+					|                chunks = []
+					|                while True:
+					|                    chunk = client.recv(0x2000)
+					|                    if not chunk:
+					|                        break
+					|                    chunks.append(chunk)
+					|                data = ''.join(chunk.decode() for chunk in chunks)
+					|                homeDirReplacement, xbmcDirReplacement = data.split('\\0')
+					|                GLOBALS['special://home'] = homeDirReplacement
+					|                GLOBALS['special://xbmc'] = xbmcDirReplacement
+					|                return True
+					|        except Exception:
+					|            pass
+					|        time.sleep(1)
+					|    return False
 					|# END $project.name-patched: globals""".stripMargin()
+			def configLine = 'config_path = os.path.join(translatePath("special://temp/"), "lt2http-config.json")'
 			def configLinePatched = """# BEGIN $project.name-patched: config
 					|#$configLine
 					|config_path = translatePath('special://lt2http-config.json')
@@ -200,7 +231,10 @@ if (addonIdDir != null && binariesIdDir != null) {
 			def stopLine = '    lockfile = os.path.join(ADDON_PATH, ".lockfile")'
 			def stopLinePatched = """# BEGIN $project.name-patched: stop
 					|#$stopLine
+					|    from lt2http.addon import populateGlobals
 					|    xbmc.executebuiltin('StartAndroidActivity($stopArgs)')
+					|    if not populateGlobals():
+					|        return False
 					|    lockfile = os.path.join(ADDON_PATH, '.lockfile')
 					|    if os.path.exists(lockfile):
 					|        os.remove(lockfile)
@@ -215,49 +249,25 @@ if (addonIdDir != null && binariesIdDir != null) {
 			def retryLine = '            notify(getLocalizedString(30116), time=7000)'
 			def retryLinePatched = """# BEGIN $project.name-patched: retry
 					|#$retryLine
-					|            from lt2http.util import translatePath
-					|            config_path = translatePath('special://lt2http-config.json')
+					|            from lt2http.addon import populateGlobals
+					|            from lt2http.daemon import config_path, write_binary_config
 					|            args = ['--config=' + config_path]
 					|            dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args)
 					|            dataSuffix = '#' + dataFragment if dataFragment != '' else ''
-					|            xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
+					|            if populateGlobals():
+					|                write_binary_config()
+					|                xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
 					|            notify(getLocalizedString(30116), time = 7000)
 					|# END $project.name-patched: retry""".stripMargin()
 			def translateLine = '    return translatePath(path)'
 			def translateLinePatched = """# BEGIN $project.name-patched: translate
 					|#$translateLine
 					|    from lt2http.addon import GLOBALS
-					|    homeDir = translatePath('special://home')
 					|    if path == 'special://lt2http-config.json':
-					|        result = os.path.abspath(os.path.join(homeDir, '..', 'lt2http-config.json'))
-					|        return result.replace('$kodiDataDir', '$dataDir', 1)
-					|    if GLOBALS.get('special://home') is None or GLOBALS.get('special://xbmc') is None:
-					|        import socket
-					|        import time
-					|        remotePort = ADDON.getSetting('remote_port')
-					|        portSuffix = '%00' + remotePort if remotePort != '' else ''
-					|        translateSuffix = '#$argTranslatePath' + portSuffix
-					|        xbmc.executebuiltin('StartAndroidActivity($startArgs)' % translateSuffix)
-					|        port = int(remotePort) if remotePort != '' else 65225
-					|        for attempt in range(10):
-					|            try:
-					|                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
-					|                    client.connect(('127.0.0.1', port))
-					|                    chunks = []
-					|                    while True:
-					|                        chunk = client.recv(0x2000)
-					|                        if not chunk:
-					|                            break
-					|                        chunks.append(chunk)
-					|                    data = ''.join(chunk.decode() for chunk in chunks)
-					|                    homeDirReplacement, xbmcDirReplacement = data.split('\\0')
-					|                    GLOBALS['special://home'] = homeDirReplacement
-					|                    GLOBALS['special://xbmc'] = xbmcDirReplacement
-					|                    break
-					|            except Exception:
-					|                pass
-					|            time.sleep(1)
+					|        result = os.path.join(translatePath('special://temp'), 'lt2http-config.json')
+					|        return result.replace('$kodiDataDir/.kodi/temp/', '$dataDir/', 1)
 					|    result = translatePath(path)
+					|    homeDir = translatePath('special://home')
 					|    if result.startswith(homeDir):
 					|        return result.replace(homeDir, GLOBALS['special://home'], 1)
 					|    xbmcDir = translatePath('special://xbmc')
@@ -380,7 +390,7 @@ if (addonIdDir != null && binariesIdDir != null) {
 		doFirst {
 			exec {
 				executable = android.adbExecutable
-				args 'shell', 'rm', '-f', "$destinationDir$androidClientZip.name"
+				args 'shell', 'rm', '-f', "$destinationDir/$androidClientZip.name"
 			}
 		}
 
