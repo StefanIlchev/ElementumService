@@ -11,35 +11,41 @@ plugins {
 	id 'org.jetbrains.kotlin.android'
 }
 
-def buildDir = layout.buildDirectory.asFile.get()
-def srcGen = "$buildDir.path/src"
-def srcMainGen = "$srcGen/main"
-def srcMainAssetsGen = "$srcMainGen/assets"
-def srcMainAbiHeadsGen = "$srcMainGen/abiHeads"
-def srcMainJniLibsGen = "$srcMainGen/jniLibs"
-def addonId = 'plugin.video.elementum'
-def addonZip = System.getProperty('elementum.addon.zip') ?: localProperties.getProperty('elementum.addon.zip')
-def addonDir = addonZip?.with { "$buildDir.path/${file(it).name - ~/\.[^.]+$/}" }
-def addonIdDir = addonDir?.with { "$it/$addonId" }
-def addonBinDir = addonIdDir?.with { "$it/resources/bin" }
-def abiBins = [
-		'arm64-v8a'  : 'android_arm64',
-		'armeabi-v7a': 'android_arm',
-		'x86'        : 'android_x86',
-		'x86_64'     : 'android_x64'
-]
-def isAddonBinLib = localProperties.getProperty('is.elementum.addon.bin.lib') as Boolean ?: addonZip?.with {
-	new ZipFile(it)
-}?.withCloseable {
-	abiBins.any { abi, bin ->
-		it.getEntry("$addonId/resources/bin/$bin/elementum")?.isDirectory() != false
-	}
-} ?: false
-def argTranslatePath = '-translatePath'
-def kodiId = 'org.xbmc.kodi'
-def dataDir = '/Download'
-def kodiDataDir = "/Android/data/$kodiId/files"
-def repoUrl = "https://StefanIlchev.github.io/$rootProject.name/"
+ext {
+	buildFolder = layout.buildDirectory.asFile.get()
+	srcGen = "$buildFolder.path/src"
+	srcMainGen = "$srcGen/main"
+	srcMainAssetsGen = "$srcMainGen/assets"
+	srcMainAbiHeadsGen = "$srcMainGen/abiHeads"
+	srcMainJniLibsGen = "$srcMainGen/jniLibs"
+	appVersionCode = localProperties.getProperty('elementum.version.code') as Integer ?: 73
+	appVersionName = localProperties.getProperty('elementum.version.name') ?: "$appVersionCode"
+	addonId = 'plugin.video.elementum'
+	addonZip = System.getProperty('elementum.addon.zip') ?: localProperties.getProperty('elementum.addon.zip')
+	addonDir = addonZip?.with { "$buildFolder.path/${file(it).name - ~/\.[^.]+$/}" }
+	addonIdDir = addonDir?.with { "$it/$addonId" }
+	addonBinDir = addonIdDir?.with { "$it/resources/bin" }
+	androidClientZip = file "$buildFolder.path/$addonId-${appVersionName}.android_client.zip"
+	abiBins = [
+			'arm64-v8a'  : 'android_arm64',
+			'armeabi-v7a': 'android_arm',
+			'x86'        : 'android_x86',
+			'x86_64'     : 'android_x64'
+	]
+	isAddonBinLib = localProperties.getProperty('is.elementum.addon.bin.lib') as Boolean ?: addonZip?.with {
+		new ZipFile(it)
+	}?.withCloseable {
+		abiBins.any { abi, bin ->
+			it.getEntry("$addonId/resources/bin/$bin/elementum")?.isDirectory() != false
+		}
+	} ?: false
+	mainIntentAction = 'android.intent.action.MAIN'
+	argTranslatePath = '-translatePath'
+	kodiId = 'org.xbmc.kodi'
+	dataDir = '/Download'
+	kodiDataDir = "/Android/data/$kodiId/files"
+	repoUrl = "https://StefanIlchev.github.io/$rootProject.name/"
+}
 
 android {
 	buildToolsVersion = libs.versions.buildToolsVersion.get()
@@ -65,10 +71,10 @@ android {
 	defaultConfig {
 		minSdk = libs.versions.minSdk.get() as int
 		targetSdk = compileSdk
-		versionCode = localProperties.getProperty('elementum.version.code') as Integer ?: 73
-		versionName = localProperties.getProperty('elementum.version.name') ?: "$versionCode"
+		versionCode = appVersionCode
+		versionName = appVersionName
 		manifestPlaceholders = [
-				'mainIntentAction': 'android.intent.action.MAIN'
+				'mainIntentAction': mainIntentAction
 		]
 		buildConfigField 'String', 'ADDON_ID', "\"$addonId\""
 		buildConfigField 'String', 'ARG_TRANSLATE_PATH', "\"$argTranslatePath\""
@@ -162,16 +168,13 @@ static String toSetAddonEnabledJson(addonId, enabled) {
 	toMethodJson('Addons.SetAddonEnabled', ['addonid': addonId, 'enabled': enabled])
 }
 
-def addonVersion = android.defaultConfig.versionName
-def mainIntentAction = android.defaultConfig.manifestPlaceholders['mainIntentAction']
-
 tasks.register('startApplication') {
 	group = project.name
 
 	doLast {
 		exec {
 			executable = android.adbExecutable
-			args 'shell', 'am', 'start', '-a', mainIntentAction, '-d', "version:$addonVersion", android.namespace
+			args 'shell', 'am', 'start', '-a', mainIntentAction, '-d', "version:$appVersionName", android.namespace
 		}
 	}
 }
@@ -208,7 +211,7 @@ if (addonBinDir != null) {
 			def addonFile = file "$addonIdDir/addon.xml"
 			def addonInfo = new XmlSlurper().parse addonFile
 			def providerName = addonInfo.@'provider-name'
-			addonInfo.@'version' = addonVersion
+			addonInfo.@'version' = appVersionName
 			addonInfo.'requires'.appendNode {
 				'import'('addon': serviceRepoAddonId, 'optional': 'true')
 			}
@@ -218,7 +221,7 @@ if (addonBinDir != null) {
 				} as Writable, it)
 			}
 			def repoAddonInfoFormat = XmlUtil.serialize(new StreamingMarkupBuilder().bind {
-				'addon'('name': '{name}', 'id': '{id}', 'provider-name': providerName, 'version': addonVersion) {
+				'addon'('name': '{name}', 'id': '{id}', 'provider-name': providerName, 'version': appVersionName) {
 
 					'extension'('name': '{name}', 'point': 'xbmc.addon.repository') {
 
@@ -242,8 +245,8 @@ if (addonBinDir != null) {
 					'requires' {}
 				}
 			})
-			def stopArgs = "$android.namespace, $mainIntentAction, , stop:$addonVersion"
-			def startArgs = "$android.namespace, $mainIntentAction, , version:$addonVersion%s"
+			def stopArgs = "$android.namespace, $mainIntentAction, , stop:$appVersionName"
+			def startArgs = "$android.namespace, $mainIntentAction, , version:$appVersionName%s"
 			def globalsLine = 'ADDON_VERSION = ADDON.getAddonInfo("version")'
 			def globalsLinePatched = """# BEGIN $project.name-patched: globals
 					|#$globalsLine
@@ -539,8 +542,6 @@ if (addonBinDir != null) {
 		mustRunAfter genMainAssets, genMainJniLibs
 	}
 
-	def androidClientZip = file "$buildDir.path/$addonId-${addonVersion}.android_client.zip"
-
 	def zipAndroidClient = tasks.register('zipAndroidClient', Zip) {
 		group = project.name
 		inputs.dir addonDir
@@ -559,7 +560,10 @@ if (addonBinDir != null) {
 	tasks.register('pushAndroidClient') {
 		group = project.name
 		dependsOn zipAndroidClient
-		def destinationDir = "/sdcard$dataDir"
+
+		ext {
+			destinationDir = "/sdcard$dataDir"
+		}
 
 		doFirst {
 			exec {
@@ -579,7 +583,10 @@ if (addonBinDir != null) {
 	tasks.register('genPages') {
 		group = project.name
 		dependsOn tasks.named('assembleRelease'), zipAndroidClient
-		def pagesDir = "$rootDir.path/docs"
+
+		ext {
+			pagesDir = "$rootDir.path/docs"
+		}
 
 		doFirst {
 			delete pagesDir
@@ -592,7 +599,7 @@ if (addonBinDir != null) {
 				gitignore.withWriterAppend { it.writeLine gitignorePages }
 			}
 			copy {
-				from "$buildDir.path/outputs/apk/release"
+				from "$buildFolder.path/outputs/apk/release"
 				into pagesDir
 				include '*.apk'
 			}
@@ -600,7 +607,7 @@ if (addonBinDir != null) {
 				from androidClientZip
 				into pagesDir
 			}
-			def repoZip = file "$pagesDir/$addonId/$addonId-${addonVersion}.zip"
+			def repoZip = file "$pagesDir/$addonId/$addonId-${appVersionName}.zip"
 			copy {
 				from androidClientZip
 				into repoZip.parentFile

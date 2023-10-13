@@ -8,28 +8,34 @@ plugins {
 	id 'org.jetbrains.kotlin.android'
 }
 
-def buildDir = layout.buildDirectory.asFile.get()
-def srcGen = "$buildDir.path/src"
-def srcMainGen = "$srcGen/main"
-def srcMainAssetsGen = "$srcMainGen/assets"
-def srcMainJniLibsGen = "$srcMainGen/jniLibs"
-def addonId = 'service.lt2http'
-def addonZip = System.getProperty('lt2http.addon.zip') ?: localProperties.getProperty('lt2http.addon.zip')
-def addonDir = addonZip?.with { "$buildDir.path/${file(it).name - ~/\.[^.]+$/}" }
-def addonIdDir = addonDir?.with { "$it/$addonId" }
-def binariesZip = System.getProperty('lt2http.binaries.zip') ?: localProperties.getProperty('lt2http.binaries.zip')
-def binariesDir = binariesZip?.with { "$buildDir.path/${file(it).name - ~/\.[^.]+$/}" }
-def binariesIdDir = binariesDir?.with { "$it/${file(it).name}" }
-def abiBins = [
-		'arm64-v8a'  : 'android-arm64',
-		'armeabi-v7a': 'android-arm',
-		'x86'        : 'android-x86',
-		'x86_64'     : 'android-x64'
-]
-def argTranslatePath = '-translatePath'
-def kodiId = 'org.xbmc.kodi'
-def dataDir = '/Download'
-def kodiDataDir = "/Android/data/$kodiId/files"
+ext {
+	buildFolder = layout.buildDirectory.asFile.get()
+	srcGen = "$buildFolder.path/src"
+	srcMainGen = "$srcGen/main"
+	srcMainAssetsGen = "$srcMainGen/assets"
+	srcMainJniLibsGen = "$srcMainGen/jniLibs"
+	appVersionCode = localProperties.getProperty('lt2http.version.code') as Integer ?: 28
+	appVersionName = localProperties.getProperty('lt2http.version.name') ?: "$appVersionCode"
+	addonId = 'service.lt2http'
+	addonZip = System.getProperty('lt2http.addon.zip') ?: localProperties.getProperty('lt2http.addon.zip')
+	addonDir = addonZip?.with { "$buildFolder.path/${file(it).name - ~/\.[^.]+$/}" }
+	addonIdDir = addonDir?.with { "$it/$addonId" }
+	binariesZip = System.getProperty('lt2http.binaries.zip') ?: localProperties.getProperty('lt2http.binaries.zip')
+	binariesDir = binariesZip?.with { "$buildFolder.path/${file(it).name - ~/\.[^.]+$/}" }
+	binariesIdDir = binariesDir?.with { "$it/${file(it).name}" }
+	androidClientZip = file "$buildFolder.path/$addonId-${appVersionName}.android_client.zip"
+	abiBins = [
+			'arm64-v8a'  : 'android-arm64',
+			'armeabi-v7a': 'android-arm',
+			'x86'        : 'android-x86',
+			'x86_64'     : 'android-x64'
+	]
+	mainIntentAction = 'android.intent.action.MAIN'
+	argTranslatePath = '-translatePath'
+	kodiId = 'org.xbmc.kodi'
+	dataDir = '/Download'
+	kodiDataDir = "/Android/data/$kodiId/files"
+}
 
 android {
 	buildToolsVersion = libs.versions.buildToolsVersion.get()
@@ -44,10 +50,10 @@ android {
 	defaultConfig {
 		minSdk = libs.versions.minSdk.get() as int
 		targetSdk = compileSdk
-		versionCode = localProperties.getProperty('lt2http.version.code') as Integer ?: 28
-		versionName = localProperties.getProperty('lt2http.version.name') ?: "$versionCode"
+		versionCode = appVersionCode
+		versionName = appVersionName
 		manifestPlaceholders = [
-				'mainIntentAction': 'android.intent.action.MAIN'
+				'mainIntentAction': mainIntentAction
 		]
 		buildConfigField 'String', 'ADDON_ID', "\"$addonId\""
 		buildConfigField 'String', 'ARG_TRANSLATE_PATH', "\"$argTranslatePath\""
@@ -116,16 +122,13 @@ dependencies {
 	implementation project(':binaryWrapper')
 }
 
-def addonVersion = android.defaultConfig.versionName
-def mainIntentAction = android.defaultConfig.manifestPlaceholders['mainIntentAction']
-
 tasks.register('startApplication') {
 	group = project.name
 
 	doLast {
 		exec {
 			executable = android.adbExecutable
-			args 'shell', 'am', 'start', '-a', mainIntentAction, '-d', "version:$addonVersion", android.namespace
+			args 'shell', 'am', 'start', '-a', mainIntentAction, '-d', "version:$appVersionName", android.namespace
 		}
 	}
 }
@@ -164,14 +167,14 @@ if (addonIdDir != null && binariesIdDir != null) {
 			}
 			def addonFile = file "$addonIdDir/addon.xml"
 			def addonInfo = new XmlSlurper().parse addonFile
-			addonInfo.@'version' = addonVersion
+			addonInfo.@'version' = appVersionName
 			addonFile.withWriter {
 				XmlUtil.serialize(new StreamingMarkupBuilder().bind {
 					mkp.yield addonInfo
 				} as Writable, it)
 			}
-			def stopArgs = "$android.namespace, $mainIntentAction, , stop:$addonVersion"
-			def startArgs = "$android.namespace, $mainIntentAction, , version:$addonVersion%s"
+			def stopArgs = "$android.namespace, $mainIntentAction, , stop:$appVersionName"
+			def startArgs = "$android.namespace, $mainIntentAction, , version:$appVersionName%s"
 			def globalsLine = 'ADDON_VERSION = ADDON.getAddonInfo("version")'
 			def globalsLinePatched = """# BEGIN $project.name-patched: globals
 					|#$globalsLine
@@ -373,8 +376,6 @@ if (addonIdDir != null && binariesIdDir != null) {
 		mustRunAfter genMainAssets, genMainJniLibs
 	}
 
-	def androidClientZip = file "$buildDir.path/$addonId-${addonVersion}.android_client.zip"
-
 	def zipAndroidClient = tasks.register('zipAndroidClient', Zip) {
 		group = project.name
 		inputs.dir addonDir
@@ -393,7 +394,10 @@ if (addonIdDir != null && binariesIdDir != null) {
 	tasks.register('pushAndroidClient') {
 		group = project.name
 		dependsOn zipAndroidClient
-		def destinationDir = "/sdcard$dataDir"
+
+		ext {
+			destinationDir = "/sdcard$dataDir"
+		}
 
 		doFirst {
 			exec {
