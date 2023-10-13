@@ -15,7 +15,13 @@ class DaemonInvoker(
 	vararg subprocessArgs: String
 ) : BaseDaemonInvoker(context, mainHandler) {
 
-	private val addonDir = File(context.filesDir, ".kodi/addons/${BuildConfig.ADDON_ID}")
+	private val homeDir = File(context.filesDir, ".kodi")
+
+	private val xbmcDir = File(context.cacheDir, "apk/assets")
+
+	private val addonDir = File(homeDir, "addons/${BuildConfig.ADDON_ID}")
+
+	private val lockfile = File(addonDir, ".lockfile")
 
 	override val subprocessAssets = mapOf(BuildConfig.ADDON_ID to addonDir)
 
@@ -34,12 +40,6 @@ class DaemonInvoker(
 	override val subprocessRetryDelay = 5_000L
 
 	override val subprocessTag = BuildConfig.ADDON_ID
-
-	private val lockfile = File(addonDir, ".lockfile")
-
-	private val homeDir = File(context.filesDir, ".kodi")
-
-	private val xbmcDir = File(context.cacheDir, "apk/assets")
 
 	private var channel: ServerSocketChannel? = null
 
