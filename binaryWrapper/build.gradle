@@ -4,15 +4,14 @@ plugins {
 	id 'maven-publish'
 }
 
+kotlin {
+	jvmToolchain libs.versions.jvmToolchain.get() as int
+}
+
 android {
 	buildToolsVersion = libs.versions.buildToolsVersion.get()
 	compileSdk = libs.versions.compileSdk.get() as int
 	namespace = 'ilchev.stefan.binarywrapper'
-
-	compileOptions {
-		sourceCompatibility = JavaVersion.VERSION_17
-		targetCompatibility = JavaVersion.VERSION_17
-	}
 
 	defaultConfig {
 		minSdk = libs.versions.minSdk.get() as int

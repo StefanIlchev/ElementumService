@@ -37,15 +37,14 @@ ext {
 	kodiDataDir = "/Android/data/$kodiId/files"
 }
 
+kotlin {
+	jvmToolchain libs.versions.jvmToolchain.get() as int
+}
+
 android {
 	buildToolsVersion = libs.versions.buildToolsVersion.get()
 	compileSdk = libs.versions.compileSdk.get() as int
 	namespace = 'service.lt2http.android'
-
-	compileOptions {
-		sourceCompatibility = JavaVersion.VERSION_17
-		targetCompatibility = JavaVersion.VERSION_17
-	}
 
 	defaultConfig {
 		minSdk = libs.versions.minSdk.get() as int
