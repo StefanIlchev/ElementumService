@@ -244,7 +244,6 @@ if (addonBinDir != null) {
 					'requires' {}
 				}
 			})
-			def stopArgs = "$android.namespace, $mainIntentAction, , stop:$appVersionName"
 			def startArgs = "$android.namespace, $mainIntentAction, , version:$appVersionName%s"
 			def globalsLine = 'ADDON_VERSION = ADDON.getAddonInfo("version")'
 			def globalsLinePatched = """# BEGIN $project.name-patched: globals
@@ -268,15 +267,19 @@ if (addonBinDir != null) {
 					|    xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
 					|    for attempt in range(10):
 					|        try:
+					|            chunks = []
 					|            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
 					|                client.connect(('127.0.0.1', port))
+					|                while True:
+					|                    chunk = client.recv(0x2000)
+					|                    if not chunk:
+					|                        break
+					|                    chunks.append(chunk)
+					|            str = ''.join(chunk.decode() for chunk in chunks)
+					|            if '\\0' in str:
 					|                with open(os.path.join(ADDON_PATH, '.globals'), 'w') as f:
-					|                    while True:
-					|                        chunk = client.recv(0x2000)
-					|                        if not chunk:
-					|                            break
-					|                        f.write(chunk.decode())
-					|            return True
+					|                    f.write(str)
+					|                return True
 					|        except Exception:
 					|            pass
 					|        time.sleep(1)
@@ -308,7 +311,9 @@ if (addonBinDir != null) {
 			def stopLine = '    lockfile = os.path.join(ADDON_PATH, ".lockfile")'
 			def stopLinePatched = """# BEGIN $project.name-patched: stop
 					|#$stopLine
-					|    xbmc.executebuiltin('StartAndroidActivity($stopArgs)')
+					|    from elementum.addon import populateGlobals
+					|    if not populateGlobals():
+					|        return None
 					|    lockfile = os.path.join(ADDON_PATH, '.lockfile')
 					|    if os.path.exists(lockfile):
 					|        os.remove(lockfile)
@@ -316,7 +321,6 @@ if (addonBinDir != null) {
 			def startLine = '            proc = subprocess.Popen(args, **kwargs)'
 			def startLinePatched = """# BEGIN $project.name-patched: start
 					|#$startLine
-					|            from elementum.addon import populateGlobals
 					|            repoAddonId = '$repoAddonId'
 					|            serviceRepoAddonId = '$serviceRepoAddonId'
 					|            repoAddonInfoFormat = '''$repoAddonInfoFormat'''
@@ -359,8 +363,7 @@ if (addonBinDir != null) {
 					|                    pass
 					|            dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args[1:])
 					|            dataSuffix = '#' + dataFragment if dataFragment != '' else ''
-					|            if populateGlobals():
-					|                xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
+					|            xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
 					|            for id in [serviceRepoAddonId]:
 					|                try:
 					|                    from elementum.provider import parse_json
@@ -408,11 +411,12 @@ if (addonBinDir != null) {
 			def infoLinePatched = """# BEGIN $project.name-patched: info
 					|#$infoLine
 					|        from elementum.addon import getGlobals
+					|        globals = getGlobals()
 					|        result = {}
 					|        homeDir = translatePath('special://home')
-					|        homeDirReplacement = getGlobals()['special://home']
+					|        homeDirReplacement = globals['special://home']
 					|        xbmcDir = translatePath('special://xbmc')
-					|        xbmcDirReplacement = getGlobals()['special://xbmc']
+					|        xbmcDirReplacement = globals['special://xbmc']
 					|        for key, value in info.items():
 					|            if value.startswith(homeDir):
 					|                result[key] = value.replace(homeDir, homeDirReplacement, 1)

@@ -57,6 +57,13 @@ class DaemonInvoker(
 		channel = null
 	}
 
+	private val localPort by lazy {
+		val regex = """-localPort=(\d+)""".toRegex()
+		subprocessCmd.firstNotNullOfOrNull {
+			regex.matchEntire(it)?.groupValues?.get(1)?.toIntOrNull()
+		} ?: 65220
+	}
+
 	override fun destroy() {
 		super.destroy()
 		if (Looper.myLooper() == mainHandler.looper) {
@@ -79,31 +86,27 @@ class DaemonInvoker(
 		}
 	}
 
-	private fun translatePath() {
-		if (isDestroyed) return
-		val regex = "-localPort=(\\d+)".toRegex()
-		val port = subprocessCmd.firstNotNullOfOrNull {
-			regex.matchEntire(it)?.groupValues?.get(1)?.toIntOrNull()
-		} ?: 65220
+	private fun translatePath(): Long {
+		if (isDestroyed) return -1L
 		ServerSocketChannel.open().use { channel ->
-			if (!mainHandler.post(toSetChannelRunnable(channel))) return
-			channel.bind(InetSocketAddress(port))
+			if (!mainHandler.post(toSetChannelRunnable(channel))) return -1L
+			channel.bind(InetSocketAddress(localPort))
 			channel.accept().use { it.write(ByteBuffer.wrap("${homeDir.path}/\u0000${xbmcDir.path}/".toByteArray())) }
 			if (!isDestroyed) {
 				mainHandler.post(clearChannelRunnable)
 			}
 		}
+		return 1_000L
 	}
 
-	override fun invoke(): Long {
-		if (subprocessCmd.contains(BuildConfig.ARG_TRANSLATE_PATH)) {
-			try {
-				translatePath()
-			} catch (ignored: Throwable) {
-			}
-			return -1L
+	override fun invoke() = if (subprocessCmd.contains(BuildConfig.ARG_TRANSLATE_PATH)) {
+		try {
+			translatePath()
+		} catch (ignored: Throwable) {
+			-1L
 		}
+	} else {
 		lockfile.delete()
-		return super.invoke()
+		super.invoke()
 	}
 }

@@ -172,7 +172,6 @@ if (addonIdDir != null && binariesIdDir != null) {
 					mkp.yield addonInfo
 				} as Writable, it)
 			}
-			def stopArgs = "$android.namespace, $mainIntentAction, , stop:$appVersionName"
 			def startArgs = "$android.namespace, $mainIntentAction, , version:$appVersionName%s"
 			def globalsLine = 'ADDON_VERSION = ADDON.getAddonInfo("version")'
 			def globalsLinePatched = """# BEGIN $project.name-patched: globals
@@ -196,15 +195,19 @@ if (addonIdDir != null && binariesIdDir != null) {
 					|    xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
 					|    for attempt in range(10):
 					|        try:
+					|            chunks = []
 					|            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
 					|                client.connect(('127.0.0.1', port))
+					|                while True:
+					|                    chunk = client.recv(0x2000)
+					|                    if not chunk:
+					|                        break
+					|                    chunks.append(chunk)
+					|            str = ''.join(chunk.decode() for chunk in chunks)
+					|            if '\\0' in str:
 					|                with open(os.path.join(ADDON_PATH, '.globals'), 'w') as f:
-					|                    while True:
-					|                        chunk = client.recv(0x2000)
-					|                        if not chunk:
-					|                            break
-					|                        f.write(chunk.decode())
-					|            return True
+					|                    f.write(str)
+					|                return True
 					|        except Exception:
 					|            pass
 					|        time.sleep(1)
@@ -242,7 +245,6 @@ if (addonIdDir != null && binariesIdDir != null) {
 			def stopLinePatched = """# BEGIN $project.name-patched: stop
 					|#$stopLine
 					|    from lt2http.addon import populateGlobals
-					|    xbmc.executebuiltin('StartAndroidActivity($stopArgs)')
 					|    if not populateGlobals():
 					|        return False
 					|    lockfile = os.path.join(ADDON_PATH, '.lockfile')
