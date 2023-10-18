@@ -14,7 +14,7 @@ ext {
 	srcMainGen = "$srcGen/main"
 	srcMainAssetsGen = "$srcMainGen/assets"
 	srcMainJniLibsGen = "$srcMainGen/jniLibs"
-	appVersionCode = localProperties.getProperty('lt2http.version.code') as Integer ?: 31
+	appVersionCode = localProperties.getProperty('lt2http.version.code') as Integer ?: 32
 	appVersionName = localProperties.getProperty('lt2http.version.name') ?: "$appVersionCode"
 	addonId = 'service.lt2http'
 	addonZip = System.getProperty('lt2http.addon.zip') ?: localProperties.getProperty('lt2http.addon.zip')
