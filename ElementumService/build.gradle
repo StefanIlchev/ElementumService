@@ -265,7 +265,7 @@ if (addonBinDir != null) {
 					|    dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args)
 					|    dataSuffix = '#' + dataFragment if dataFragment != '' else ''
 					|    xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
-					|    for attempt in range(10):
+					|    for _ in range(10):
 					|        try:
 					|            chunks = []
 					|            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
@@ -311,9 +311,6 @@ if (addonBinDir != null) {
 			def stopLine = '    lockfile = os.path.join(ADDON_PATH, ".lockfile")'
 			def stopLinePatched = """# BEGIN $project.name-patched: stop
 					|#$stopLine
-					|    from elementum.addon import populateGlobals
-					|    if not populateGlobals():
-					|        return None
 					|    lockfile = os.path.join(ADDON_PATH, '.lockfile')
 					|    if os.path.exists(lockfile):
 					|        os.remove(lockfile)
@@ -321,6 +318,8 @@ if (addonBinDir != null) {
 			def startLine = '            proc = subprocess.Popen(args, **kwargs)'
 			def startLinePatched = """# BEGIN $project.name-patched: start
 					|#$startLine
+					|            from elementum.addon import populateGlobals
+					|            from elementum.provider import parse_json
 					|            repoAddonId = '$repoAddonId'
 					|            serviceRepoAddonId = '$serviceRepoAddonId'
 					|            repoAddonInfoFormat = '''$repoAddonInfoFormat'''
@@ -363,10 +362,10 @@ if (addonBinDir != null) {
 					|                    pass
 					|            dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args[1:])
 					|            dataSuffix = '#' + dataFragment if dataFragment != '' else ''
-					|            xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
+					|            if populateGlobals():
+					|                xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
 					|            for id in [serviceRepoAddonId]:
 					|                try:
-					|                    from elementum.provider import parse_json
 					|                    detailsJson = '${toGetAddonDetailsJson('%s', ['installed', 'enabled'])}' % id
 					|                    enableJson = '${toSetAddonEnabledJson('%s', true)}' % id
 					|                    addon = parse_json(xbmc.executeJSONRPC(detailsJson)) \\
@@ -377,7 +376,7 @@ if (addonBinDir != null) {
 					|                        continue
 					|                    xbmc.executebuiltin('UpdateLocalAddons')
 					|                    xbmc.executebuiltin('InstallAddon(%s)' % id)
-					|                    for attempt in range(10):
+					|                    for _ in range(10):
 					|                        addon = parse_json(xbmc.executeJSONRPC(detailsJson)) \\
 					|                            .get('result', {}).get('addon', {})
 					|                        if addon.get('installed', False):

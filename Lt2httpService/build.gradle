@@ -193,7 +193,7 @@ if (addonIdDir != null && binariesIdDir != null) {
 					|    dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args)
 					|    dataSuffix = '#' + dataFragment if dataFragment != '' else ''
 					|    xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
-					|    for attempt in range(10):
+					|    for _ in range(10):
 					|        try:
 					|            chunks = []
 					|            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
