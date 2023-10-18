@@ -59,9 +59,7 @@ class DaemonInvoker(
 
 	private val localPort by lazy {
 		val regex = """-localPort=(\d+)""".toRegex()
-		subprocessCmd.firstNotNullOfOrNull {
-			regex.matchEntire(it)?.groupValues?.get(1)?.toIntOrNull()
-		} ?: 65220
+		subprocessCmd.firstNotNullOfOrNull { regex.matchEntire(it)?.groupValues?.get(1)?.toIntOrNull() } ?: 65220
 	}
 
 	override fun destroy() {
@@ -92,9 +90,9 @@ class DaemonInvoker(
 			if (!mainHandler.post(toSetChannelRunnable(channel))) return -1L
 			channel.bind(InetSocketAddress(localPort))
 			channel.accept().use { it.write(ByteBuffer.wrap("${homeDir.path}/\u0000${xbmcDir.path}/".toByteArray())) }
-			if (!isDestroyed) {
-				mainHandler.post(clearChannelRunnable)
-			}
+			if (isDestroyed ||
+				!mainHandler.post(clearChannelRunnable)
+			) return -1L
 		}
 		return 1_000L
 	}
