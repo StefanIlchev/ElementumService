@@ -59,7 +59,9 @@ class DaemonInvoker(
 
 	private val localPort by lazy {
 		val regex = """-localPort=(\d+)""".toRegex()
-		subprocessCmd.firstNotNullOfOrNull { regex.matchEntire(it)?.groupValues?.get(1)?.toIntOrNull() } ?: 65225
+		subprocessCmd.firstNotNullOfOrNull {
+			regex.matchEntire(it)?.groupValues?.get(1)?.toIntOrNull()
+		} ?: BuildConfig.LOCAL_PORT
 	}
 
 	override fun destroy() {

@@ -41,6 +41,7 @@ ext {
 	} ?: false
 	mainIntentAction = 'android.intent.action.MAIN'
 	argTranslatePath = '-translatePath'
+	localPort = 65220
 	kodiId = 'org.xbmc.kodi'
 	dataDir = '/Download'
 	kodiDataDir = "/Android/data/$kodiId/files"
@@ -77,6 +78,7 @@ android {
 		]
 		buildConfigField 'String', 'ADDON_ID', "\"$addonId\""
 		buildConfigField 'String', 'ARG_TRANSLATE_PATH', "\"$argTranslatePath\""
+		buildConfigField 'int', 'LOCAL_PORT', "$localPort"
 		buildConfigField 'String', 'PROJECT_NAME', "\"$project.name\""
 		buildConfigField 'String', 'REPO_URL', "\"$repoUrl\""
 
@@ -251,21 +253,24 @@ if (addonBinDir != null) {
 					|ADDON_VERSION = ADDON.getAddonInfo('version')
 					|GLOBALS = {}
 					|
-					|def populateGlobals():
+					|def startApp(args):
 					|    import six
+					|    from kodi_six import xbmc
+					|    dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args)
+					|    dataSuffix = '#' + dataFragment if dataFragment != '' else ''
+					|    xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
+					|
+					|def populateGlobals():
 					|    import socket
 					|    import time
-					|    from kodi_six import xbmc
 					|    remotePort = ADDON.getSetting('remote_port')
-					|    port = 65220
+					|    port = $localPort
 					|    args = ['$argTranslatePath']
 					|    if remotePort != '':
 					|        port = int(remotePort)
 					|        args.append('-localPort=' + remotePort)
-					|    dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args)
-					|    dataSuffix = '#' + dataFragment if dataFragment != '' else ''
-					|    xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
-					|    for _ in range(10):
+					|    startApp(args)
+					|    for _ in range(100):
 					|        try:
 					|            chunks = []
 					|            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
@@ -275,14 +280,14 @@ if (addonBinDir != null) {
 					|                    if not chunk:
 					|                        break
 					|                    chunks.append(chunk)
-					|            str = ''.join(chunk.decode() for chunk in chunks)
+					|            str = b''.join(chunks).decode()
 					|            if '\\0' in str:
 					|                with open(os.path.join(ADDON_PATH, '.globals'), 'w') as f:
 					|                    f.write(str)
 					|                return True
 					|        except Exception:
 					|            pass
-					|        time.sleep(1)
+					|        time.sleep(0.1)
 					|    return False
 					|
 					|def getGlobals():
@@ -293,6 +298,17 @@ if (addonBinDir != null) {
 					|        GLOBALS['special://home'] = homeDirReplacement
 					|        GLOBALS['special://xbmc'] = xbmcDirReplacement
 					|    return GLOBALS
+					|
+					|def retryStartApp():
+					|    if populateGlobals():
+					|        args = []
+					|        if ADDON.getSetting('local_port') != '':
+					|            args.append('-remotePort=' + ADDON.getSetting('local_port'))
+					|        if ADDON.getSetting('remote_host') != '':
+					|            args.append('-localHost=' + ADDON.getSetting('remote_host'))
+					|        if ADDON.getSetting('remote_port') != '':
+					|            args.append('-localPort=' + ADDON.getSetting('remote_port'))
+					|        startApp(args)
 					|# END $project.name-patched: globals""".stripMargin()
 			def versionLine = '    installed_version = read_current_version(binary_dir)'
 			def versionLinePatched = """# BEGIN $project.name-patched: version
@@ -318,7 +334,7 @@ if (addonBinDir != null) {
 			def startLine = '            proc = subprocess.Popen(args, **kwargs)'
 			def startLinePatched = """# BEGIN $project.name-patched: start
 					|#$startLine
-					|            from elementum.addon import populateGlobals
+					|            from elementum.addon import populateGlobals, startApp
 					|            from elementum.provider import parse_json
 					|            repoAddonId = '$repoAddonId'
 					|            serviceRepoAddonId = '$serviceRepoAddonId'
@@ -360,10 +376,8 @@ if (addonBinDir != null) {
 					|                    shutil.copy(iconPng, os.path.join(idDir, 'icon.png'))
 					|                except Exception:
 					|                    pass
-					|            dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args[1:])
-					|            dataSuffix = '#' + dataFragment if dataFragment != '' else ''
 					|            if populateGlobals():
-					|                xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
+					|                startApp(args[1:])
 					|            for id in [serviceRepoAddonId]:
 					|                try:
 					|                    detailsJson = '${toGetAddonDetailsJson('%s', ['installed', 'enabled'])}' % id
@@ -381,7 +395,7 @@ if (addonBinDir != null) {
 					|                            .get('result', {}).get('addon', {})
 					|                        if addon.get('installed', False):
 					|                            break
-					|                        time.sleep(1)
+					|                        time.sleep(1.0)
 					|                    xbmc.executeJSONRPC(enableJson)
 					|                    xbmc.executebuiltin('UpdateLocalAddons')
 					|                    xbmc.executebuiltin('UpdateAddonRepos')
@@ -389,22 +403,21 @@ if (addonBinDir != null) {
 					|                    pass
 					|            return None
 					|# END $project.name-patched: start""".stripMargin()
-			def retryLine = '            notify(getLocalizedString(30116), time=7000)'
+			def retryLine = '        data = _json(url)'
 			def retryLinePatched = """# BEGIN $project.name-patched: retry
 					|#$retryLine
-					|            from elementum.addon import populateGlobals
-					|            args = []
-					|            if ADDON.getSetting('local_port') != '':
-					|                args.append('-remotePort=' + ADDON.getSetting('local_port'))
-					|            if ADDON.getSetting('remote_host') != '':
-					|                args.append('-localHost=' + ADDON.getSetting('remote_host'))
-					|            if ADDON.getSetting('remote_port') != '':
-					|                args.append('-localPort=' + ADDON.getSetting('remote_port'))
-					|            dataFragment = '%00'.join(six.moves.urllib_parse.quote(arg, '') for arg in args)
-					|            dataSuffix = '#' + dataFragment if dataFragment != '' else ''
-					|            if populateGlobals():
-					|                xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
-					|            notify(getLocalizedString(30116), time = 7000)
+					|        from elementum.addon import retryStartApp
+					|        try:
+					|            data = _json(url)
+					|        except ConnectionResetError:
+					|            retryStartApp()
+					|            raise
+					|        except urllib_error.URLError as e:
+					|            if isinstance(e.reason, IOError) or \\
+					|                    isinstance(e.reason, OSError) or \\
+					|                    'Connection refused' in e.reason:
+					|                retryStartApp()
+					|            raise
 					|# END $project.name-patched: retry""".stripMargin()
 			def infoLine = '        return info'
 			def infoLinePatched = """# BEGIN $project.name-patched: info

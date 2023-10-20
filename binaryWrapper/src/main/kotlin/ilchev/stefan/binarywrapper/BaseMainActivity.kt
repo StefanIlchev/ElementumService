@@ -47,6 +47,16 @@ abstract class BaseMainActivity : Activity() {
 				.apply()
 		}
 
+	private var isForegroundServiceStart
+		get() = getSharedPreferences(BuildConfig.LIBRARY_PACKAGE_NAME, MODE_PRIVATE)
+			.getBoolean(FOREGROUND_SERVICE, false)
+		set(value) {
+			getSharedPreferences(BuildConfig.LIBRARY_PACKAGE_NAME, MODE_PRIVATE)
+				.edit()
+				.putBoolean(FOREGROUND_SERVICE, value)
+				.apply()
+		}
+
 	private fun isActivityFound(
 		intent: Intent
 	) = try {
@@ -205,12 +215,16 @@ abstract class BaseMainActivity : Activity() {
 	}
 
 	private fun callForegroundServiceAndFinish() {
+		val isForegroundServiceStart = isForegroundServiceStart
+		if (isForegroundServiceStart) {
+			this.isForegroundServiceStart = false
+		}
 		try {
 			val service = (intent?.let(::Intent) ?: Intent()).setClass(this, foregroundServiceClass)
 			if (isStopIntent) {
 				tryStopService(service)
 				BaseForegroundService.tryShowDifferent(this, versionName)
-			} else {
+			} else if (isForegroundServiceStart) {
 				startForegroundService(service)
 			}
 		} catch (t: Throwable) {
@@ -221,6 +235,7 @@ abstract class BaseMainActivity : Activity() {
 
 	override fun onResume() {
 		super.onResume()
+		isForegroundServiceStart = true
 		if (isStopIntent || requestRequestedPermissions() == null) {
 			callForegroundServiceAndFinish()
 		}
