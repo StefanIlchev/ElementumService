@@ -280,10 +280,10 @@ if (addonBinDir != null) {
 					|                    if not chunk:
 					|                        break
 					|                    chunks.append(chunk)
-					|            str = b''.join(chunks).decode()
-					|            if '\\0' in str:
+					|            data = b''.join(chunks).decode()
+					|            if '\\0' in data:
 					|                with open(os.path.join(ADDON_PATH, '.globals'), 'w') as f:
-					|                    f.write(str)
+					|                    f.write(data)
 					|                return True
 					|        except Exception:
 					|            pass
