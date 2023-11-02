@@ -15,7 +15,7 @@ pluginManagement {
 		id 'com.android.library' version '8.1.2'
 
 		// https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib
-		id 'org.jetbrains.kotlin.android' version '1.9.10'
+		id 'org.jetbrains.kotlin.android' version '1.9.20'
 	}
 }
 
