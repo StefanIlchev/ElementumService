@@ -47,6 +47,10 @@ android {
 	compileSdk = libs.versions.compileSdk.get() as int
 	namespace = 'service.lt2http.android'
 
+	buildFeatures {
+		buildConfig = true
+	}
+
 	defaultConfig {
 		minSdk = libs.versions.minSdk.get() as int
 		targetSdk = compileSdk

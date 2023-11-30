@@ -13,6 +13,10 @@ android {
 	compileSdk = libs.versions.compileSdk.get() as int
 	namespace = 'ilchev.stefan.binarywrapper'
 
+	buildFeatures {
+		buildConfig = true
+	}
+
 	defaultConfig {
 		minSdk = libs.versions.minSdk.get() as int
 

@@ -68,6 +68,10 @@ android {
 		}
 	}
 
+	buildFeatures {
+		buildConfig = true
+	}
+
 	defaultConfig {
 		minSdk = libs.versions.minSdk.get() as int
 		targetSdk = compileSdk
@@ -141,6 +145,10 @@ android {
 		abi {
 			enable = true
 			universalApk = true
+			exclude 'mips64',
+					'mips',
+					'armeabi',
+					'riscv64'
 		}
 	}
 
