@@ -111,6 +111,10 @@ android {
 		abi {
 			enable = true
 			universalApk = true
+			exclude 'mips64',
+					'mips',
+					'armeabi',
+					'riscv64'
 		}
 	}
 
