@@ -40,22 +40,18 @@ abstract class BaseMainActivity : Activity() {
 		get() = Build.VERSION.SDK_INT < Build.VERSION_CODES.R || Environment.isExternalStorageManager() ||
 				getSharedPreferences(BuildConfig.LIBRARY_PACKAGE_NAME, MODE_PRIVATE)
 					.getBoolean(MANAGE_EXTERNAL_STORAGE, false)
-		set(value) {
-			getSharedPreferences(BuildConfig.LIBRARY_PACKAGE_NAME, MODE_PRIVATE)
-				.edit()
-				.putBoolean(MANAGE_EXTERNAL_STORAGE, value)
-				.apply()
-		}
+		set(value) = getSharedPreferences(BuildConfig.LIBRARY_PACKAGE_NAME, MODE_PRIVATE)
+			.edit()
+			.putBoolean(MANAGE_EXTERNAL_STORAGE, value)
+			.apply()
 
 	private var isForegroundServiceStart
 		get() = getSharedPreferences(BuildConfig.LIBRARY_PACKAGE_NAME, MODE_PRIVATE)
 			.getBoolean(FOREGROUND_SERVICE, false)
-		set(value) {
-			getSharedPreferences(BuildConfig.LIBRARY_PACKAGE_NAME, MODE_PRIVATE)
-				.edit()
-				.putBoolean(FOREGROUND_SERVICE, value)
-				.apply()
-		}
+		set(value) = getSharedPreferences(BuildConfig.LIBRARY_PACKAGE_NAME, MODE_PRIVATE)
+			.edit()
+			.putBoolean(FOREGROUND_SERVICE, value)
+			.apply()
 
 	private fun isActivityFound(
 		intent: Intent
