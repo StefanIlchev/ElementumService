@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="18 18 72 72">
+	<path d="M0,0h108v108h-108z" fill="black" />
+	<path
+		d="M39.09474,31.76842 L45.91579,35.30526 L45.91579,41.62105 L54.75789,46.42105 L59.81052,43.89474 L66.88421,47.43158 L66.88421,55.51579 L52.98947,63.34737 L52.98947,71.93684 L59.81053,75.22105 L66.88421,71.93684 L66.88421,63.34737 L52.98947,55.51579 L52.98947,49.70526 L44.14737,44.90526 L39.09474,47.17895 L32.27368,43.38947 L32.27368,35.30526 Z"
+		fill="transparent" stroke="white" stroke-width="2" />
+	<path d="M36.06316,45.49474 L36.06316,37.83158 L43.42556,34.01404" fill="transparent" stroke="white"
+		stroke-width="2" />
+	<path d="M56.77895,57.65167 L56.77895,49.70526 L63.97206,45.97550" fill="transparent" stroke="white"
+		stroke-width="2" />
+	<path d="M40.86316,40.61053 m-1,0 a1,1 0 0,0 2,0 a1,1 0 0,0 -2,0" fill="white" stroke="white" stroke-width="2" />
+	<path d="M59.81053,67.64211 m-3,0 a3,3 0 0,0 6,0 a3,3 0 0,0 -6,0" fill="white" stroke="white" stroke-width="2" />
+	<path d="M39.09474,55.01053 m0,-2.5 a2.5,2.5 0 0,0 0,5 a2.5,2.5 0 0,0 0,-5 L39.09474,47.17895" fill="transparent"
+		stroke="white" stroke-width="2" />
+	<path d="M59.81053,34.04211 m0,2.5 a2.5,2.5 0 0,0 0,-5 a2.5,2.5 0 0,0 0,5 L59.81053,43.89474" fill="transparent"
+		stroke="white" stroke-width="2" />
+	<path d="M74.21053,43.13684 m-1.5,0 a1.5,1.5 0 0,0 3,0 a1.5,1.5 0 0,0 -3,0 m1.5,0 L66.88421,47.43158" fill="white"
+		stroke="white" stroke-width="2" />
+	<path d="M45.66316,59.30526 m-1.5,0 a1.5,1.5 0 0,0 3,0 a1.5,1.5 0 0,0 -3,0 m1.5,0 L52.98947,63.34737" fill="white"
+		stroke="white" stroke-width="2" />
+	<path d="M43.64211,67.13684 m-1.5,0 a1.5,1.5 0 0,0 3,0 a1.5,1.5 0 0,0 -3,0 m1.5,0 L52.98947,67.13684" fill="white"
+		stroke="white" stroke-width="2" />
+	<path d="M45.91579,75.22105 m-1.5,0 a1.5,1.5 0 0,0 3,0 a1.5,1.5 0 0,0 -3,0 m1.5,0 L52.98947,71.93684" fill="white"
+		stroke="white" stroke-width="2" />
+</svg>
