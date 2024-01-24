@@ -11,8 +11,8 @@ pluginManagement {
 	plugins {
 
 		// https://mvnrepository.com/artifact/com.android.tools.build/gradle?repo=google
-		id 'com.android.application' version '8.2.1'
-		id 'com.android.library' version '8.2.1'
+		id 'com.android.application' version '8.2.2'
+		id 'com.android.library' version '8.2.2'
 
 		// https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib
 		id 'org.jetbrains.kotlin.android' version '1.9.22'
