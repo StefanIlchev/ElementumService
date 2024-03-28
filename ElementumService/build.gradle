@@ -18,7 +18,7 @@ ext {
 	srcMainAssetsGen = "$srcMainGen/assets"
 	srcMainAbiHeadsGen = "$srcMainGen/abiHeads"
 	srcMainJniLibsGen = "$srcMainGen/jniLibs"
-	appVersionCode = localProperties.getProperty('elementum.version.code') as Integer ?: 80
+	appVersionCode = localProperties.getProperty('elementum.version.code') as Integer ?: 81
 	appVersionName = localProperties.getProperty('elementum.version.name') ?: "$appVersionCode"
 	addonId = 'plugin.video.elementum'
 	addonZip = System.getProperty('elementum.addon.zip') ?: localProperties.getProperty('elementum.addon.zip')
