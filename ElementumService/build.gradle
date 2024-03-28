@@ -45,7 +45,7 @@ ext {
 	kodiId = 'org.xbmc.kodi'
 	dataDir = '/Download'
 	kodiDataDir = "/Android/data/$kodiId/files"
-	repoUrl = "https://StefanIlchev.github.io/$rootProject.name/"
+	repoUrl = localProperties.getProperty('elementum.repo.url') ?: ''
 }
 
 kotlin {
@@ -344,6 +344,7 @@ if (addonBinDir != null) {
 					|#$startLine
 					|            from elementum.addon import populateGlobals, startApp
 					|            from elementum.provider import parse_json
+					|            serviceRepoAddonDataDir = '$repoUrl'
 					|            repoAddonId = '$repoAddonId'
 					|            serviceRepoAddonId = '$serviceRepoAddonId'
 					|            repoAddonInfoFormat = '''$repoAddonInfoFormat'''
@@ -356,15 +357,14 @@ if (addonBinDir != null) {
 					|            serviceRepoAddonInfo = repoAddonInfoFormat.format(
 					|                name = 'Elementum Service Repository',
 					|                id = serviceRepoAddonId,
-					|                dataDir = '$repoUrl',
+					|                dataDir = serviceRepoAddonDataDir,
 					|                summary = 'GitHub repository for Elementum Service updates'
 					|            )
 					|            fanartPng = os.path.join(ADDON_PATH, 'fanart.png')
 					|            iconPng = os.path.join(ADDON_PATH, 'icon.png')
-					|            repoAddons = [
-					|                (repoAddonId, repoAddonInfo),
-					|                (serviceRepoAddonId, serviceRepoAddonInfo)
-					|            ]
+					|            repoAddons = [(repoAddonId, repoAddonInfo)]
+					|            if serviceRepoAddonDataDir != '':
+					|                repoAddons.append((serviceRepoAddonId, serviceRepoAddonInfo))
 					|            for id, info in repoAddons:
 					|                idDir = os.path.join(ADDON_PATH, '..', id)
 					|                infoFile = os.path.join(idDir, 'addon.xml')
@@ -386,7 +386,7 @@ if (addonBinDir != null) {
 					|                    pass
 					|            if populateGlobals():
 					|                startApp(args[1:])
-					|            for id in [serviceRepoAddonId]:
+					|            for id in [serviceRepoAddonId] if serviceRepoAddonDataDir != '' else []:
 					|                try:
 					|                    detailsJson = '${toGetAddonDetailsJson('%s', ['installed', 'enabled'])}' % id
 					|                    enableJson = '${toSetAddonEnabledJson('%s', true)}' % id

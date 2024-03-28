@@ -22,5 +22,9 @@ class ForegroundService : BaseForegroundService() {
 
 	override fun getUpdateDownloadUri(
 		versionName: String
-	): Uri = Uri.parse("${BuildConfig.REPO_URL}${getUpdateFileName(versionName)}")
+	) = if (BuildConfig.REPO_URL.isEmpty()) {
+		null
+	} else {
+		Uri.parse("${BuildConfig.REPO_URL}${getUpdateFileName(versionName)}")
+	}
 }

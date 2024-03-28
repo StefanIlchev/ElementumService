@@ -162,10 +162,7 @@ abstract class BaseMainActivity : Activity() {
 			val packageInfo = BaseForegroundService.getPackageInfo(this, PackageManager.GET_PERMISSIONS)
 			val set = mutableSetOf(*packageInfo.requestedPermissions ?: emptyArray())
 			if (set.remove(Manifest.permission.REQUEST_INSTALL_PACKAGES) &&
-				BaseForegroundService.getUpdate(
-					packageInfo,
-					versionName
-				) != null &&
+				BaseForegroundService.getUpdate(packageInfo, versionName) != null &&
 				request(
 					"REQUEST_INSTALL_PACKAGES",
 					{ isInstallPackagesRequester },
@@ -194,6 +191,9 @@ abstract class BaseMainActivity : Activity() {
 			}
 			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
 				set.remove(POST_NOTIFICATIONS)
+			}
+			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+				set.remove(FOREGROUND_SERVICE_MEDIA_PLAYBACK)
 			}
 			if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
 				set.remove(Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -287,6 +287,9 @@ abstract class BaseMainActivity : Activity() {
 
 		@SuppressLint("InlinedApi")
 		private const val POST_NOTIFICATIONS = Manifest.permission.POST_NOTIFICATIONS
+
+		@SuppressLint("InlinedApi")
+		private const val FOREGROUND_SERVICE_MEDIA_PLAYBACK = Manifest.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK
 
 		@SuppressLint("InlinedApi")
 		private const val MANAGE_EXTERNAL_STORAGE = Manifest.permission.MANAGE_EXTERNAL_STORAGE
