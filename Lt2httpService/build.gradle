@@ -31,11 +31,14 @@ ext {
 			'x86_64'     : 'android-x64'
 	]
 	mainIntentAction = 'android.intent.action.MAIN'
+	argAddonInfo = '-addonInfo'
+	argLocalPort = '-localPort'
 	argTranslatePath = '-translatePath'
 	localPort = 65225
 	kodiId = 'org.xbmc.kodi'
 	dataDir = '/Download'
 	kodiDataDir = "/Android/data/$kodiId/files"
+	repoUrl = localProperties.getProperty('elementum.repo.url') ?: ''
 }
 
 kotlin {
@@ -60,8 +63,12 @@ android {
 				'mainIntentAction': mainIntentAction
 		]
 		buildConfigField 'String', 'ADDON_ID', "\"$addonId\""
+		buildConfigField 'String', 'ARG_ADDON_INFO', "\"$argAddonInfo\""
+		buildConfigField 'String', 'ARG_LOCAL_PORT', "\"$argLocalPort\""
 		buildConfigField 'String', 'ARG_TRANSLATE_PATH', "\"$argTranslatePath\""
 		buildConfigField 'int', 'LOCAL_PORT', "$localPort"
+		buildConfigField 'String', 'PROJECT_NAME', "\"$project.name\""
+		buildConfigField 'String', 'REPO_URL', "\"$repoUrl\""
 	}
 
 	applicationVariants.configureEach { variant ->
@@ -196,34 +203,44 @@ if (addonIdDir != null && binariesIdDir != null) {
 					|    dataSuffix = '#' + dataFragment if dataFragment != '' else ''
 					|    xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
 					|
-					|def populateGlobals():
+					|def recvData(port):
 					|    import socket
+					|    try:
+					|        chunks = []
+					|        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
+					|            client.connect(('127.0.0.1', port))
+					|            while True:
+					|                chunk = client.recv(0x2000)
+					|                if not chunk:
+					|                    break
+					|                chunks.append(chunk)
+					|        return b''.join(chunks)
+					|    except Exception:
+					|        pass
+					|    return b''
+					|
+					|def recvApp(expected, args):
 					|    import time
 					|    remotePort = ADDON.getSetting('remote_port')
 					|    port = $localPort
-					|    args = ['$argTranslatePath']
 					|    if remotePort != '':
 					|        port = int(remotePort)
-					|        args.append('-localPort=' + remotePort)
+					|        args.append('$argLocalPort=' + remotePort)
 					|    startApp(args)
+					|    expectedB = expected.encode()
 					|    for _ in range(100):
-					|        try:
-					|            chunks = []
-					|            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
-					|                client.connect(('127.0.0.1', port))
-					|                while True:
-					|                    chunk = client.recv(0x2000)
-					|                    if not chunk:
-					|                        break
-					|                    chunks.append(chunk)
-					|            data = b''.join(chunks).decode()
-					|            if '\\0' in data:
-					|                with open(os.path.join(ADDON_PATH, '.globals'), 'w') as f:
-					|                    f.write(data)
-					|                return True
-					|        except Exception:
-					|            pass
+					|        data = recvData(port)
+					|        if expectedB in data:
+					|            return data
 					|        time.sleep(0.1)
+					|    return b''
+					|
+					|def populateGlobals():
+					|    data = recvApp('$android.namespace', ['$argTranslatePath'])
+					|    if data != b'':
+					|        with open(os.path.join(ADDON_PATH, '.globals'), 'wb') as f:
+					|            f.write(data)
+					|        return True
 					|    return False
 					|
 					|def getGlobals():
@@ -433,6 +450,47 @@ if (addonIdDir != null && binariesIdDir != null) {
 				executable = android.adbExecutable
 				args 'push', androidClientZip.path, destinationDir
 			}
+		}
+	}
+
+	tasks.register('genPages') {
+		group = project.name
+		dependsOn tasks.named('assembleRelease'), zipAndroidClient
+		finalizedBy rootProject.tasks.named('genIndex')
+
+		doLast {
+			copy {
+				from "$buildFolder.path/outputs/apk/release"
+				into pagesDir
+				include '*.apk'
+			}
+			copy {
+				from androidClientZip
+				into pagesDir
+			}
+			def repoZip = file "$pagesDir/$addonId/$addonId-${appVersionName}.zip"
+			copy {
+				from androidClientZip
+				into repoZip.parentFile
+				rename { repoZip.name }
+			}
+			def addonFile = file "$addonIdDir/addon.xml"
+			def addonInfo = new XmlSlurper().parse addonFile
+			copy {
+				from addonIdDir
+				into "$pagesDir/$addonId"
+				include addonInfo.'extension'.'assets'.'*'*.text()
+			}
+			def repoInfo = file "$pagesDir/$addonId/addons.xml"
+			repoInfo.withWriter {
+				XmlUtil.serialize(new StreamingMarkupBuilder().bind {
+					'addons' {
+						mkp.yield addonInfo
+					}
+				} as Writable, it)
+			}
+			def repoInfoMd5 = file "$pagesDir/$addonId/addons.xml.md5"
+			repoInfoMd5.text = repoInfo.text.md5()
 		}
 	}
 }

@@ -40,6 +40,8 @@ ext {
 		}
 	} ?: false
 	mainIntentAction = 'android.intent.action.MAIN'
+	argAddonInfo = '-addonInfo'
+	argLocalPort = '-localPort'
 	argTranslatePath = '-translatePath'
 	localPort = 65220
 	kodiId = 'org.xbmc.kodi'
@@ -81,6 +83,8 @@ android {
 				'mainIntentAction': mainIntentAction
 		]
 		buildConfigField 'String', 'ADDON_ID', "\"$addonId\""
+		buildConfigField 'String', 'ARG_ADDON_INFO', "\"$argAddonInfo\""
+		buildConfigField 'String', 'ARG_LOCAL_PORT', "\"$argLocalPort\""
 		buildConfigField 'String', 'ARG_TRANSLATE_PATH', "\"$argTranslatePath\""
 		buildConfigField 'int', 'LOCAL_PORT', "$localPort"
 		buildConfigField 'String', 'PROJECT_NAME', "\"$project.name\""
@@ -215,7 +219,6 @@ if (addonBinDir != null) {
 				from zipTree(addonZip)
 				into addonDir
 			}
-			def repoAddonId = 'repository.elementumorg'
 			def serviceRepoAddonId = 'repository.service.elementum'
 			def addonFile = file "$addonIdDir/addon.xml"
 			def addonInfo = new XmlSlurper().parse addonFile
@@ -230,17 +233,17 @@ if (addonBinDir != null) {
 				} as Writable, it)
 			}
 			def repoAddonInfoFormat = XmlUtil.serialize(new StreamingMarkupBuilder().bind {
-				'addon'('name': '{name}', 'id': '{id}', 'provider-name': providerName, 'version': appVersionName) {
+				'addon'('id': '{id}', 'name': '{name}', 'provider-name': providerName, 'version': appVersionName) {
 
-					'extension'('name': '{name}', 'point': 'xbmc.addon.repository') {
+					'extension'('point': 'xbmc.addon.repository') {
 
 						'dir' {
 
-							'checksum'("{dataDir}$addonId/addons.xml.md5")
+							'checksum'("{dataDir}addons.xml.md5")
 
 							'datadir'('zip': 'true', '{dataDir}')
 
-							'info'('compressed': 'false', "{dataDir}$addonId/addons.xml")
+							'info'('compressed': 'false', "{dataDir}addons.xml")
 						}
 					}
 
@@ -250,8 +253,6 @@ if (addonBinDir != null) {
 
 						'summary'('lang': 'en', '{summary}')
 					}
-
-					'requires' {}
 				}
 			})
 			def startArgs = "$android.namespace, $mainIntentAction, , version:$appVersionName%s"
@@ -261,6 +262,56 @@ if (addonBinDir != null) {
 					|ADDON_VERSION = ADDON.getAddonInfo('version')
 					|GLOBALS = {}
 					|
+					|def makeAddon(id, info):
+					|    import shutil
+					|    fanartPng = os.path.join(ADDON_PATH, 'fanart.png')
+					|    iconPng = os.path.join(ADDON_PATH, 'icon.png')
+					|    idDir = os.path.join(ADDON_PATH, '..', id)
+					|    infoFile = os.path.join(idDir, 'addon.xml')
+					|    if os.path.exists(infoFile):
+					|        try:
+					|            with open(infoFile, 'r') as f:
+					|                if info == f.read():
+					|                    return True
+					|        except Exception:
+					|            pass
+					|    try:
+					|        shutil.rmtree(idDir, True)
+					|        os.makedirs(idDir)
+					|        with open(infoFile, 'w') as f:
+					|            f.write(info)
+					|        shutil.copy(fanartPng, os.path.join(idDir, 'fanart.png'))
+					|        shutil.copy(iconPng, os.path.join(idDir, 'icon.png'))
+					|        return True
+					|    except Exception:
+					|        pass
+					|    return False
+					|
+					|def installAddon(id):
+					|    import time
+					|    from kodi_six import xbmc
+					|    from elementum.provider import parse_json
+					|    try:
+					|        detailsJson = '${toGetAddonDetailsJson('%s', ['installed', 'enabled'])}' % id
+					|        enableJson = '${toSetAddonEnabledJson('%s', true)}' % id
+					|        addon = parse_json(xbmc.executeJSONRPC(detailsJson)).get('result', {}).get('addon', {})
+					|        if addon.get('installed', False):
+					|            if not addon.get('enabled', False):
+					|                xbmc.executeJSONRPC(enableJson)
+					|            return
+					|        xbmc.executebuiltin('UpdateLocalAddons')
+					|        xbmc.executebuiltin('InstallAddon(%s)' % id)
+					|        for _ in range(10):
+					|            addon = parse_json(xbmc.executeJSONRPC(detailsJson)).get('result', {}).get('addon', {})
+					|            if addon.get('installed', False):
+					|                break
+					|            time.sleep(1.0)
+					|        xbmc.executeJSONRPC(enableJson)
+					|        xbmc.executebuiltin('UpdateLocalAddons')
+					|        xbmc.executebuiltin('UpdateAddonRepos')
+					|    except Exception:
+					|        pass
+					|
 					|def startApp(args):
 					|    import six
 					|    from kodi_six import xbmc
@@ -268,34 +319,44 @@ if (addonBinDir != null) {
 					|    dataSuffix = '#' + dataFragment if dataFragment != '' else ''
 					|    xbmc.executebuiltin('StartAndroidActivity($startArgs)' % dataSuffix)
 					|
-					|def populateGlobals():
+					|def recvData(port):
 					|    import socket
+					|    try:
+					|        chunks = []
+					|        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
+					|            client.connect(('127.0.0.1', port))
+					|            while True:
+					|                chunk = client.recv(0x2000)
+					|                if not chunk:
+					|                    break
+					|                chunks.append(chunk)
+					|        return b''.join(chunks)
+					|    except Exception:
+					|        pass
+					|    return b''
+					|
+					|def recvApp(expected, args):
 					|    import time
 					|    remotePort = ADDON.getSetting('remote_port')
 					|    port = $localPort
-					|    args = ['$argTranslatePath']
 					|    if remotePort != '':
 					|        port = int(remotePort)
-					|        args.append('-localPort=' + remotePort)
+					|        args.append('$argLocalPort=' + remotePort)
 					|    startApp(args)
+					|    expectedB = expected.encode()
 					|    for _ in range(100):
-					|        try:
-					|            chunks = []
-					|            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
-					|                client.connect(('127.0.0.1', port))
-					|                while True:
-					|                    chunk = client.recv(0x2000)
-					|                    if not chunk:
-					|                        break
-					|                    chunks.append(chunk)
-					|            data = b''.join(chunks).decode()
-					|            if '\\0' in data:
-					|                with open(os.path.join(ADDON_PATH, '.globals'), 'w') as f:
-					|                    f.write(data)
-					|                return True
-					|        except Exception:
-					|            pass
+					|        data = recvData(port)
+					|        if expectedB in data:
+					|            return data
 					|        time.sleep(0.1)
+					|    return b''
+					|
+					|def populateGlobals():
+					|    data = recvApp('$android.namespace', ['$argTranslatePath'])
+					|    if data != b'':
+					|        with open(os.path.join(ADDON_PATH, '.globals'), 'wb') as f:
+					|            f.write(data)
+					|        return True
 					|    return False
 					|
 					|def getGlobals():
@@ -315,7 +376,7 @@ if (addonBinDir != null) {
 					|        if ADDON.getSetting('remote_host') != '':
 					|            args.append('-localHost=' + ADDON.getSetting('remote_host'))
 					|        if ADDON.getSetting('remote_port') != '':
-					|            args.append('-localPort=' + ADDON.getSetting('remote_port'))
+					|            args.append('$argLocalPort=' + ADDON.getSetting('remote_port'))
 					|        startApp(args)
 					|# END $project.name-patched: globals""".stripMargin()
 			def versionLine = '    installed_version = read_current_version(binary_dir)'
@@ -342,73 +403,21 @@ if (addonBinDir != null) {
 			def startLine = '            proc = subprocess.Popen(args, **kwargs)'
 			def startLinePatched = """# BEGIN $project.name-patched: start
 					|#$startLine
-					|            from elementum.addon import populateGlobals, startApp
-					|            from elementum.provider import parse_json
-					|            serviceRepoAddonDataDir = '$repoUrl'
-					|            repoAddonId = '$repoAddonId'
-					|            serviceRepoAddonId = '$serviceRepoAddonId'
-					|            repoAddonInfoFormat = '''$repoAddonInfoFormat'''
-					|            repoAddonInfo = repoAddonInfoFormat.format(
-					|                name = 'ElementumOrg repository',
-					|                id = repoAddonId,
-					|                dataDir = ELEMENTUMD_HOST + '/repository/$providerName/',
-					|                summary = 'GitHub virtual Add-on repository'
-					|            )
-					|            serviceRepoAddonInfo = repoAddonInfoFormat.format(
-					|                name = 'Elementum Service Repository',
-					|                id = serviceRepoAddonId,
-					|                dataDir = serviceRepoAddonDataDir,
-					|                summary = 'GitHub repository for Elementum Service updates'
-					|            )
-					|            fanartPng = os.path.join(ADDON_PATH, 'fanart.png')
-					|            iconPng = os.path.join(ADDON_PATH, 'icon.png')
-					|            repoAddons = [(repoAddonId, repoAddonInfo)]
-					|            if serviceRepoAddonDataDir != '':
-					|                repoAddons.append((serviceRepoAddonId, serviceRepoAddonInfo))
-					|            for id, info in repoAddons:
-					|                idDir = os.path.join(ADDON_PATH, '..', id)
-					|                infoFile = os.path.join(idDir, 'addon.xml')
-					|                if os.path.exists(infoFile):
-					|                    try:
-					|                        with open(infoFile, 'r') as f:
-					|                            if info == f.read():
-					|                                continue
-					|                    except Exception:
-					|                        pass
-					|                try:
-					|                    shutil.rmtree(idDir, True)
-					|                    os.makedirs(idDir)
-					|                    with open(infoFile, 'w') as f:
-					|                        f.write(info)
-					|                    shutil.copy(fanartPng, os.path.join(idDir, 'fanart.png'))
-					|                    shutil.copy(iconPng, os.path.join(idDir, 'icon.png'))
-					|                except Exception:
-					|                    pass
+					|            from elementum.addon import installAddon, makeAddon, populateGlobals, startApp
 					|            if populateGlobals():
 					|                startApp(args[1:])
-					|            for id in [serviceRepoAddonId] if serviceRepoAddonDataDir != '' else []:
-					|                try:
-					|                    detailsJson = '${toGetAddonDetailsJson('%s', ['installed', 'enabled'])}' % id
-					|                    enableJson = '${toSetAddonEnabledJson('%s', true)}' % id
-					|                    addon = parse_json(xbmc.executeJSONRPC(detailsJson)) \\
-					|                        .get('result', {}).get('addon', {})
-					|                    if addon.get('installed', False):
-					|                        if not addon.get('enabled', False):
-					|                            xbmc.executeJSONRPC(enableJson)
-					|                        continue
-					|                    xbmc.executebuiltin('UpdateLocalAddons')
-					|                    xbmc.executebuiltin('InstallAddon(%s)' % id)
-					|                    for _ in range(10):
-					|                        addon = parse_json(xbmc.executeJSONRPC(detailsJson)) \\
-					|                            .get('result', {}).get('addon', {})
-					|                        if addon.get('installed', False):
-					|                            break
-					|                        time.sleep(1.0)
-					|                    xbmc.executeJSONRPC(enableJson)
-					|                    xbmc.executebuiltin('UpdateLocalAddons')
-					|                    xbmc.executebuiltin('UpdateAddonRepos')
-					|                except Exception:
-					|                    pass
+					|            repoAddonInfoFormat = '''$repoAddonInfoFormat'''
+					|            serviceRepoAddonDataDir = '$repoUrl'
+					|            if serviceRepoAddonDataDir != '':
+					|                serviceRepoAddonId = '$serviceRepoAddonId'
+					|                serviceRepoAddonInfo = repoAddonInfoFormat.format(
+					|                    name = 'Elementum Service Repository',
+					|                    id = serviceRepoAddonId,
+					|                    dataDir = serviceRepoAddonDataDir,
+					|                    summary = 'GitHub repository for Elementum Service updates'
+					|                )
+					|                if makeAddon(serviceRepoAddonId, serviceRepoAddonInfo):
+					|                    installAddon(serviceRepoAddonId)
 					|            return None
 					|# END $project.name-patched: start""".stripMargin()
 			def retryLine = '        data = _json(url)'
@@ -427,6 +436,25 @@ if (addonBinDir != null) {
 					|                retryStartApp()
 					|            raise
 					|# END $project.name-patched: retry""".stripMargin()
+			def installLine = '        return xbmc.executebuiltin("InstallAddon(%s)" % addonId)'
+			def installLinePatched = """# BEGIN $project.name-patched: install
+					|#$installLine
+					|        if addonId == 'repository.elementumorg':
+					|            import zipfile
+					|            from io import BytesIO
+					|            from elementum.addon import installAddon, recvApp, retryStartApp
+					|            addonZip = recvApp(addonId, ['$argAddonInfo=' + addonId])
+					|            if addonZip != b'':
+					|                try:
+					|                    with zipfile.ZipFile(BytesIO(addonZip), 'r') as zip:
+					|                        zip.extractall(os.path.join(ADDON_PATH, '..'))
+					|                    installAddon(addonId)
+					|                except Exception:
+					|                    pass
+					|            retryStartApp()
+					|            return None
+					|        return xbmc.executebuiltin('InstallAddon(%s)' % addonId)
+					|# END $project.name-patched: install""".stripMargin()
 			def infoLine = '        return info'
 			def infoLinePatched = """# BEGIN $project.name-patched: info
 					|#$infoLine
@@ -473,6 +501,7 @@ if (addonBinDir != null) {
 							[retryLine, retryLinePatched]
 					],
 					(file("$addonIdDir/resources/site-packages/elementum/rpc.py"))       : [
+							[installLine, installLinePatched],
 							[infoLine, infoLinePatched],
 							[translateLine, translateLinePatched]
 					]
@@ -606,21 +635,9 @@ if (addonBinDir != null) {
 	tasks.register('genPages') {
 		group = project.name
 		dependsOn tasks.named('assembleRelease'), zipAndroidClient
-
-		ext {
-			pagesDir = "$rootDir.path/docs"
-		}
-
-		doFirst {
-			delete pagesDir
-		}
+		finalizedBy rootProject.tasks.named('genIndex')
 
 		doLast {
-			def gitignore = file "$rootDir.path/.gitignore"
-			def gitignorePages = "!${file(pagesDir).name}/**"
-			if (gitignore.isFile() && !gitignore.any { it == gitignorePages }) {
-				gitignore.withWriterAppend { it.writeLine gitignorePages }
-			}
 			copy {
 				from "$buildFolder.path/outputs/apk/release"
 				into pagesDir
@@ -653,44 +670,6 @@ if (addonBinDir != null) {
 			}
 			def repoInfoMd5 = file "$pagesDir/$addonId/addons.xml.md5"
 			repoInfoMd5.text = repoInfo.text.md5()
-			def indexPage = file "$pagesDir/index.html"
-			indexPage.withWriter {
-				def builder = new StreamingMarkupBuilder()
-				builder.setUseDoubleQuotes true
-				it << '<!DOCTYPE html>' << builder.bind {
-					'html'('lang': 'en', 'style': 'color-scheme: light dark;') {
-
-						'head' {
-
-							'meta'('charset': 'utf-8')
-
-							'title'(rootProject.name)
-						}
-
-						'body' {
-
-							'table' {
-								file(pagesDir).listFiles({
-									it.isFile() && it != indexPage
-								} as FileFilter).sort().each {
-									def name = XmlUtil.escapeXml it.name
-									def date = new Date(it.lastModified()).format 'yyyy-MM-dd HH:mm'
-									def size = "${it.length()}B"
-
-									'tr' {
-
-										'td' { 'a'('href': name, name) }
-
-										'td'(date)
-
-										'td'('style': 'text-align: right;', size)
-									}
-								}
-							}
-						}
-					}
-				}
-			}
 		}
 	}
 }

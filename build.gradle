@@ -1,3 +1,7 @@
+import groovy.xml.StreamingMarkupBuilder
+import groovy.xml.XmlSlurper
+import groovy.xml.XmlUtil
+
 allprojects {
 
 	repositories {
@@ -13,9 +17,86 @@ allprojects {
 		if (localPropertiesFile.isFile()) {
 			localPropertiesFile.withReader { localProperties.load it }
 		}
+		pagesDir = "$rootDir.path/docs"
 	}
 
 	tasks.withType(JavaCompile).configureEach {
 		options.deprecation = true
+	}
+}
+
+tasks.register('genPages') {
+	group = project.name
+
+	doFirst {
+		delete pagesDir
+	}
+
+	doLast {
+		def gitignore = file "$rootDir.path/.gitignore"
+		def gitignorePages = "!${file(pagesDir).name}/**"
+		if (gitignore.isFile() && !gitignore.any { it == gitignorePages }) {
+			gitignore.withWriterAppend { it.writeLine gitignorePages }
+		}
+	}
+}
+
+tasks.register('genIndex') {
+	group = project.name
+
+	doLast {
+		def repoInfo = file "$pagesDir/addons.xml"
+		repoInfo.withWriter {
+			XmlUtil.serialize(new StreamingMarkupBuilder().bind {
+				'addons' {
+					file(pagesDir).listFiles({
+						it.isDirectory()
+					} as FileFilter).sort().each {
+						def addonsInfo = new XmlSlurper().parse(new File(it, 'addons.xml'))
+						mkp.yield addonsInfo.'addon'
+					}
+				}
+			} as Writable, it)
+		}
+		def repoInfoMd5 = file "$pagesDir/addons.xml.md5"
+		repoInfoMd5.text = repoInfo.text.md5()
+		def indexPage = file "$pagesDir/index.html"
+		indexPage.withWriter {
+			def builder = new StreamingMarkupBuilder()
+			builder.setUseDoubleQuotes true
+			it << '<!DOCTYPE html>' << builder.bind {
+				'html'('lang': 'en', 'style': 'color-scheme: light dark;') {
+
+					'head' {
+
+						'meta'('charset': 'utf-8')
+
+						'title'(rootProject.name)
+					}
+
+					'body' {
+
+						'table' {
+							file(pagesDir).listFiles({
+								it.isFile() && it != repoInfo && it != repoInfoMd5 && it != indexPage
+							} as FileFilter).sort().each {
+								def name = XmlUtil.escapeXml it.name
+								def date = new Date(it.lastModified()).format 'yyyy-MM-dd HH:mm'
+								def size = "${it.length()}B"
+
+								'tr' {
+
+									'td' { 'a'('href': name, name) }
+
+									'td'(date)
+
+									'td'('style': 'text-align: right;', size)
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 }
