@@ -168,8 +168,7 @@ if (addonIdDir != null && binariesIdDir != null) {
 		outputs.dirs addonDir, binariesDir
 
 		doFirst {
-			delete addonDir
-			delete binariesDir
+			delete addonDir, binariesDir
 		}
 
 		doLast {
