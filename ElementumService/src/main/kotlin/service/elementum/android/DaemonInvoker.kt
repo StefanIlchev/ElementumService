@@ -110,30 +110,31 @@ class DaemonInvoker(
 		}
 	}
 
-	private val invoker = """${BuildConfig.ARG_ADDON_INFO}=(\S+)""".toRegex().let { regex ->
-		subprocessArgs.firstNotNullOfOrNull { regex.matchEntire(it)?.groupValues?.get(1) }?.let { addonId ->
-			val data = ByteArrayOutputStream().use { out ->
-				ZipOutputStream(out).use { zip ->
-					for (file in File(addonsDir, addonId).walkTopDown()) {
-						if (file.isDirectory) {
-							zip.putNextEntry(ZipEntry("${file.relativeTo(addonsDir).path}/"))
-						} else {
-							zip.putNextEntry(ZipEntry(file.relativeTo(addonsDir).path))
-							file.inputStream().use { it.copyTo(zip) }
+	private val invoker by lazy {
+		"""${BuildConfig.ARG_ADDON_INFO}=(\S+)""".toRegex().let { regex ->
+			subprocessArgs.firstNotNullOfOrNull { regex.matchEntire(it)?.groupValues?.get(1) }?.let { addonId ->
+				ByteArrayOutputStream().use { data ->
+					ZipOutputStream(data).use { zip ->
+						for (file in File(addonsDir, addonId).walkTopDown()) {
+							if (file.isDirectory) {
+								zip.putNextEntry(ZipEntry("${file.relativeTo(addonsDir).path}/"))
+							} else if (file.isFile) {
+								zip.putNextEntry(ZipEntry(file.relativeTo(addonsDir).path))
+								file.inputStream().use { it.copyTo(zip) }
+							}
 						}
 					}
+					toSendInvoker(subprocessArgs, data.toByteArray())
 				}
-				out.toByteArray()
 			}
-			toSendInvoker(subprocessArgs, data)
-		}
-	} ?: if (subprocessArgs.contains(BuildConfig.ARG_TRANSLATE_PATH)) {
-		val data = "${homeDir.path}/\u0000${xbmcDir.path}/".toByteArray()
-		toSendInvoker(subprocessArgs, data)
-	} else {
-		{
-			lockfile.delete()
-			super.invoke()
+		} ?: if (subprocessArgs.contains(BuildConfig.ARG_TRANSLATE_PATH)) {
+			val data = "${homeDir.path}/\u0000${xbmcDir.path}/"
+			toSendInvoker(subprocessArgs, data.toByteArray())
+		} else {
+			{
+				lockfile.delete()
+				super.invoke()
+			}
 		}
 	}
 
