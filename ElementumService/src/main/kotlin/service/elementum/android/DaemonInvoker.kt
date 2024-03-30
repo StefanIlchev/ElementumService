@@ -3,6 +3,7 @@ package service.elementum.android
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import ilchev.stefan.binarywrapper.BaseDaemonInvoker
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -110,33 +111,44 @@ class DaemonInvoker(
 		}
 	}
 
-	private val invoker by lazy {
-		"""${BuildConfig.ARG_ADDON_INFO}=(\S+)""".toRegex().let { regex ->
-			subprocessArgs.firstNotNullOfOrNull { regex.matchEntire(it)?.groupValues?.get(1) }?.let { addonId ->
-				ByteArrayOutputStream().use { data ->
-					ZipOutputStream(data).use { zip ->
-						for (file in File(addonsDir, addonId).walkTopDown()) {
-							if (file.isDirectory) {
-								zip.putNextEntry(ZipEntry("${file.relativeTo(addonsDir).path}/"))
-							} else if (file.isFile) {
-								zip.putNextEntry(ZipEntry(file.relativeTo(addonsDir).path))
-								file.inputStream().use { it.copyTo(zip) }
-							}
-						}
-					}
-					toSendInvoker(subprocessArgs, data.toByteArray())
+	private fun toData(
+		addonId: String
+	) = ByteArrayOutputStream().use { out ->
+		ZipOutputStream(out).use { zip ->
+			for (file in File(addonsDir, addonId).walkTopDown()) {
+				if (file.isDirectory) {
+					zip.putNextEntry(ZipEntry("${file.relativeTo(addonsDir).path}/"))
+				} else if (file.isFile) {
+					zip.putNextEntry(ZipEntry(file.relativeTo(addonsDir).path))
+					file.inputStream().use { it.copyTo(zip) }
 				}
 			}
-		} ?: if (subprocessArgs.contains(BuildConfig.ARG_TRANSLATE_PATH)) {
-			val data = "${homeDir.path}/\u0000${xbmcDir.path}/"
-			toSendInvoker(subprocessArgs, data.toByteArray())
-		} else {
-			{
-				lockfile.delete()
-				super.invoke()
+		}
+		out.toByteArray()
+	}
+
+	private val invoker by lazy {
+		try {
+			"""${BuildConfig.ARG_ADDON_INFO}=(\S+)""".toRegex().let { regex ->
+				subprocessArgs.firstNotNullOfOrNull { regex.matchEntire(it)?.groupValues?.get(1) }?.let {
+					toSendInvoker(subprocessArgs, toData(it))
+				}
+			} ?: subprocessArgs.takeIf { it.contains(BuildConfig.ARG_TRANSLATE_PATH) }?.let {
+				toSendInvoker(it, "${homeDir.path}/\u0000${xbmcDir.path}/".toByteArray())
 			}
+		} catch (t: Throwable) {
+			Log.w(TAG, t)
+			null
+		} ?: {
+			lockfile.delete()
+			super.invoke()
 		}
 	}
 
 	override fun invoke() = invoker()
+
+	companion object {
+
+		private const val TAG = "DaemonInvoker"
+	}
 }
