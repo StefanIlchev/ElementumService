@@ -72,6 +72,22 @@ class DaemonInvoker(
 		}
 	}
 
+	private fun toData(
+		addonId: String
+	) = ByteArrayOutputStream().use { out ->
+		ZipOutputStream(out).use { zip ->
+			for (file in File(addonsDir, addonId).walkTopDown()) {
+				if (file.isDirectory) {
+					zip.putNextEntry(ZipEntry("${file.relativeTo(addonsDir).path}/"))
+				} else if (file.isFile) {
+					zip.putNextEntry(ZipEntry(file.relativeTo(addonsDir).path))
+					file.inputStream().use { it.copyTo(zip) }
+				}
+			}
+		}
+		out.toByteArray()
+	}
+
 	private fun toSetChannelRunnable(
 		value: ServerSocketChannel
 	) = Runnable {
@@ -97,9 +113,9 @@ class DaemonInvoker(
 		}
 	}
 
-	private fun toSendInvoker(subprocessArgs: Array<out String>, data: ByteArray): () -> Long {
+	private fun toSendInvoker(data: ByteArray): () -> Long {
 		val regex = """${BuildConfig.ARG_LOCAL_PORT}=(\d+)""".toRegex()
-		val port = subprocessArgs.firstNotNullOfOrNull {
+		val port = subprocessCmd.firstNotNullOfOrNull {
 			regex.matchEntire(it)?.groupValues?.get(1)?.toIntOrNull()
 		} ?: BuildConfig.LOCAL_PORT
 		return {
@@ -111,30 +127,16 @@ class DaemonInvoker(
 		}
 	}
 
-	private fun toData(
-		addonId: String
-	) = ByteArrayOutputStream().use { out ->
-		ZipOutputStream(out).use { zip ->
-			for (file in File(addonsDir, addonId).walkTopDown()) {
-				if (file.isDirectory) {
-					zip.putNextEntry(ZipEntry("${file.relativeTo(addonsDir).path}/"))
-				} else if (file.isFile) {
-					zip.putNextEntry(ZipEntry(file.relativeTo(addonsDir).path))
-					file.inputStream().use { it.copyTo(zip) }
-				}
-			}
-		}
-		out.toByteArray()
-	}
-
 	private val invoker by lazy {
 		try {
 			"""${BuildConfig.ARG_ADDON_INFO}=(\S+)""".toRegex().let { regex ->
-				subprocessArgs.firstNotNullOfOrNull { regex.matchEntire(it)?.groupValues?.get(1) }?.let {
-					toSendInvoker(subprocessArgs, toData(it))
+				subprocessCmd.firstNotNullOfOrNull { regex.matchEntire(it)?.groupValues?.get(1) }?.let {
+					toSendInvoker(toData(it))
 				}
-			} ?: subprocessArgs.takeIf { it.contains(BuildConfig.ARG_TRANSLATE_PATH) }?.let {
-				toSendInvoker(it, "${homeDir.path}/\u0000${xbmcDir.path}/".toByteArray())
+			} ?: if (subprocessCmd.contains(BuildConfig.ARG_TRANSLATE_PATH)) {
+				toSendInvoker("${homeDir.path}/\u0000${xbmcDir.path}/".toByteArray())
+			} else {
+				null
 			}
 		} catch (t: Throwable) {
 			Log.w(TAG, t)
