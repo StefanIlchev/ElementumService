@@ -40,6 +40,15 @@ dependencyResolutionManagement {
 
 			// https://developer.android.com/ndk/guides/cmake
 			version 'cmake', '3.22.1'
+
+			// https://mvnrepository.com/artifact/androidx.test/runner
+			library 'androidTest.runner', 'androidx.test:runner:1.5.2'
+
+			// https://mvnrepository.com/artifact/androidx.test.ext/junit-ktx
+			library 'androidTest.junit', 'androidx.test.ext:junit-ktx:1.1.5'
+
+			// https://mvnrepository.com/artifact/junit/junit
+			library 'test.junit', 'junit:junit:4.13.2'
 		}
 	}
 }

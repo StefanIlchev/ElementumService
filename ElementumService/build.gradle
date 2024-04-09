@@ -18,8 +18,12 @@ ext {
 	srcMainAssetsGen = "$srcMainGen/assets"
 	srcMainAbiHeadsGen = "$srcMainGen/abiHeads"
 	srcMainJniLibsGen = "$srcMainGen/jniLibs"
-	appVersionCode = localProperties.getProperty('elementum.version.code') as Integer ?: 85
-	appVersionName = localProperties.getProperty('elementum.version.name') ?: "$appVersionCode"
+	appVersionCode = System.getProperty('version.code') as Integer
+			?: localProperties.getProperty('elementum.version.code') as Integer
+			?: 85
+	appVersionName = System.getProperty('version.name')
+			?: localProperties.getProperty('elementum.version.name')
+			?: "$appVersionCode"
 	addonId = 'plugin.video.elementum'
 	addonZip = System.getProperty('elementum.addon.zip') ?: localProperties.getProperty('elementum.addon.zip')
 	addonDir = addonZip?.with { "$buildFolder.path/${file(it).name - ~/\.[^.]+$/}" }
@@ -59,6 +63,8 @@ android {
 	compileSdk = libs.versions.compileSdk.get() as int
 	ndkVersion = libs.versions.ndkVersion.get()
 	namespace = 'service.elementum.android'
+	testNamespace = "${namespace}.test"
+	testBuildType = System.getProperty('test.build.type') ?: 'debug'
 
 	if (isAddonBinLib) {
 		externalNativeBuild {
@@ -79,6 +85,7 @@ android {
 		targetSdk = compileSdk
 		versionCode = appVersionCode
 		versionName = appVersionName
+		testInstrumentationRunner = 'androidx.test.runner.AndroidJUnitRunner'
 		manifestPlaceholders = [
 				'mainIntentAction': mainIntentAction
 		]
@@ -123,9 +130,12 @@ android {
 	buildTypes {
 
 		release {
-			minifyEnabled = true
-			shrinkResources = true
-			proguardFiles += getDefaultProguardFile('proguard-android-optimize.txt')
+			def isNotTestBuildType = testBuildType != name
+			minifyEnabled = isNotTestBuildType
+			shrinkResources = isNotTestBuildType
+			if (isNotTestBuildType) {
+				proguardFiles += getDefaultProguardFile('proguard-android-optimize.txt')
+			}
 			signingConfig = signingConfigs.debug
 		}
 	}
@@ -167,6 +177,9 @@ android {
 
 dependencies {
 	implementation project(':binaryWrapper')
+	androidTestImplementation libs.androidTest.runner
+	androidTestImplementation libs.androidTest.junit
+	testImplementation libs.test.junit
 }
 
 static String toMethodJson(method, params) {
@@ -181,26 +194,26 @@ static String toSetAddonEnabledJson(addonId, enabled) {
 	toMethodJson('Addons.SetAddonEnabled', ['addonid': addonId, 'enabled': enabled])
 }
 
-tasks.register('startApplication') {
-	group = project.name
-
-	doLast {
-		exec {
-			executable = android.adbExecutable
-			args 'shell', 'am', 'start', '-a', mainIntentAction, '-d', "version:$appVersionName", android.namespace
-		}
+System.getProperty('adb.args')?.with { adbArgs ->
+	tasks.register('adb', Exec) {
+		group = project.name
+		executable = android.adbExecutable.path
+		args(adbArgs.split(' '))
 	}
 }
 
-tasks.register('changeDataLocation') {
-	group = project.name
-
-	doLast {
-		exec {
-			executable = android.adbExecutable
-			args 'shell', 'echo', "xbmc.data=/sdcard$kodiDataDir", '>/sdcard/xbmc_env.properties'
-		}
+System.getProperty('adb.shell.args')?.with { adbShellArgs ->
+	tasks.register('adbShell', Exec) {
+		group = project.name
+		executable = android.adbExecutable.path
+		args('shell', adbShellArgs)
 	}
+}
+
+tasks.register('changeDataLocation', Exec) {
+	group = project.name
+	executable = android.adbExecutable.path
+	args 'shell', 'echo', "xbmc.data=/sdcard$kodiDataDir", '>/sdcard/xbmc_env.properties'
 }
 
 if (addonBinDir != null) {
@@ -619,14 +632,14 @@ if (addonBinDir != null) {
 
 		doFirst {
 			exec {
-				executable = android.adbExecutable
+				executable = android.adbExecutable.path
 				args 'shell', 'rm', '-f', "$destinationDir/$androidClientZip.name"
 			}
 		}
 
 		doLast {
 			exec {
-				executable = android.adbExecutable
+				executable = android.adbExecutable.path
 				args 'push', androidClientZip.path, destinationDir
 			}
 		}
