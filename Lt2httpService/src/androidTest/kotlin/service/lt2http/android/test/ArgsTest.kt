@@ -49,13 +49,11 @@ class ArgsTest(
 			return "${homeDir.path}/\u0000${xbmcDir.path}/"
 		}
 
-		private fun toExpectedAddonInfo() = "PK\u0005\u0006" + "\u0000".repeat(18)
-
 		@Parameterized.Parameters
 		@JvmStatic
 		fun data() = arrayOf(
 			arrayOf(toExpectedTranslatePath(), arrayOf(BuildConfig.ARG_TRANSLATE_PATH)),
-			arrayOf(toExpectedAddonInfo(), arrayOf("${BuildConfig.ARG_ADDON_INFO}=args.test"))
+			arrayOf("PK\u0005\u0006${"\u0000".repeat(18)}", arrayOf("${BuildConfig.ARG_ADDON_INFO}=args.test"))
 		)
 	}
 }

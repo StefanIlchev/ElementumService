@@ -13,9 +13,11 @@ class UpdateTest {
 
 	@Before
 	fun before() {
-		val fileName = "${BuildConfig.PROJECT_NAME}-universal-$BUILD_TYPE-$VERSION_NAME.apk"
-		val filePath = "build/outputs/apk/$BUILD_TYPE/$fileName"
-		val build = "assembleRelease -p ${BuildConfig.PROJECT_NAME} -Dversion.name=\"$VERSION_NAME\""
+		val buildType = if (BuildConfig.DEBUG) "release" else "debug"
+		val task = "assemble${buildType.replaceFirstChar { it.uppercaseChar() }}"
+		val fileName = "${BuildConfig.PROJECT_NAME}-universal-$buildType-$VERSION_NAME.apk"
+		val filePath = "build/outputs/apk/$buildType/$fileName"
+		val build = "$task -p ${BuildConfig.PROJECT_NAME} -Dversion.name=\"$VERSION_NAME\""
 		val install = "install -g $filePath"
 		Assert.assertTrue(executeGradle(build))
 		Assert.assertTrue(executeAdb(install))
@@ -40,8 +42,6 @@ class UpdateTest {
 	}
 
 	companion object {
-
-		private const val BUILD_TYPE = "release"
 
 		private const val VERSION_NAME = "update.test"
 
