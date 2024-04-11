@@ -2,6 +2,7 @@ import com.android.build.gradle.tasks.MergeSourceSetFolders
 import groovy.xml.StreamingMarkupBuilder
 import groovy.xml.XmlSlurper
 import groovy.xml.XmlUtil
+import org.apache.tools.ant.types.Commandline
 
 plugins {
 	id 'com.android.application'
@@ -155,15 +156,7 @@ System.getProperty('adb.args')?.with { adbArgs ->
 	tasks.register('adb', Exec) {
 		group = project.name
 		executable = android.adbExecutable.path
-		args(adbArgs.split(' '))
-	}
-}
-
-System.getProperty('adb.shell.args')?.with { adbShellArgs ->
-	tasks.register('adbShell', Exec) {
-		group = project.name
-		executable = android.adbExecutable.path
-		args('shell', adbShellArgs)
+		args Commandline.translateCommandline(adbArgs)
 	}
 }
 

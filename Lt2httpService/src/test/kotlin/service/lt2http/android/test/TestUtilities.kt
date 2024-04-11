@@ -16,7 +16,3 @@ fun executeGradle(
 fun executeAdb(
 	args: String
 ) = executeGradle("adb -p ${BuildConfig.PROJECT_NAME} -Dadb.args=\"$args\"")
-
-fun executeAdbShell(
-	args: String
-) = executeGradle("adbShell -p ${BuildConfig.PROJECT_NAME} -Dadb.shell.args=\"$args\"")
