@@ -3,6 +3,7 @@ package service.lt2http.android.test
 import android.content.Intent
 import org.junit.After
 import org.junit.Assert
+import org.junit.Assume
 import org.junit.Before
 import org.junit.Test
 import service.lt2http.android.BuildConfig
@@ -37,6 +38,7 @@ class UpdateTest {
 			"appops set --uid ${BuildConfig.APPLICATION_ID} MANAGE_EXTERNAL_STORAGE allow",
 			"am start -W -S -a ${Intent.ACTION_MAIN} -d $data ${BuildConfig.APPLICATION_ID}"
 		).joinToString("; ", "shell ")
+		Assume.assumeFalse(BuildConfig.REPO_URL.isEmpty())
 		Assert.assertTrue(executeAdb(start))
 		assertUpdate()
 	}
