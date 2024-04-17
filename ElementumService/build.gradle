@@ -21,7 +21,7 @@ ext {
 	srcMainJniLibsGen = "$srcMainGen/jniLibs"
 	appVersionCode = System.getProperty('version.code') as Integer
 			?: localProperties.getProperty('elementum.version.code') as Integer
-			?: 85
+			?: 86
 	appVersionName = System.getProperty('version.name')
 			?: localProperties.getProperty('elementum.version.name')
 			?: "$appVersionCode"
