@@ -17,7 +17,7 @@ ext {
 	srcMainJniLibsGen = "$srcMainGen/jniLibs"
 	appVersionCode = System.getProperty('version.code') as Integer
 			?: localProperties.getProperty('lt2http.version.code') as Integer
-			?: 40
+			?: libs.versions.lt2http.versionCode.get() as int
 	appVersionName = System.getProperty('version.name')
 			?: localProperties.getProperty('lt2http.version.name')
 			?: "$appVersionCode"
@@ -460,6 +460,7 @@ if (addonIdDir != null && binariesIdDir != null) {
 
 	tasks.register('genPages') {
 		group = project.name
+		outputs.dir pagesDir
 		dependsOn tasks.named('assembleRelease'), zipAndroidClient
 		finalizedBy rootProject.tasks.named('genIndex')
 

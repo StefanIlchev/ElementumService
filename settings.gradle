@@ -10,7 +10,7 @@ pluginManagement {
 
 	plugins {
 
-		// https://mvnrepository.com/artifact/com.android.tools.build/gradle?repo=google
+		// https://mvnrepository.com/artifact/com.android.tools.build/gradle
 		id 'com.android.application' version '8.3.2'
 		id 'com.android.library' version '8.3.2'
 
@@ -24,6 +24,12 @@ dependencyResolutionManagement {
 	versionCatalogs {
 
 		libs {
+
+			version 'binaryWrapper.version', '1.0.23'
+
+			version 'elementum.versionCode', '88'
+
+			version 'lt2http.versionCode', '40'
 
 			// https://developer.android.com/build/jdks
 			version 'jvmToolchain', '21'

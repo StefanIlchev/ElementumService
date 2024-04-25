@@ -21,7 +21,7 @@ ext {
 	srcMainJniLibsGen = "$srcMainGen/jniLibs"
 	appVersionCode = System.getProperty('version.code') as Integer
 			?: localProperties.getProperty('elementum.version.code') as Integer
-			?: 88
+			?: libs.versions.elementum.versionCode.get() as int
 	appVersionName = System.getProperty('version.name')
 			?: localProperties.getProperty('elementum.version.name')
 			?: "$appVersionCode"
@@ -640,6 +640,7 @@ if (addonBinDir != null) {
 
 	tasks.register('genPages') {
 		group = project.name
+		outputs.dir pagesDir
 		dependsOn tasks.named('assembleRelease'), zipAndroidClient
 		finalizedBy rootProject.tasks.named('genIndex')
 

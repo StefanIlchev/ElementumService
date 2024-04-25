@@ -25,8 +25,9 @@ allprojects {
 	}
 }
 
-tasks.register('genPages') {
+def genPages = tasks.register('genPages') {
 	group = project.name
+	outputs.dir pagesDir
 
 	doFirst {
 		delete pagesDir
@@ -38,14 +39,27 @@ tasks.register('genPages') {
 		if (gitignore.isFile() && !gitignore.any { it == gitignorePages }) {
 			gitignore.withWriterAppend { it.writeLine gitignorePages }
 		}
+		file(pagesDir).mkdirs()
 	}
 }
 
 tasks.register('genIndex') {
 	group = project.name
+	inputs.dir pagesDir
+
+	ext {
+		repoInfo = file "$pagesDir/addons.xml"
+		repoInfoMd5 = file "$pagesDir/addons.xml.md5"
+		indexPage = file "$pagesDir/index.html"
+	}
+	outputs.files repoInfo, repoInfoMd5, indexPage
+	dependsOn genPages
+
+	doFirst {
+		delete repoInfo, repoInfoMd5, indexPage
+	}
 
 	doLast {
-		def repoInfo = file "$pagesDir/addons.xml"
 		repoInfo.withWriter {
 			XmlUtil.serialize(new StreamingMarkupBuilder().bind {
 				'addons' {
@@ -58,9 +72,7 @@ tasks.register('genIndex') {
 				}
 			} as Writable, it)
 		}
-		def repoInfoMd5 = file "$pagesDir/addons.xml.md5"
 		repoInfoMd5.text = repoInfo.text.md5()
-		def indexPage = file "$pagesDir/index.html"
 		indexPage.withWriter {
 			def builder = new StreamingMarkupBuilder()
 			builder.setUseDoubleQuotes true

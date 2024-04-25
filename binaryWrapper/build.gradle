@@ -48,7 +48,7 @@ publishing {
 		register('release', MavenPublication) {
 			groupId = 'ilchev.stefan'
 			artifactId = 'binary-wrapper'
-			version = '1.0.23'
+			version = libs.versions.binaryWrapper.version.get()
 
 			afterEvaluate {
 				from components.release
