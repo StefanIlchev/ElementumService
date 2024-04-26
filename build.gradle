@@ -1,6 +1,11 @@
+import com.github.breadmoirai.githubreleaseplugin.GithubReleaseTask
 import groovy.xml.StreamingMarkupBuilder
 import groovy.xml.XmlSlurper
 import groovy.xml.XmlUtil
+
+plugins {
+	id 'com.github.breadmoirai.github-release'
+}
 
 allprojects {
 
@@ -43,7 +48,7 @@ def genPages = tasks.register('genPages') {
 	}
 }
 
-tasks.register('genIndex') {
+def genIndex = tasks.register('genIndex') {
 	group = project.name
 	inputs.dir pagesDir
 
@@ -51,6 +56,9 @@ tasks.register('genIndex') {
 		repoInfo = file "$pagesDir/addons.xml"
 		repoInfoMd5 = file "$pagesDir/addons.xml.md5"
 		indexPage = file "$pagesDir/index.html"
+		indexFilter = {
+			it.isFile() && it != repoInfo && it != repoInfoMd5 && it != indexPage
+		} as FileFilter
 	}
 	outputs.files repoInfo, repoInfoMd5, indexPage
 	dependsOn genPages
@@ -89,9 +97,7 @@ tasks.register('genIndex') {
 					'body' {
 
 						'table' {
-							file(pagesDir).listFiles({
-								it.isFile() && it != repoInfo && it != repoInfoMd5 && it != indexPage
-							} as FileFilter).sort().each {
+							file(pagesDir).listFiles(indexFilter).sort().each {
 								def name = XmlUtil.escapeXml it.name
 								def date = new Date(it.lastModified()).format 'yyyy-MM-dd HH:mm'
 								def size = "${it.length()}B"
@@ -111,4 +117,22 @@ tasks.register('genIndex') {
 			}
 		}
 	}
+}
+
+tasks.named('githubRelease', GithubReleaseTask) {
+	def binaryWrapper = project(':binaryWrapper')
+	def elementumService = project(':ElementumService')
+	def lt2httpService = project(':Lt2httpService')
+	dependsOn elementumService.tasks.named('genPages'), lt2httpService.tasks.named('genPages')
+	owner = localProperties.getProperty('github.owner')
+	repo = localProperties.getProperty('github.repo')
+	authorization = localProperties.getProperty('github.authorization')
+	tagName = "v$elementumService.appVersionName"
+	targetCommitish = localProperties.getProperty('github.targetCommitish')
+	releaseName = "$elementumService.name $elementumService.appVersionName"
+	body = """$binaryWrapper.name ${libs.versions.binaryWrapper.version.get()}
+			|$lt2httpService.name $lt2httpService.appVersionName
+			|${localProperties.getProperty('github.body') ?: ''}""".stripMargin()
+	prerelease = true
+	releaseAssets.setFrom file(pagesDir).listFiles(genIndex.get().indexFilter).sort()
 }
