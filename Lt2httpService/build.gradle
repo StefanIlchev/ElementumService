@@ -461,7 +461,7 @@ if (addonIdDir != null && binariesIdDir != null) {
 	tasks.register('genPages') {
 		group = project.name
 		outputs.dir pagesDir
-		dependsOn tasks.named('assembleRelease'), zipAndroidClient
+		dependsOn rootProject.tasks.named('genPages'), tasks.named('packageRelease'), zipAndroidClient
 		finalizedBy rootProject.tasks.named('genIndex')
 
 		doLast {
