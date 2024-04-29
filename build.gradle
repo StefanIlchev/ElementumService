@@ -7,7 +7,16 @@ plugins {
 	id 'com.github.breadmoirai.github-release'
 }
 
-allprojects {
+ext {
+	localProperties = new Properties()
+	def localPropertiesFile = file 'local.properties'
+	if (localPropertiesFile.isFile()) {
+		localPropertiesFile.withReader { localProperties.load it }
+	}
+	pagesDir = file 'docs'
+}
+
+subprojects {
 
 	repositories {
 		google()
@@ -17,12 +26,8 @@ allprojects {
 	}
 
 	ext {
-		localProperties = new Properties()
-		def localPropertiesFile = file "$rootDir.path/local.properties"
-		if (localPropertiesFile.isFile()) {
-			localPropertiesFile.withReader { localProperties.load it }
-		}
-		pagesDir = "$rootDir.path/docs"
+		localProperties = localProperties
+		pagesDir = pagesDir
 	}
 
 	tasks.withType(JavaCompile).configureEach {
@@ -39,12 +44,12 @@ def genPages = tasks.register('genPages') {
 	}
 
 	doLast {
-		def gitignore = file "$rootDir.path/.gitignore"
-		def gitignorePages = "!${file(pagesDir).name}/**"
+		def gitignore = file '.gitignore'
+		def gitignorePages = "!$pagesDir.name/**"
 		if (gitignore.isFile() && !gitignore.any { it == gitignorePages }) {
 			gitignore.withWriterAppend { it.writeLine gitignorePages }
 		}
-		file(pagesDir).mkdirs()
+		pagesDir.mkdirs()
 	}
 }
 
@@ -53,12 +58,10 @@ def genIndex = tasks.register('genIndex') {
 	inputs.dir pagesDir
 
 	ext {
-		repoInfo = file "$pagesDir/addons.xml"
-		repoInfoMd5 = file "$pagesDir/addons.xml.md5"
-		indexPage = file "$pagesDir/index.html"
-		indexFilter = {
-			it.isFile() && it != repoInfo && it != repoInfoMd5 && it != indexPage
-		} as FileFilter
+		repoInfo = new File(pagesDir, 'addons.xml')
+		repoInfoMd5 = new File(pagesDir, 'addons.xml.md5')
+		indexPage = new File(pagesDir, 'index.html')
+		indexFilter = { it.isFile() && it != repoInfo && it != repoInfoMd5 && it != indexPage } as FileFilter
 	}
 	outputs.files repoInfo, repoInfoMd5, indexPage
 	dependsOn genPages
@@ -71,9 +74,7 @@ def genIndex = tasks.register('genIndex') {
 		repoInfo.withWriter {
 			XmlUtil.serialize(new StreamingMarkupBuilder().bind {
 				'addons' {
-					file(pagesDir).listFiles({
-						it.isDirectory()
-					} as FileFilter).sort().each {
+					pagesDir.listFiles({ it.isDirectory() } as FileFilter).sort().each {
 						def addonsInfo = new XmlSlurper().parse(new File(it, 'addons.xml'))
 						mkp.yield addonsInfo.'addon'
 					}
@@ -91,13 +92,13 @@ def genIndex = tasks.register('genIndex') {
 
 						'meta'('charset': 'utf-8')
 
-						'title'(rootProject.name)
+						'title'(project.name)
 					}
 
 					'body' {
 
 						'table' {
-							file(pagesDir).listFiles(indexFilter).sort().each {
+							pagesDir.listFiles(indexFilter).sort().each {
 								def name = XmlUtil.escapeXml it.name
 								def date = new Date(it.lastModified()).format 'yyyy-MM-dd HH:mm'
 								def size = "${it.length()}B"
@@ -134,5 +135,5 @@ tasks.named('githubRelease', GithubReleaseTask) {
 			|$lt2httpService.name $lt2httpService.appVersionName
 			|${localProperties.getProperty('github.body') ?: ''}""".stripMargin()
 	prerelease = true
-	releaseAssets.setFrom file(pagesDir).listFiles(genIndex.get().indexFilter).sort()
+	releaseAssets.from genIndex.map { pagesDir.listFiles(it.indexFilter).sort() }
 }

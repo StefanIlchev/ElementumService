@@ -1,4 +1,5 @@
 import com.android.build.gradle.tasks.MergeSourceSetFolders
+import com.android.build.gradle.tasks.PackageApplication
 import groovy.json.JsonOutput
 import groovy.xml.StreamingMarkupBuilder
 import groovy.xml.XmlSlurper
@@ -13,8 +14,7 @@ plugins {
 }
 
 ext {
-	buildFolder = layout.buildDirectory.asFile.get()
-	srcGen = "$buildFolder.path/src"
+	srcGen = layout.buildDirectory.file('src').get().asFile.path
 	srcMainGen = "$srcGen/main"
 	srcMainAssetsGen = "$srcMainGen/assets"
 	srcMainAbiHeadsGen = "$srcMainGen/abiHeads"
@@ -27,10 +27,12 @@ ext {
 			?: "$appVersionCode"
 	addonId = 'plugin.video.elementum'
 	addonZip = System.getProperty('elementum.addon.zip') ?: localProperties.getProperty('elementum.addon.zip')
-	addonDir = addonZip?.with { "$buildFolder.path/${file(it).name - ~/\.[^.]+$/}" }
+	addonDir = addonZip?.with {
+		layout.buildDirectory.file(file(it).name - ~/\.[^.]+$/).get().asFile.path
+	}
 	addonIdDir = addonDir?.with { "$it/$addonId" }
 	addonBinDir = addonIdDir?.with { "$it/resources/bin" }
-	androidClientZip = file "$buildFolder.path/$addonId-${appVersionName}.android_client.zip"
+	androidClientZip = layout.buildDirectory.file("$addonId-${appVersionName}.android_client.zip").get().asFile
 	abiBins = [
 			'arm64-v8a'  : 'android_arm64',
 			'armeabi-v7a': 'android_arm',
@@ -110,18 +112,10 @@ android {
 		}
 	}
 
-	applicationVariants.configureEach { variant ->
-		variant.outputs.each {
-			def fileName = it.outputFileName
-			def name = fileName - ~/\.[^.]+$/
-			it.outputFileName = "$name-$variant.versionName${fileName.substring name.length()}"
-		}
-	}
-
 	signingConfigs {
 
 		debug {
-			storeFile = file(localProperties.getProperty('store.file') ?: "$rootDir.path/debug.keystore")
+			storeFile = rootProject.file(localProperties.getProperty('store.file') ?: 'debug.keystore')
 			storePassword = localProperties.getProperty('store.password') ?: 'android'
 			keyAlias = localProperties.getProperty('key.alias') ?: 'androiddebugkey'
 			keyPassword = localProperties.getProperty('key.password') ?: 'android'
@@ -172,6 +166,17 @@ android {
 		jniLibs {
 			keepDebugSymbols += '**/lib*.so'
 			useLegacyPackaging = true
+		}
+	}
+}
+
+androidComponents {
+
+	onVariants(selector().all()) { variant ->
+		variant.outputs.each {
+			def fileName = it.outputFileName.get()
+			def name = fileName - ~/\.[^.]+$/
+			it.outputFileName.set "$name-${it.versionName.get()}${fileName.substring name.length()}"
 		}
 	}
 }
@@ -639,14 +644,17 @@ if (addonBinDir != null) {
 	}
 
 	tasks.register('genPages') {
+		def packageRelease = tasks.named('packageRelease', PackageApplication)
 		group = project.name
 		outputs.dir pagesDir
-		dependsOn rootProject.tasks.named('genPages'), tasks.named('packageRelease'), zipAndroidClient
+		dependsOn rootProject.tasks.named('genPages'), packageRelease, zipAndroidClient
 		finalizedBy rootProject.tasks.named('genIndex')
 
 		doLast {
 			copy {
-				from "$buildFolder.path/outputs/apk/release"
+				from packageRelease.map { task ->
+					task.outputDirectory.asFileTree.filter { it.name.matches ~/.*\.apk/ }
+				}
 				into pagesDir
 				include '*.apk'
 			}
@@ -654,7 +662,7 @@ if (addonBinDir != null) {
 				from androidClientZip
 				into pagesDir
 			}
-			def repoZip = file "$pagesDir/$addonId/$addonId-${appVersionName}.zip"
+			def repoZip = new File(pagesDir, "$addonId/$addonId-${appVersionName}.zip")
 			copy {
 				from androidClientZip
 				into repoZip.parentFile
@@ -664,10 +672,10 @@ if (addonBinDir != null) {
 			def addonInfo = new XmlSlurper().parse addonFile
 			copy {
 				from addonIdDir
-				into "$pagesDir/$addonId"
+				into new File(pagesDir, addonId)
 				include addonInfo.'extension'.'assets'.'*'*.text()
 			}
-			def repoInfo = file "$pagesDir/$addonId/addons.xml"
+			def repoInfo = new File(pagesDir, "$addonId/addons.xml")
 			repoInfo.withWriter {
 				XmlUtil.serialize(new StreamingMarkupBuilder().bind {
 					'addons' {
@@ -675,7 +683,7 @@ if (addonBinDir != null) {
 					}
 				} as Writable, it)
 			}
-			def repoInfoMd5 = file "$pagesDir/$addonId/addons.xml.md5"
+			def repoInfoMd5 = new File(pagesDir, "$addonId/addons.xml.md5")
 			repoInfoMd5.text = repoInfo.text.md5()
 		}
 	}
