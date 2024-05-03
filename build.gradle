@@ -61,7 +61,6 @@ def genIndex = tasks.register('genIndex') {
 		repoInfo = new File(pagesDir, 'addons.xml')
 		repoInfoMd5 = new File(pagesDir, 'addons.xml.md5')
 		indexPage = new File(pagesDir, 'index.html')
-		indexFilter = { it.isFile() && it != repoInfo && it != repoInfoMd5 && it != indexPage } as FileFilter
 	}
 	outputs.files repoInfo, repoInfoMd5, indexPage
 	dependsOn genPages
@@ -98,7 +97,7 @@ def genIndex = tasks.register('genIndex') {
 					'body' {
 
 						'table' {
-							pagesDir.listFiles(indexFilter).sort().each {
+							pagesDir.listFiles({ it.isFile() && it != indexPage } as FileFilter).sort().each {
 								def name = XmlUtil.escapeXml it.name
 								def date = new Date(it.lastModified()).format 'yyyy-MM-dd HH:mm'
 								def size = "${it.length()}B"
@@ -135,5 +134,9 @@ tasks.named('githubRelease', GithubReleaseTask) {
 			|$lt2httpService.name $lt2httpService.appVersionName
 			|${localProperties.getProperty('github.body') ?: ''}""".stripMargin()
 	prerelease = true
-	releaseAssets.from genIndex.map { pagesDir.listFiles(it.indexFilter).sort() }
+	releaseAssets.from genIndex.map { task ->
+		pagesDir.listFiles({
+			it.isFile() && it != task.repoInfo && it != task.repoInfoMd5 && it != task.indexPage
+		} as FileFilter).sort()
+	}
 }
