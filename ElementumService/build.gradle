@@ -114,7 +114,7 @@ android {
 
 	signingConfigs {
 
-		debug {
+		named('debug') {
 			storeFile = rootProject.file(localProperties.getProperty('store.file') ?: 'debug.keystore')
 			storePassword = localProperties.getProperty('store.password') ?: 'android'
 			keyAlias = localProperties.getProperty('key.alias') ?: 'androiddebugkey'
@@ -124,8 +124,8 @@ android {
 
 	buildTypes {
 
-		release {
-			def isNotTestBuildType = testBuildType != name
+		named('release') {
+			def isNotTestBuildType = testBuildType != it.name
 			minifyEnabled = isNotTestBuildType
 			shrinkResources = isNotTestBuildType
 			if (isNotTestBuildType) {
@@ -137,7 +137,7 @@ android {
 
 	sourceSets {
 
-		main {
+		named('main') {
 
 			assets {
 				srcDir srcMainAssetsGen
@@ -652,9 +652,7 @@ if (addonBinDir != null) {
 
 		doLast {
 			copy {
-				from packageRelease.map { task ->
-					task.outputDirectory.asFileTree.filter { it.name.matches ~/.*\.apk/ }
-				}
+				from packageRelease.get().outputDirectory
 				into pagesDir
 				include '*.apk'
 			}
