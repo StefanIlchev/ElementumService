@@ -1,20 +1,22 @@
-import com.github.breadmoirai.githubreleaseplugin.GithubReleaseTask
+import groovy.xml.MarkupBuilder
 import groovy.xml.StreamingMarkupBuilder
 import groovy.xml.XmlSlurper
 import groovy.xml.XmlUtil
+import org.codehaus.groovy.runtime.EncodingGroovyMethods
+import java.io.FileFilter
+import java.io.StringWriter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Properties
 
 plugins {
-	id 'com.github.breadmoirai.github-release'
+	id("com.github.breadmoirai.github-release")
 }
 
-ext {
-	localProperties = new Properties()
-	def localPropertiesFile = file 'local.properties'
-	if (localPropertiesFile.isFile()) {
-		localPropertiesFile.withReader { localProperties.load it }
-	}
-	pagesDir = file 'docs'
+val localProperties = Properties().also {
+	file("local.properties").takeIf(File::isFile)?.bufferedReader()?.use(it::load)
 }
+val pagesDir = file("docs")
 
 subprojects {
 
@@ -22,93 +24,97 @@ subprojects {
 		google()
 		mavenCentral()
 		mavenLocal()
-		maven { url 'https://jitpack.io' }
+		maven("https://jitpack.io")
 	}
 
-	ext {
-		localProperties = localProperties
-		pagesDir = pagesDir
-	}
+	extra["localProperties"] = localProperties
+	extra["pagesDir"] = pagesDir
 
-	tasks.withType(JavaCompile).configureEach {
-		options.deprecation = true
+	tasks.withType<JavaCompile>().configureEach {
+		options.isDeprecation = true
 	}
 }
 
-def genPages = tasks.register('genPages') {
+val genPages = tasks.register("genPages") {
 	group = project.name
-	outputs.dir pagesDir
+	outputs.dir(pagesDir)
 
 	doFirst {
-		delete pagesDir
+		delete(pagesDir)
 	}
 
 	doLast {
-		def gitignore = file '.gitignore'
-		def gitignorePages = "!$pagesDir.name/**"
-		if (gitignore.isFile() && !gitignore.any { it == gitignorePages }) {
-			gitignore.withWriterAppend { it.writeLine gitignorePages }
+		val gitignore = file(".gitignore")
+		val gitignorePages = "!${pagesDir.name}/**"
+		if (gitignore.isFile() && !gitignore.useLines { lines -> lines.any { it == gitignorePages } }) {
+			gitignore.appendText("$gitignorePages\n")
 		}
 		pagesDir.mkdirs()
 	}
 }
 
-def genIndex = tasks.register('genIndex') {
+val genIndex = tasks.register("genIndex") {
+	val repoInfo = File(pagesDir, "addons.xml")
+	val repoInfoMd5 = File(pagesDir, "addons.xml.md5")
+	val indexPage = File(pagesDir, "index.html")
 	group = project.name
-	inputs.dir pagesDir
-
-	ext {
-		repoInfo = new File(pagesDir, 'addons.xml')
-		repoInfoMd5 = new File(pagesDir, 'addons.xml.md5')
-		indexPage = new File(pagesDir, 'index.html')
-	}
-	outputs.files repoInfo, repoInfoMd5, indexPage
-	dependsOn genPages
+	inputs.dir(pagesDir)
+	outputs.files(repoInfo, repoInfoMd5, indexPage)
+	dependsOn(genPages)
 
 	doFirst {
-		delete repoInfo, repoInfoMd5, indexPage
+		delete(repoInfo, repoInfoMd5, indexPage)
 	}
 
 	doLast {
-		repoInfo.withWriter {
-			XmlUtil.serialize(new StreamingMarkupBuilder().bind {
-				'addons' {
-					pagesDir.listFiles({ it.isDirectory() } as FileFilter).sort().each {
-						def addonsInfo = new XmlSlurper().parse(new File(it, 'addons.xml'))
-						mkp.yield addonsInfo.'addon'
+		val repoInfoText = StringWriter().use { out ->
+			MarkupBuilder(out).run {
+				withGroovyBuilder {
+					"addons" {
+						val parser = XmlSlurper()
+						val builder = StreamingMarkupBuilder()
+						pagesDir.listFiles(FileFilter { it.isDirectory() })?.sorted()?.forEach {
+							val addonsInfo = parser.parse(File(it, repoInfo.name))
+							mkp.yieldUnescaped(builder.bindNode(addonsInfo.children()))
+						}
 					}
 				}
-			} as Writable, it)
+			}
+			XmlUtil.serialize("$out")
 		}
-		repoInfoMd5.text = repoInfo.text.md5()
-		indexPage.withWriter {
-			def builder = new StreamingMarkupBuilder()
-			builder.setUseDoubleQuotes true
-			it << '<!DOCTYPE html>' << builder.bind {
-				'html'('lang': 'en', 'style': 'color-scheme: light dark;') {
+		repoInfo.writeText(repoInfoText)
+		repoInfoMd5.writeText(EncodingGroovyMethods.md5(repoInfoText))
+		indexPage.printWriter().use { out ->
+			out.write("<!DOCTYPE html>")
+			MarkupBuilder(out).run {
+				doubleQuotes = true
+				withGroovyBuilder {
+					"html"("lang" to "en", "style" to "color-scheme: light dark;") {
 
-					'head' {
+						"head" {
 
-						'meta'('charset': 'utf-8')
+							"meta"("charset" to "utf-8")
 
-						'title'(project.name)
-					}
+							"title" { mkp.yield(project.name) }
+						}
 
-					'body' {
+						"body" {
 
-						'table' {
-							pagesDir.listFiles({ it.isFile() && it != indexPage } as FileFilter).sort().each {
-								def name = XmlUtil.escapeXml it.name
-								def date = new Date(it.lastModified()).format 'yyyy-MM-dd HH:mm'
-								def size = "${it.length()}B"
+							"table" {
+								val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm")
+								pagesDir.listFiles(FileFilter { it.isFile() && it != indexPage })?.sorted()?.forEach {
+									val name = it.name
+									val date = formatter.format(Date(it.lastModified()))
+									val size = "${it.length()}B"
 
-								'tr' {
+									"tr" {
 
-									'td' { 'a'('href': name, name) }
+										"td" { "a"("href" to name) { mkp.yield(name) } }
 
-									'td'(date)
+										"td" { mkp.yield(date) }
 
-									'td'('style': 'text-align: right;', size)
+										"td"("style" to "text-align: right;") { mkp.yield(size) }
+									}
 								}
 							}
 						}
@@ -119,24 +125,22 @@ def genIndex = tasks.register('genIndex') {
 	}
 }
 
-tasks.named('githubRelease', GithubReleaseTask) {
-	def binaryWrapper = project(':binaryWrapper')
-	def elementumService = project(':ElementumService')
-	def lt2httpService = project(':Lt2httpService')
-	dependsOn elementumService.tasks.named('genPages'), lt2httpService.tasks.named('genPages')
-	owner = localProperties.getProperty('github.owner')
-	repo = localProperties.getProperty('github.repo')
-	authorization = localProperties.getProperty('github.authorization')
-	tagName = "v$elementumService.appVersionName"
-	targetCommitish = localProperties.getProperty('github.targetCommitish')
-	releaseName = "$elementumService.name $elementumService.appVersionName"
-	body = """$binaryWrapper.name ${libs.versions.binaryWrapper.version.get()}
-			|$lt2httpService.name $lt2httpService.appVersionName
-			|${localProperties.getProperty('github.body') ?: ''}""".stripMargin()
+tasks.githubRelease {
+	val binaryWrapper = project(":binaryWrapper")
+	val elementumService = project(":ElementumService")
+	val lt2httpService = project(":Lt2httpService")
+	dependsOn(elementumService.tasks.named("genPages"), lt2httpService.tasks.named("genPages"))
+	owner = localProperties.getProperty("github.owner")
+	repo = localProperties.getProperty("github.repo")
+	authorization = localProperties.getProperty("github.authorization")
+	tagName = "v${elementumService.extra["appVersionName"]}"
+	targetCommitish = localProperties.getProperty("github.targetCommitish")
+	releaseName = "${elementumService.name} ${elementumService.extra["appVersionName"]}"
+	body = """${binaryWrapper.name} ${libs.versions.binaryWrapper.version.get()}
+		|${lt2httpService.name} ${lt2httpService.extra["appVersionName"]}
+		|${localProperties.getProperty("github.body") ?: ""}""".trimMargin()
 	prerelease = true
-	releaseAssets.from genIndex.map { task ->
-		pagesDir.listFiles({
-			it.isFile() && it != task.repoInfo && it != task.repoInfoMd5 && it != task.indexPage
-		} as FileFilter).sort()
-	}
+	releaseAssets.from(genIndex.map { task ->
+		pagesDir.listFiles(FileFilter { it.isFile() && it !in task.outputs.files })?.sorted() ?: listOf()
+	})
 }

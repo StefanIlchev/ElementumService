@@ -1,24 +1,24 @@
 plugins {
-	id 'com.android.library'
-	id 'org.jetbrains.kotlin.android'
-	id 'maven-publish'
+	id("com.android.library")
+	kotlin("android")
+	id("maven-publish")
 }
 
 kotlin {
-	jvmToolchain libs.versions.jvmToolchain.get() as int
+	jvmToolchain(libs.versions.jvmToolchain.get().toInt())
 }
 
 android {
 	buildToolsVersion = libs.versions.buildToolsVersion.get()
-	compileSdk = libs.versions.compileSdk.get() as int
-	namespace = 'ilchev.stefan.binarywrapper'
+	compileSdk = libs.versions.compileSdk.get().toInt()
+	namespace = "ilchev.stefan.binarywrapper"
 
 	buildFeatures {
 		buildConfig = true
 	}
 
 	defaultConfig {
-		minSdk = libs.versions.minSdk.get() as int
+		minSdk = libs.versions.minSdk.get().toInt()
 
 		aarMetadata {
 			minCompileSdk = minSdk
@@ -27,15 +27,15 @@ android {
 
 	buildTypes {
 
-		named('release') {
-			minifyEnabled = false
-			proguardFiles += getDefaultProguardFile('proguard-android-optimize.txt')
+		named("release") {
+			isMinifyEnabled = false
+			proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
 		}
 	}
 
 	publishing {
 
-		singleVariant('release') {
+		singleVariant("release") {
 			withSourcesJar()
 		}
 	}
@@ -45,13 +45,13 @@ publishing {
 
 	publications {
 
-		register('release', MavenPublication) {
-			groupId = 'ilchev.stefan'
-			artifactId = 'binary-wrapper'
+		register<MavenPublication>("release") {
+			groupId = "ilchev.stefan"
+			artifactId = "binary-wrapper"
 			version = libs.versions.binaryWrapper.version.get()
 
 			afterEvaluate {
-				from components.release
+				from(components["release"])
 			}
 		}
 	}
