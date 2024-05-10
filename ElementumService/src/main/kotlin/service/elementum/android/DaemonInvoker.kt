@@ -130,7 +130,7 @@ class DaemonInvoker(
 		subprocessCmd.firstNotNullOfOrNull { regex.matchEntire(it)?.groupValues?.get(1) }?.let {
 			toSendInvoker(toAddonInfoConsumer(it))
 		}
-	} ?: if (subprocessCmd.contains(BuildConfig.ARG_TRANSLATE_PATH)) {
+	} ?: if (BuildConfig.ARG_TRANSLATE_PATH in subprocessCmd) {
 		toSendInvoker { channel ->
 			channel.use { it.write(ByteBuffer.wrap("${homeDir.path}/\u0000${xbmcDir.path}/".toByteArray())) }
 		}

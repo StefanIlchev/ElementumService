@@ -184,20 +184,20 @@ abstract class BaseMainActivity : Activity() {
 				)
 			) return arrayOf(MANAGE_EXTERNAL_STORAGE)
 			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-				set.remove(FOREGROUND_SERVICE)
+				set -= FOREGROUND_SERVICE
 			}
 			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-				set.remove(UPDATE_PACKAGES_WITHOUT_USER_ACTION)
+				set -= UPDATE_PACKAGES_WITHOUT_USER_ACTION
 			}
 			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-				set.remove(POST_NOTIFICATIONS)
+				set -= POST_NOTIFICATIONS
 			}
 			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-				set.remove(FOREGROUND_SERVICE_MEDIA_PLAYBACK)
+				set -= FOREGROUND_SERVICE_MEDIA_PLAYBACK
 			}
 			if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
-				set.remove(Manifest.permission.READ_EXTERNAL_STORAGE)
-				set.remove(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+				set -= Manifest.permission.READ_EXTERNAL_STORAGE
+				set -= Manifest.permission.WRITE_EXTERNAL_STORAGE
 			}
 			if (set.isNotEmpty()) {
 				val permissions = set.toTypedArray()
