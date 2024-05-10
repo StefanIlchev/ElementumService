@@ -28,11 +28,11 @@ dependencyResolutionManagement {
 
 		create("libs") {
 
-			version("binaryWrapper.version", "1.0.23")
+			version("binaryWrapper.version", "1.0.24")
 
-			version("elementum.versionCode", "88")
+			version("elementum.versionCode", "89")
 
-			version("lt2http.versionCode", "40")
+			version("lt2http.versionCode", "41")
 
 			// https://developer.android.com/build/jdks
 			version("jvmToolchain", "21")
