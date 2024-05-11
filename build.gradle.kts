@@ -46,7 +46,7 @@ val genPages = tasks.register("genPages") {
 	doLast {
 		val gitignore = file(".gitignore")
 		val gitignorePages = "!${pagesDir.name}/**"
-		if (gitignore.isFile() && !gitignore.useLines { lines -> lines.any { it == gitignorePages } }) {
+		if (gitignore.isFile() && gitignore.useLines { lines -> lines.all { it != gitignorePages } }) {
 			gitignore.appendText("%s%n".format(gitignorePages))
 		}
 		pagesDir.mkdirs()
