@@ -38,7 +38,7 @@ dependencyResolutionManagement {
 			version("jvmToolchain", "21")
 
 			// https://developer.android.com/tools/releases/build-tools
-			version("buildToolsVersion", "34.0.0")
+			version("buildToolsVersion", "35.0.0")
 
 			// https://developer.android.com/tools/releases/platforms
 			version("compileSdk", "34")
@@ -51,10 +51,10 @@ dependencyResolutionManagement {
 			version("cmake", "3.22.1")
 
 			// https://mvnrepository.com/artifact/androidx.test/runner
-			library("androidTest.runner", "androidx.test:runner:1.5.2")
+			library("androidTest.runner", "androidx.test:runner:1.6.1")
 
 			// https://mvnrepository.com/artifact/androidx.test.ext/junit-ktx
-			library("androidTest.junit", "androidx.test.ext:junit-ktx:1.1.5")
+			library("androidTest.junit", "androidx.test.ext:junit-ktx:1.2.1")
 
 			// https://mvnrepository.com/artifact/junit/junit
 			library("test.junit", "junit:junit:4.13.2")
