@@ -45,7 +45,7 @@ dependencyResolutionManagement {
 			version("minSdk", "26")
 
 			// https://developer.android.com/ndk/downloads
-			version("ndkVersion", "26.3.11579264")
+			version("ndkVersion", "27.0.12077973")
 
 			// https://developer.android.com/ndk/guides/cmake
 			version("cmake", "3.22.1")
