@@ -13,10 +13,12 @@ plugins {
 	id("com.github.breadmoirai.github-release")
 }
 
-val localProperties = Properties().also {
-	file("local.properties").takeIf(File::isFile)?.bufferedReader()?.use(it::load)
+val localProperties by extra {
+	Properties().also { file("local.properties").takeIf(File::isFile)?.bufferedReader()?.use(it::load) }
 }
-val pagesDir = file("docs")
+val pagesDir by extra {
+	file("docs")
+}
 
 subprojects {
 
@@ -26,9 +28,6 @@ subprojects {
 		mavenLocal()
 		maven("https://jitpack.io")
 	}
-
-	extra["localProperties"] = localProperties
-	extra["pagesDir"] = pagesDir
 
 	tasks.withType<JavaCompile>().configureEach {
 		options.isDeprecation = true

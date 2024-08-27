@@ -16,8 +16,8 @@ plugins {
 	kotlin("android")
 }
 
-val localProperties: Properties by extra
-val pagesDir: File by extra
+val localProperties: Properties by rootProject.extra
+val pagesDir: File by rootProject.extra
 val srcGen: String = layout.buildDirectory.file("src").get().asFile.path
 val srcMainGen = "$srcGen/main"
 val srcMainAssetsGen = "$srcMainGen/assets"
