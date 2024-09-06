@@ -173,6 +173,10 @@ System.getProperty("adb.args")?.let {
 		group = project.name
 		executable = android.adbExecutable.path
 		args(*Commandline.translateCommandline(it))
+
+		doFirst {
+			println("adb ${args?.joinToString(" ")}")
+		}
 	}
 }
 

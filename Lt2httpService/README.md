@@ -15,7 +15,7 @@ Add [lt2http](https://github.com/ElementumOrg/service.lt2http) to [Kodi](https:/
 On [Android 11](https://developer.android.com/about/versions/11/privacy/storage#all-files-access) and up the service app may ask you to allow it to manage all files or try to open its settings if your device [does not let it](https://issuetracker.google.com/issues/71327396#comment5). If nothing else works the service app will show you the following command that will allow it to manage all files which you might have to execute for [lt2http](https://github.com/ElementumOrg/service.lt2http) to work properly:
 
 ```bat
-adb shell appops set --uid service.lt2http.android MANAGE_EXTERNAL_STORAGE allow
+adb shell appops set service.lt2http.android MANAGE_EXTERNAL_STORAGE allow
 ```
 
 The service app will not work if it is a different version from the addon and will show a message like:

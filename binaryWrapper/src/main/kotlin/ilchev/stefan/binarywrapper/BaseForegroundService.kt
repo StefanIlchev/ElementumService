@@ -241,22 +241,19 @@ abstract class BaseForegroundService : Service() {
 		updateInstallReceiver = receiver
 		val installer = packageManager.packageInstaller
 		val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
-		var flags = PendingIntent.FLAG_UPDATE_CURRENT
 		params.setSize(file.length())
-		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
+		val intent = if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
 			params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
-			flags = flags or if (Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU) {
-				PendingIntent.FLAG_IMMUTABLE
-			} else {
-				PendingIntent.FLAG_MUTABLE
-			}
+			Intent(this, receiver::class.java)
+		} else {
+			Intent(BuildConfig.LIBRARY_PACKAGE_NAME)
 		}
 		val updateInstallId = installer.createSession(params).also { updateInstallId = it }
 		val statusReceiver = PendingIntent.getBroadcast(
 			this,
 			updateInstallId,
-			Intent(BuildConfig.LIBRARY_PACKAGE_NAME),
-			flags
+			intent,
+			PendingIntent.FLAG_MUTABLE
 		).intentSender
 		workHandler.post {
 			try {

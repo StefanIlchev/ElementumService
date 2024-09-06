@@ -100,7 +100,7 @@ abstract class BaseMainActivity : Activity() {
 		val applicationInfo = applicationInfo
 		val applicationIcon = applicationInfo.icon
 		val applicationLabel = packageManager.getApplicationLabel(applicationInfo)
-		val cmd = "adb shell appops set --uid $packageName $permission allow"
+		val cmd = "adb shell appops set $packageName $permission allow"
 		val allowCmdDialog = AlertDialog.Builder(this)
 			.setIcon(applicationIcon)
 			.setTitle(applicationLabel)

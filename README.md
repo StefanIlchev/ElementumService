@@ -17,7 +17,7 @@ Add [Elementum](https://github.com/elgatito/plugin.video.elementum) to [Kodi](ht
 On [Android 11](https://developer.android.com/about/versions/11/privacy/storage#all-files-access) and up the service app may ask you to allow it to manage all files or try to open its settings if your device [does not let it](https://issuetracker.google.com/issues/71327396#comment5). If nothing else works the service app will show you the following command that will allow it to manage all files which you might have to execute for [Elementum](https://github.com/elgatito/plugin.video.elementum) to work properly:
 
 ```bat
-adb shell appops set --uid service.elementum.android MANAGE_EXTERNAL_STORAGE allow
+adb shell appops set service.elementum.android MANAGE_EXTERNAL_STORAGE allow
 ```
 
 ## Auto-update
