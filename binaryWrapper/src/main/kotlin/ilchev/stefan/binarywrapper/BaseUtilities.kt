@@ -1,7 +1,6 @@
 package ilchev.stefan.binarywrapper
 
 import android.annotation.SuppressLint
-import android.app.Service.RECEIVER_EXPORTED
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -10,6 +9,7 @@ import android.content.SharedPreferences
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Parcelable
@@ -23,9 +23,36 @@ val mainHandler = Handler(Looper.getMainLooper())
 val Context.sharedPreferences: SharedPreferences
 	get() = getSharedPreferences(BuildConfig.LIBRARY_PACKAGE_NAME, Context.MODE_PRIVATE)
 
+fun Context.isActivityFound(
+	intent: Intent
+) = try {
+	val activityInfo = intent.resolveActivityInfo(packageManager, 0)
+	activityInfo?.isEnabled == true && activityInfo.exported
+} catch (t: Throwable) {
+	Log.w(TAG, t)
+	false
+}
+
+fun Context.tryStartActivity(intent: Intent, options: Bundle? = null) {
+	try {
+		startActivity(intent, options)
+	} catch (t: Throwable) {
+		Log.w(TAG, t)
+	}
+}
+
+fun Context.tryStopService(
+	intent: Intent
+) = try {
+	stopService(intent)
+} catch (t: Throwable) {
+	Log.w(TAG, t)
+	false
+}
+
 @Suppress("deprecation", "KotlinRedundantDiagnosticSuppress")
 fun Context.getPackageInfo(
-	flags: Int
+	flags: Int = 0
 ): PackageInfo = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
 	packageManager.getPackageInfo(packageName, flags)
 } else {
@@ -50,7 +77,7 @@ fun Context.registerExportedReceiver(
 ) = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
 	registerReceiver(receiver, filter, null, mainHandler)
 } else {
-	registerReceiver(receiver, filter, null, mainHandler, RECEIVER_EXPORTED)
+	registerReceiver(receiver, filter, null, mainHandler, Context.RECEIVER_EXPORTED)
 }
 
 fun getUpdate(
@@ -60,7 +87,7 @@ fun getUpdate(
 
 fun Context.tryShowDifferent(versionName: String?) {
 	try {
-		val packageInfo = getPackageInfo(0)
+		val packageInfo = getPackageInfo()
 		getUpdate(packageInfo, versionName) ?: return
 		Toast.makeText(this, "${packageInfo.versionName} \u2260 $versionName", Toast.LENGTH_LONG).show()
 	} catch (t: Throwable) {

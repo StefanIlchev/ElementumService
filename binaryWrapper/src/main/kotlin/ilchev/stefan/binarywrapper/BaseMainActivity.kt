@@ -45,31 +45,12 @@ abstract class BaseMainActivity : Activity() {
 		get() = sharedPreferences.getBoolean(FOREGROUND_SERVICE, false)
 		set(value) = sharedPreferences.edit().putBoolean(FOREGROUND_SERVICE, value).apply()
 
-	private fun isActivityFound(
-		intent: Intent
-	) = try {
-		val activityInfo = intent.resolveActivityInfo(packageManager, 0)
-		activityInfo?.isEnabled == true && activityInfo.exported
-	} catch (t: Throwable) {
-		Log.w(TAG, t)
-		false
-	}
-
-	private fun tryStartActivityForResult(intent: Intent, requestCode: Int, options: Bundle?) {
+	private fun tryStartActivityForResult(intent: Intent, requestCode: Int = -1, options: Bundle? = null) {
 		try {
 			startActivityForResult(intent, requestCode, options)
 		} catch (t: Throwable) {
 			Log.w(TAG, t)
 		}
-	}
-
-	private fun tryStopService(
-		intent: Intent
-	) = try {
-		stopService(intent)
-	} catch (t: Throwable) {
-		Log.w(TAG, t)
-		false
 	}
 
 	private fun hideAllowCmd() {
@@ -142,7 +123,7 @@ abstract class BaseMainActivity : Activity() {
 		if (isActivityFound(intent) ||
 			isActivityFound(intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS))
 		) {
-			tryStartActivityForResult(intent, requestCode.ordinal, null)
+			tryStartActivityForResult(intent, requestCode.ordinal)
 		} else {
 			showAllowCmd(permission, supplier, consumer)
 		}
