@@ -42,8 +42,8 @@ abstract class BaseMainActivity : Activity() {
 		set(value) = sharedPreferences.edit().putBoolean(MANAGE_EXTERNAL_STORAGE, value).apply()
 
 	private var isForegroundServiceStart
-		get() = sharedPreferences.getBoolean(Manifest.permission.FOREGROUND_SERVICE, false)
-		set(value) = sharedPreferences.edit().putBoolean(Manifest.permission.FOREGROUND_SERVICE, value).apply()
+		get() = sharedPreferences.getBoolean(FOREGROUND_SERVICE, false)
+		set(value) = sharedPreferences.edit().putBoolean(FOREGROUND_SERVICE, value).apply()
 
 	private fun isActivityFound(
 		intent: Intent
@@ -176,6 +176,9 @@ abstract class BaseMainActivity : Activity() {
 					RequestCode.MANAGE_EXTERNAL_STORAGE
 				)
 			) return arrayOf(MANAGE_EXTERNAL_STORAGE)
+			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+				set -= FOREGROUND_SERVICE
+			}
 			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
 				set -= UPDATE_PACKAGES_WITHOUT_USER_ACTION
 			}
@@ -266,6 +269,9 @@ abstract class BaseMainActivity : Activity() {
 		@SuppressLint("InlinedApi")
 		private const val ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION =
 			Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION
+
+		@SuppressLint("InlinedApi")
+		private const val FOREGROUND_SERVICE = Manifest.permission.FOREGROUND_SERVICE
 
 		@SuppressLint("InlinedApi")
 		private const val UPDATE_PACKAGES_WITHOUT_USER_ACTION = Manifest.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION
