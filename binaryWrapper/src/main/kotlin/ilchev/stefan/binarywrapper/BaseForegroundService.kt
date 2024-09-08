@@ -1,6 +1,5 @@
 package ilchev.stefan.binarywrapper
 
-import android.annotation.SuppressLint
 import android.app.DownloadManager
 import android.app.Notification
 import android.app.NotificationChannel
@@ -11,9 +10,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageInfo
 import android.content.pm.PackageInstaller
-import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.graphics.BitmapFactory
 import android.media.MediaMetadata
@@ -25,10 +22,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
 import android.os.HandlerThread
-import android.os.Looper
-import android.os.Parcelable
 import android.util.Log
-import android.widget.Toast
 import java.io.File
 
 abstract class BaseForegroundService : Service() {
@@ -48,7 +42,7 @@ abstract class BaseForegroundService : Service() {
 
 	private var updateDownloadReceiver: BroadcastReceiver? = null
 
-	private var updateDownloadId = 0L
+	private var updateDownloadId = -1L
 
 	private var mediaSession: MediaSession? = null
 
@@ -63,7 +57,6 @@ abstract class BaseForegroundService : Service() {
 	protected open fun getUpdateDownloadUri(versionName: String): Uri? = null
 
 	private fun getData(intent: Intent?): Uri? {
-		val sharedPreferences = getSharedPreferences(BuildConfig.LIBRARY_PACKAGE_NAME, MODE_PRIVATE)
 		intent ?: return sharedPreferences.getString(BuildConfig.LIBRARY_PACKAGE_NAME, null)?.let(Uri::parse)
 		return intent.data.also {
 			sharedPreferences.edit()
@@ -75,7 +68,7 @@ abstract class BaseForegroundService : Service() {
 	private fun getUpdateVersionName(
 		data: Uri?
 	) = try {
-		getUpdate(getPackageInfo(this, 0), getVersionName(data))
+		getUpdate(getPackageInfo(0), getVersionName(data))
 	} catch (t: Throwable) {
 		Log.w(TAG, t)
 		null
@@ -87,16 +80,6 @@ abstract class BaseForegroundService : Service() {
 		} catch (t: Throwable) {
 			Log.w(TAG, t)
 		}
-	}
-
-	@SuppressLint("UnspecifiedRegisterReceiverFlag")
-	private fun registerExportedReceiver(
-		receiver: BroadcastReceiver,
-		filter: IntentFilter
-	) = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-		registerReceiver(receiver, filter, null, mainHandler)
-	} else {
-		registerReceiver(receiver, filter, null, mainHandler, RECEIVER_EXPORTED)
 	}
 
 	private fun startForeground(stopIntent: PendingIntent) {
@@ -198,7 +181,7 @@ abstract class BaseForegroundService : Service() {
 			updateInstallReceiver = null
 			unregisterReceiver(it)
 		}
-		updateInstallId.takeIf { it != 0 }?.also {
+		updateInstallId.takeIf { it > 0 }?.also {
 			updateInstallId = 0
 			try {
 				packageManager.packageInstaller.abandonSession(it)
@@ -242,20 +225,28 @@ abstract class BaseForegroundService : Service() {
 		val installer = packageManager.packageInstaller
 		val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
 		params.setSize(file.length())
-		val intent = if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
+		var intent: Intent? = null
+		var flags = 0
+		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
 			params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
-			Intent(this, receiver::class.java)
-		} else {
-			Intent(BuildConfig.LIBRARY_PACKAGE_NAME)
+			flags = if (Build.VERSION.SDK_INT > Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+				intent = Intent(BuildConfig.LIBRARY_PACKAGE_NAME, null, this, receiver::class.java)
+				PendingIntent.FLAG_MUTABLE
+			} else if (Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU) {
+				PendingIntent.FLAG_IMMUTABLE
+			} else {
+				PendingIntent.FLAG_MUTABLE
+			}
 		}
 		val updateInstallId = installer.createSession(params).also { updateInstallId = it }
 		val statusReceiver = PendingIntent.getBroadcast(
 			this,
 			updateInstallId,
-			intent,
-			PendingIntent.FLAG_MUTABLE
+			intent ?: Intent(BuildConfig.LIBRARY_PACKAGE_NAME),
+			flags or PendingIntent.FLAG_UPDATE_CURRENT
 		).intentSender
 		workHandler.post {
+			if (versionName != updateVersionName) return@post
 			try {
 				installer.openSession(updateInstallId).use { session ->
 					session.openWrite(file.name, 0L, file.length()).use { out ->
@@ -276,10 +267,10 @@ abstract class BaseForegroundService : Service() {
 			updateDownloadReceiver = null
 			unregisterReceiver(it)
 		}
-		return updateDownloadId.takeIf { it != 0L }?.let {
-			updateDownloadId = 0L
+		return updateDownloadId.takeIf { it != -1L }?.let {
+			updateDownloadId = -1L
 			val manager = getSystemService(DownloadManager::class.java)
-			manager?.remove(updateDownloadId)
+			manager?.remove(it)
 		} ?: 0
 	}
 
@@ -295,9 +286,9 @@ abstract class BaseForegroundService : Service() {
 				if (unregisterUpdateReceiver(versionName, this) || intent == null) return
 				when (intent.action) {
 					DownloadManager.ACTION_DOWNLOAD_COMPLETE -> {
-						val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0L)
-						if (id != 0L && id == updateDownloadId) {
-							updateDownloadId = 0L
+						val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1L)
+						if (id != -1L && id == updateDownloadId) {
+							updateDownloadId = -1L
 							updateDownloadReceiver = null
 							unregisterReceiver(this)
 							try {
@@ -312,7 +303,7 @@ abstract class BaseForegroundService : Service() {
 					DownloadManager.ACTION_NOTIFICATION_CLICKED -> {
 						val id = updateDownloadId
 						val ids = intent.getLongArrayExtra(DownloadManager.EXTRA_NOTIFICATION_CLICK_DOWNLOAD_IDS)
-						if (id != 0L && ids?.contains(id) == true) {
+						if (id != -1L && ids?.contains(id) == true) {
 							stopForeground()
 						}
 					}
@@ -362,7 +353,7 @@ abstract class BaseForegroundService : Service() {
 		val versionName = updateVersionNameMsg
 		updateVersionName = null
 		updateVersionNameMsg = null
-		tryShowDifferent(this, versionName)
+		tryShowDifferent(versionName)
 		stopUpdateInstall()
 		stopUpdateDownload()
 		try {
@@ -467,44 +458,5 @@ abstract class BaseForegroundService : Service() {
 		private const val TAG = "BaseForegroundService"
 
 		private const val NOTIFICATION_ID = 1
-
-		val mainHandler = Handler(Looper.getMainLooper())
-
-		@Suppress("deprecation", "KotlinRedundantDiagnosticSuppress")
-		fun getPackageInfo(context: Context, flags: Int): PackageInfo {
-			val packageManager = context.packageManager
-			val packageName = context.packageName
-			return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-				packageManager.getPackageInfo(packageName, flags)
-			} else {
-				packageManager.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(flags.toLong()))
-			}
-		}
-
-		@Suppress("deprecation")
-		private fun <T : Parcelable?> getParcelableExtra(
-			intent: Intent,
-			name: String,
-			clazz: Class<T>
-		) = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-			intent.getParcelableExtra(name)
-		} else {
-			intent.getParcelableExtra(name, clazz)
-		}
-
-		fun getUpdate(
-			packageInfo: PackageInfo,
-			versionName: String?
-		) = versionName.takeIf { packageInfo.versionName != it }
-
-		fun tryShowDifferent(context: Context, versionName: String?) {
-			try {
-				val packageInfo = getPackageInfo(context, 0)
-				getUpdate(packageInfo, versionName) ?: return
-				Toast.makeText(context, "${packageInfo.versionName} \u2260 $versionName", Toast.LENGTH_LONG).show()
-			} catch (t: Throwable) {
-				Log.w(TAG, t)
-			}
-		}
 	}
 }

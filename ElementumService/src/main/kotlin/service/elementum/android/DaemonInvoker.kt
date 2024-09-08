@@ -1,9 +1,9 @@
 package service.elementum.android
 
 import android.content.Context
-import android.os.Handler
 import android.os.Looper
 import ilchev.stefan.binarywrapper.BaseDaemonInvoker
+import ilchev.stefan.binarywrapper.mainHandler
 import java.io.File
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
@@ -15,9 +15,8 @@ import java.util.zip.ZipOutputStream
 
 class DaemonInvoker(
 	context: Context,
-	private val mainHandler: Handler,
 	vararg subprocessArgs: String
-) : BaseDaemonInvoker(context, mainHandler) {
+) : BaseDaemonInvoker(context) {
 
 	private val homeDir = File(context.filesDir, ".kodi")
 

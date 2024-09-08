@@ -38,20 +38,12 @@ abstract class BaseMainActivity : Activity() {
 
 	private var isExternalStorageManager
 		get() = Build.VERSION.SDK_INT < Build.VERSION_CODES.R || Environment.isExternalStorageManager() ||
-				getSharedPreferences(BuildConfig.LIBRARY_PACKAGE_NAME, MODE_PRIVATE)
-					.getBoolean(MANAGE_EXTERNAL_STORAGE, false)
-		set(value) = getSharedPreferences(BuildConfig.LIBRARY_PACKAGE_NAME, MODE_PRIVATE)
-			.edit()
-			.putBoolean(MANAGE_EXTERNAL_STORAGE, value)
-			.apply()
+				sharedPreferences.getBoolean(MANAGE_EXTERNAL_STORAGE, false)
+		set(value) = sharedPreferences.edit().putBoolean(MANAGE_EXTERNAL_STORAGE, value).apply()
 
 	private var isForegroundServiceStart
-		get() = getSharedPreferences(BuildConfig.LIBRARY_PACKAGE_NAME, MODE_PRIVATE)
-			.getBoolean(FOREGROUND_SERVICE, false)
-		set(value) = getSharedPreferences(BuildConfig.LIBRARY_PACKAGE_NAME, MODE_PRIVATE)
-			.edit()
-			.putBoolean(FOREGROUND_SERVICE, value)
-			.apply()
+		get() = sharedPreferences.getBoolean(Manifest.permission.FOREGROUND_SERVICE, false)
+		set(value) = sharedPreferences.edit().putBoolean(Manifest.permission.FOREGROUND_SERVICE, value).apply()
 
 	private fun isActivityFound(
 		intent: Intent
@@ -83,7 +75,7 @@ abstract class BaseMainActivity : Activity() {
 	private fun hideAllowCmd() {
 		allowCmdRunnable?.also {
 			allowCmdRunnable = null
-			BaseForegroundService.mainHandler.removeCallbacks(it)
+			mainHandler.removeCallbacks(it)
 		}
 		allowCmdDialog?.apply {
 			allowCmdDialog = null
@@ -128,13 +120,13 @@ abstract class BaseMainActivity : Activity() {
 				if (isStopIntent) {
 					callForegroundServiceAndFinish()
 				} else if (allowCmdDialog.isShowing && !supplier()) {
-					BaseForegroundService.mainHandler.postDelayed(this, 100L)
-				} else if (requestRequestedPermissions() == null) {
-					callForegroundServiceAndFinish()
+					mainHandler.postDelayed(this, 100L)
+				} else {
+					requestRequestedPermissions() ?: callForegroundServiceAndFinish()
 				}
 			}
 		}
-		BaseForegroundService.mainHandler.post(allowCmdRunnable)
+		mainHandler.post(allowCmdRunnable)
 		this.allowCmdRunnable = allowCmdRunnable
 	}
 
@@ -158,11 +150,12 @@ abstract class BaseMainActivity : Activity() {
 	}
 
 	private fun requestRequestedPermissions(): Array<String>? {
+		if (isStopIntent) return null
 		try {
-			val packageInfo = BaseForegroundService.getPackageInfo(this, PackageManager.GET_PERMISSIONS)
+			val packageInfo = getPackageInfo(PackageManager.GET_PERMISSIONS)
 			val set = mutableSetOf(*packageInfo.requestedPermissions ?: emptyArray())
 			if (set.remove(Manifest.permission.REQUEST_INSTALL_PACKAGES) &&
-				BaseForegroundService.getUpdate(packageInfo, versionName) != null &&
+				getUpdate(packageInfo, versionName) != null &&
 				request(
 					"REQUEST_INSTALL_PACKAGES",
 					{ isInstallPackagesRequester },
@@ -183,9 +176,6 @@ abstract class BaseMainActivity : Activity() {
 					RequestCode.MANAGE_EXTERNAL_STORAGE
 				)
 			) return arrayOf(MANAGE_EXTERNAL_STORAGE)
-			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-				set -= FOREGROUND_SERVICE
-			}
 			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
 				set -= UPDATE_PACKAGES_WITHOUT_USER_ACTION
 			}
@@ -219,7 +209,7 @@ abstract class BaseMainActivity : Activity() {
 			val service = (intent?.let(::Intent) ?: Intent()).setClass(this, foregroundServiceClass)
 			if (isStopIntent) {
 				tryStopService(service)
-				BaseForegroundService.tryShowDifferent(this, versionName)
+				tryShowDifferent(versionName)
 			} else if (isForegroundServiceStart) {
 				startForegroundService(service)
 			}
@@ -232,9 +222,7 @@ abstract class BaseMainActivity : Activity() {
 	override fun onResume() {
 		super.onResume()
 		isForegroundServiceStart = true
-		if (isStopIntent || requestRequestedPermissions() == null) {
-			callForegroundServiceAndFinish()
-		}
+		requestRequestedPermissions() ?: callForegroundServiceAndFinish()
 	}
 
 	override fun onPause() {
@@ -278,9 +266,6 @@ abstract class BaseMainActivity : Activity() {
 		@SuppressLint("InlinedApi")
 		private const val ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION =
 			Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION
-
-		@SuppressLint("InlinedApi")
-		private const val FOREGROUND_SERVICE = Manifest.permission.FOREGROUND_SERVICE
 
 		@SuppressLint("InlinedApi")
 		private const val UPDATE_PACKAGES_WITHOUT_USER_ACTION = Manifest.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION

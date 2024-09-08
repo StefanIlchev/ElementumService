@@ -1,7 +1,6 @@
 package ilchev.stefan.binarywrapper
 
 import android.content.Context
-import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import java.io.File
@@ -11,8 +10,7 @@ import java.util.Scanner
 import javax.security.auth.Destroyable
 
 abstract class BaseDaemonInvoker(
-	context: Context,
-	private val mainHandler: Handler
+	context: Context
 ) : () -> Long, Destroyable {
 
 	private val assetManager = context.assets

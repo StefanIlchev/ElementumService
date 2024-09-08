@@ -10,7 +10,7 @@ class ForegroundService : BaseForegroundService() {
 
 	override fun getDaemonInvoker(
 		data: Uri?
-	) = DaemonInvoker(this, mainHandler, *data?.fragment?.split("\u0000")?.toTypedArray() ?: emptyArray())
+	) = DaemonInvoker(this, *data?.fragment?.split("\u0000")?.toTypedArray() ?: emptyArray())
 
 	override fun getVersionName(
 		data: Uri?
