@@ -86,7 +86,7 @@ abstract class BaseDaemonInvoker(
 	override fun equals(
 		other: Any?
 	) = other === this || other is BaseDaemonInvoker &&
-			other.javaClass == javaClass &&
+			other::class.java == this::class.java &&
 			other.subprocessAssets == subprocessAssets &&
 			other.subprocessCmd == subprocessCmd &&
 			other.subprocessEnv == subprocessEnv &&
