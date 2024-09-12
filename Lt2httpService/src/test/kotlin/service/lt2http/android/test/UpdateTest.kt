@@ -1,6 +1,7 @@
 package service.lt2http.android.test
 
 import android.content.Intent
+import android.os.Build
 import org.junit.After
 import org.junit.Assert
 import org.junit.Assume
@@ -38,10 +39,14 @@ class UpdateTest {
 	@Test
 	fun test() {
 		Assume.assumeTrue(isInstalled)
+		val manageExternalStorage = listOf(
+			"test \\\$(getprop ro.build.version.sdk) -lt ${Build.VERSION_CODES.R}",
+			"appops set ${BuildConfig.APPLICATION_ID} MANAGE_EXTERNAL_STORAGE allow"
+		).joinToString(" || ", "(", ")")
 		val data = "version:${BuildConfig.VERSION_NAME}"
 		val start = listOf(
 			"appops set ${BuildConfig.APPLICATION_ID} REQUEST_INSTALL_PACKAGES allow",
-			"appops set ${BuildConfig.APPLICATION_ID} MANAGE_EXTERNAL_STORAGE allow",
+			manageExternalStorage,
 			"am force-stop ${BuildConfig.APPLICATION_ID}",
 			"am start -W -a ${Intent.ACTION_MAIN} -d $data ${BuildConfig.APPLICATION_ID}"
 		).joinToString(" && ", "shell ")
