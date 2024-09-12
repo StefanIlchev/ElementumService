@@ -27,10 +27,6 @@ private fun Instrumentation.executeShell(
 	}
 }
 
-private fun Instrumentation.executeAllowCmd(
-	permission: String
-) = executeShell("appops set ${targetContext.packageName} $permission allow")
-
 private fun Instrumentation.tryGrantRuntimePermission(
 	permission: String
 ) = try {
@@ -40,14 +36,13 @@ private fun Instrumentation.tryGrantRuntimePermission(
 
 fun Instrumentation.grantRequestedPermissions() {
 	val packageInfo = targetContext.getPackageInfo(PackageManager.GET_PERMISSIONS)
-	val requestedPermissions = packageInfo.requestedPermissions ?: return
-	executeAllowCmd("REQUEST_INSTALL_PACKAGES")
-	if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
-		executeAllowCmd("MANAGE_EXTERNAL_STORAGE")
-	}
 	if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-		requestedPermissions.forEach { executeShell("pm grant ${targetContext.packageName} $it") }
+		packageInfo.requestedPermissions?.forEach { executeShell("pm grant ${targetContext.packageName} $it") }
 	} else {
-		requestedPermissions.forEach(::tryGrantRuntimePermission)
+		packageInfo.requestedPermissions?.forEach(::tryGrantRuntimePermission)
+	}
+	executeShell("appops set ${targetContext.packageName} REQUEST_INSTALL_PACKAGES allow")
+	if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
+		executeShell("appops set ${targetContext.packageName} MANAGE_EXTERNAL_STORAGE allow")
 	}
 }
