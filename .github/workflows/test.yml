@@ -20,6 +20,10 @@ jobs:
       - name: Build with Gradle
         uses: gradle/actions/setup-gradle@v4.1.0
 
+      - name: Set Local Properties
+        run: |
+          echo 'elementum.repo.url=https://StefanIlchev.github.io/ElementumService/' >>local.properties
+
       - name: Enable KVM group perms
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
