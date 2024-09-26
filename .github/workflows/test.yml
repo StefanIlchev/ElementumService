@@ -2,6 +2,12 @@ name: test
 
 on:
   workflow_dispatch:
+    inputs:
+      android-api-level:
+        description: Android API Level
+        required: true
+        type: number
+        default: 34
 
 jobs:
   test:
@@ -29,7 +35,7 @@ jobs:
       - name: Android Emulator Runner
         uses: ReactiveCircus/android-emulator-runner@v2.32.0
         with:
-          api-level: 34
+          api-level: ${{ github.event.inputs.android-api-level }}
           arch: x86_64
           script: ./gradlew connectedDebugAndroidTest testDebugUnitTest
 
