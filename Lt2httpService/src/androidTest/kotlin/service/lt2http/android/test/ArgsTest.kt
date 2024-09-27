@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Build
 import androidx.test.ext.junit.rules.activityScenarioRule
 import org.junit.Assert
+import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestRule
@@ -21,7 +22,7 @@ import java.nio.charset.StandardCharsets
 
 @RunWith(Parameterized::class)
 class ArgsTest(
-	private val expected: String,
+	private val expected: String?,
 	private vararg val args: String
 ) {
 
@@ -35,6 +36,7 @@ class ArgsTest(
 
 	@Test
 	fun test() {
+		Assume.assumeNotNull(expected)
 		val actual = Channels.newInputStream(SocketChannel.open(InetSocketAddress(BuildConfig.LOCAL_PORT)))
 			.bufferedReader(StandardCharsets.ISO_8859_1)
 			.use(Reader::readText)
@@ -53,12 +55,13 @@ class ArgsTest(
 
 		@Parameterized.Parameters
 		@JvmStatic
-		fun data() = mutableListOf(
-			arrayOf(toExpectedTranslatePath(), arrayOf(BuildConfig.ARG_TRANSLATE_PATH))
-		).also {
-			if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
-				it += arrayOf(toExpectedAddonInfo(), arrayOf("${BuildConfig.ARG_ADDON_INFO}=args.test"))
+		fun data() = arrayOf(
+			arrayOf(toExpectedTranslatePath(), arrayOf(BuildConfig.ARG_TRANSLATE_PATH)),
+			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+				arrayOf(null, arrayOf<String>())
+			} else {
+				arrayOf(toExpectedAddonInfo(), arrayOf("${BuildConfig.ARG_ADDON_INFO}=args.test"))
 			}
-		}
+		)
 	}
 }
