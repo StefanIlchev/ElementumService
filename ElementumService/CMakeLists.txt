@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.22.1)
-set(CMAKE_CXX_STANDARD 20)
+cmake_minimum_required(VERSION ${CMAKE_REQUIRED})
+set(CMAKE_CXX_STANDARD ${CXX_STANDARD})
 set(ANDROID_STL c++_shared)
 project(${PROJECT_NAME})
 

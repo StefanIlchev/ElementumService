@@ -50,6 +50,9 @@ dependencyResolutionManagement {
 			// https://developer.android.com/ndk/guides/cmake
 			version("cmake", "3.30.3")
 
+			// https://isocpp.org/std/the-standard
+			version("cpp", "20")
+
 			// https://mvnrepository.com/artifact/androidx.test/runner
 			library("androidTest.runner", "androidx.test:runner:1.6.2")
 

@@ -110,6 +110,8 @@ android {
 
 				cmake {
 					arguments(
+						"-DCMAKE_REQUIRED=${libs.versions.cmake.get()}",
+						"-DCXX_STANDARD=${libs.versions.cpp.get()}",
 						"-DPROJECT_NAME=${project.name}",
 						"-DSRC_MAIN_ABI_HEADS_GEN=$srcMainAbiHeadsGen",
 						"-DSRC_MAIN_JNI_LIBS_GEN=$srcMainJniLibsGen"
