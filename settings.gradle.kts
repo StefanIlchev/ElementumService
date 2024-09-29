@@ -48,7 +48,7 @@ dependencyResolutionManagement {
 			version("ndkVersion", "27.1.12297006")
 
 			// https://developer.android.com/ndk/guides/cmake
-			version("cmake", "3.22.1")
+			version("cmake", "3.30.3")
 
 			// https://mvnrepository.com/artifact/androidx.test/runner
 			library("androidTest.runner", "androidx.test:runner:1.6.2")
