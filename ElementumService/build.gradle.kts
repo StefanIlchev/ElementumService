@@ -444,10 +444,10 @@ if (addonZip != null && addonDir != null && addonIdDir != null && addonBinDir !=
 				|#$binaryLine
 				|    return 'N/A', 'N/A'
 				|# END ${project.name}-patched: binary""".trimMargin()
-			val stopLine = """    lockfile = os.path.join(ADDON_PATH, ".lockfile")"""
+			val stopLine = """    lockfile = os.path.join(get_addon_profile_dir(), ".lockfile")"""
 			val stopLinePatched = """# BEGIN ${project.name}-patched: stop
 				|#$stopLine
-				|    lockfile = os.path.join(ADDON_PATH, '.lockfile')
+				|    lockfile = os.path.join(get_addon_profile_dir(), '.lockfile')
 				|    if os.path.exists(lockfile):
 				|        os.remove(lockfile)
 				|# END ${project.name}-patched: stop""".trimMargin()
