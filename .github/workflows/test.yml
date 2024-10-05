@@ -7,7 +7,7 @@ on:
         description: Android API Level
         required: true
         type: number
-        default: 34
+        default: 35
 
 jobs:
   test:
@@ -15,10 +15,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v4.2.0
 
       - name: Setup Java JDK
-        uses: actions/setup-java@v4.3.0
+        uses: actions/setup-java@v4.4.0
         with:
           distribution: 'microsoft'
           java-version: '21'
