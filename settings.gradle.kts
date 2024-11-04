@@ -45,10 +45,10 @@ dependencyResolutionManagement {
 			version("minSdk", "26")
 
 			// https://developer.android.com/ndk/downloads
-			version("ndkVersion", "27.1.12297006")
+			version("ndkVersion", "27.2.12479018")
 
 			// https://developer.android.com/ndk/guides/cmake
-			version("cmake", "3.30.4")
+			version("cmake", "3.30.5")
 
 			// https://isocpp.org/std/the-standard
 			version("cpp", "20")
