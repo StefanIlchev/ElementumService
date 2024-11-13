@@ -465,17 +465,17 @@ if (addonZip != null && addonDir != null && addonIdDir != null &&
 		dependsOn(zipAndroidClient)
 
 		doFirst {
-			exec {
+			providers.exec {
 				executable = android.adbExecutable.path
 				args("shell", "rm", "-f", "$destinationDir/${androidClientZip.name}")
-			}
+			}.result.get()
 		}
 
 		doLast {
-			exec {
+			providers.exec {
 				executable = android.adbExecutable.path
 				args("push", androidClientZip.path, destinationDir)
-			}
+			}.result.get()
 		}
 	}
 
