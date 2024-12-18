@@ -17,46 +17,107 @@ plugins {
 }
 
 val localProperties: Properties by rootProject.extra
+
 val pagesDir: File by rootProject.extra
-val srcGen: String = layout.buildDirectory.file("src").get().asFile.path
-val srcMainGen = "$srcGen/main"
-val srcMainAssetsGen = "$srcMainGen/assets"
-val srcMainJniLibsGen = "$srcMainGen/jniLibs"
-val appVersionCode by extra(
+
+val srcGen: String by extra {
+	layout.buildDirectory.file("src").get().asFile.path
+}
+
+val srcMainGen by extra {
+	"$srcGen/main"
+}
+
+val srcMainAssetsGen by extra {
+	"$srcMainGen/assets"
+}
+
+val srcMainJniLibsGen by extra {
+	"$srcMainGen/jniLibs"
+}
+
+val appVersionCode by extra {
 	System.getProperty("version.code")?.toInt()
 		?: localProperties.getProperty("lt2http.version.code")?.toInt()
 		?: libs.versions.lt2http.versionCode.get().toInt()
-)
-val appVersionName by extra(
+}
+
+val appVersionName by extra {
 	System.getProperty("version.name")
 		?: localProperties.getProperty("lt2http.version.name")
 		?: "$appVersionCode"
-)
-val addonId = "service.lt2http"
+}
+
+val addonId by extra {
+	"service.lt2http"
+}
+
 val addonZip: String? = System.getProperty("lt2http.addon.zip")
 	?: localProperties.getProperty("lt2http.addon.zip")
+
 val addonDir = addonZip?.let { layout.buildDirectory.file(file(it).nameWithoutExtension).get().asFile.path }
-val addonIdDir = addonDir?.let { "$it/$addonId" }
+
+val addonIdDir by extra {
+	addonDir?.let { "$it/$addonId" }
+}
+
 val binariesZip: String? = System.getProperty("lt2http.binaries.zip")
 	?: localProperties.getProperty("lt2http.binaries.zip")
+
 val binariesDir = binariesZip?.let { layout.buildDirectory.file(file(it).nameWithoutExtension).get().asFile.path }
-val binariesIdDir = binariesDir?.let { "$it/${file(it).name}" }
-val androidClientZip = layout.buildDirectory.file("$addonId-$appVersionName.android_client.zip").get().asFile
-val abiBins = mapOf(
-	"arm64-v8a" to "android-arm64",
-	"armeabi-v7a" to "android-arm",
-	"x86" to "android-x86",
-	"x86_64" to "android-x64"
-)
-val mainIntentAction = "android.intent.action.MAIN"
-val argAddonInfo = "-addonInfo"
-val argLocalPort = "-localPort"
-val argTranslatePath = "-translatePath"
-val localPort = 65225
-val kodiId = "org.xbmc.kodi"
-val dataDir = "/Download"
-val kodiDataDir = "/Android/data/$kodiId/files"
-val repoUrl = localProperties.getProperty("elementum.repo.url") ?: ""
+
+val binariesIdDir by extra {
+	binariesDir?.let { "$it/${file(it).name}" }
+}
+
+val androidClientZip by extra {
+	layout.buildDirectory.file("$addonId-$appVersionName.android_client.zip").get().asFile
+}
+
+val abiBins by extra {
+	mapOf(
+		"arm64-v8a" to "android-arm64",
+		"armeabi-v7a" to "android-arm",
+		"x86" to "android-x86",
+		"x86_64" to "android-x64"
+	)
+}
+
+val mainIntentAction by extra {
+	"android.intent.action.MAIN"
+}
+
+val argAddonInfo by extra {
+	"-addonInfo"
+}
+
+val argLocalPort by extra {
+	"-localPort"
+}
+
+val argTranslatePath by extra {
+	"-translatePath"
+}
+
+val localPort by extra {
+	65225
+}
+
+val kodiId by extra {
+	"org.xbmc.kodi"
+}
+
+val dataDir by extra {
+	"/Download"
+}
+
+val kodiDataDir by extra {
+	"/Android/data/$kodiId/files"
+}
+
+val repoUrl by extra {
+	localProperties.getProperty("elementum.repo.url") ?: ""
+}
 
 kotlin {
 	jvmToolchain(libs.versions.jvmToolchain.get().toInt())
