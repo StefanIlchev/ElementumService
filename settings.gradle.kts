@@ -15,7 +15,7 @@ pluginManagement {
 		id("com.android.library") version "8.8.0"
 
 		// https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib
-		kotlin("android") version "2.1.0"
+		kotlin("android") version "2.1.10"
 
 		// https://plugins.gradle.org/plugin/com.github.breadmoirai.github-release
 		id("com.github.breadmoirai.github-release") version "2.5.2"
