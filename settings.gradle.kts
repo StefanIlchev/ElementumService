@@ -38,7 +38,7 @@ dependencyResolutionManagement {
 			version("jvmToolchain", "21")
 
 			// https://developer.android.com/tools/releases/build-tools
-			version("buildToolsVersion", "35.0.0")
+			version("buildToolsVersion", "35.0.1")
 
 			// https://developer.android.com/tools/releases/platforms
 			version("compileSdk", "35")
@@ -48,7 +48,7 @@ dependencyResolutionManagement {
 			version("ndkVersion", "27.2.12479018")
 
 			// https://developer.android.com/ndk/guides/cmake
-			version("cmake", "3.31.1")
+			version("cmake", "3.31.4")
 
 			// https://isocpp.org/std/the-standard
 			version("cpp", "20")
