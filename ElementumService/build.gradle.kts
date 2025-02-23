@@ -296,6 +296,10 @@ tasks.register<Exec>("changeDataLocation") {
 	group = project.name
 	executable = android.adbExecutable.path
 	args("shell", "echo", "xbmc.data=/sdcard$kodiDataDir", ">/sdcard/xbmc_env.properties")
+
+	doFirst {
+		println("adb ${args?.joinToString(" ")}")
+	}
 }
 
 if (addonZip != null && addonDir != null && addonIdDir != null && addonBinDir != null) {
@@ -735,14 +739,26 @@ if (addonZip != null && addonDir != null && addonIdDir != null && addonBinDir !=
 			providers.exec {
 				executable = android.adbExecutable.path
 				args("shell", "rm", "-f", "$destinationDir/${androidClientZip.name}")
-			}.result.get()
+				isIgnoreExitValue = true
+				println("adb ${args.joinToString(" ")}")
+			}.run {
+				println(standardOutput.asText.get())
+				println(standardError.asText.get())
+				result.get().assertNormalExitValue()
+			}
 		}
 
 		doLast {
 			providers.exec {
 				executable = android.adbExecutable.path
 				args("push", androidClientZip.path, destinationDir)
-			}.result.get()
+				isIgnoreExitValue = true
+				println("adb ${args.joinToString(" ")}")
+			}.run {
+				println(standardOutput.asText.get())
+				println(standardError.asText.get())
+				result.get().assertNormalExitValue()
+			}
 		}
 	}
 
