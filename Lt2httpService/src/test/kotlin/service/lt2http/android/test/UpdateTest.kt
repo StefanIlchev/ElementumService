@@ -40,7 +40,7 @@ class UpdateTest {
 	fun test() {
 		Assume.assumeTrue(isInstalled)
 		val manageExternalStorage = listOf(
-			"test \\\$(getprop ro.build.version.sdk) -lt ${Build.VERSION_CODES.R}",
+			"test \$(getprop ro.build.version.sdk) -lt ${Build.VERSION_CODES.R}",
 			"appops set ${BuildConfig.APPLICATION_ID} MANAGE_EXTERNAL_STORAGE allow"
 		).joinToString(" || ", "(", ")")
 		val data = "version:${BuildConfig.VERSION_NAME}"
