@@ -15,4 +15,8 @@ fun executeGradle(
 
 fun executeAdb(
 	args: String
-) = executeGradle("adb -p ${BuildConfig.PROJECT_NAME} -Dadb.args=\"$args\"")
+) = if (isWindows) {
+	executeGradle("adb -p ${BuildConfig.PROJECT_NAME} -Dadb.args=\"$args\"")
+} else {
+	executeGradle("adb -p ${BuildConfig.PROJECT_NAME} -Dadb.args='$args'")
+}
