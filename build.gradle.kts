@@ -16,6 +16,7 @@ plugins {
 val localProperties by extra {
 	Properties().also { file("local.properties").takeIf(File::isFile)?.bufferedReader()?.use(it::load) }
 }
+
 val pagesDir by extra {
 	file("docs")
 }
