@@ -11,8 +11,8 @@ pluginManagement {
 	plugins {
 
 		// https://mvnrepository.com/artifact/com.android.tools.build/gradle
-		id("com.android.application") version "8.9.0"
-		id("com.android.library") version "8.9.0"
+		id("com.android.application") version "8.9.1"
+		id("com.android.library") version "8.9.1"
 
 		// https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib
 		kotlin("android") version "2.1.20"
@@ -38,7 +38,7 @@ dependencyResolutionManagement {
 			version("jvmToolchain", "21")
 
 			// https://developer.android.com/tools/releases/build-tools
-			version("buildToolsVersion", "35.0.1")
+			version("buildToolsVersion", "36.0.0")
 
 			// https://developer.android.com/tools/releases/platforms
 			version("compileSdk", "35")
