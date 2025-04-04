@@ -30,7 +30,7 @@ dependencyResolutionManagement {
 
 			version("binaryWrapper.version", "1.0.25")
 
-			version("elementum.versionCode", "96")
+			version("elementum.versionCode", "97")
 
 			version("lt2http.versionCode", "42")
 
