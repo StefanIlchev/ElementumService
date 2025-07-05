@@ -3,7 +3,6 @@ import groovy.xml.StreamingMarkupBuilder
 import groovy.xml.XmlSlurper
 import groovy.xml.XmlUtil
 import org.codehaus.groovy.runtime.EncodingGroovyMethods
-import java.io.FileFilter
 import java.io.StringWriter
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -73,7 +72,7 @@ val genIndex = tasks.register("genIndex") {
 					"addons" {
 						val parser = XmlSlurper()
 						val builder = StreamingMarkupBuilder()
-						pagesDir.listFiles(FileFilter { it.isDirectory() })?.sorted()?.forEach {
+						pagesDir.listFiles { it: File -> it.isDirectory() }?.sorted()?.forEach {
 							val addonsInfo = parser.parse(File(it, repoInfo.name))
 							mkp.yieldUnescaped(builder.bindNode(addonsInfo.children()))
 						}
@@ -102,7 +101,7 @@ val genIndex = tasks.register("genIndex") {
 
 							"table" {
 								val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm")
-								pagesDir.listFiles(FileFilter { it.isFile() && it != indexPage })?.sorted()?.forEach {
+								pagesDir.listFiles { it: File -> it.isFile() && it != indexPage }?.sorted()?.forEach {
 									val name = it.name
 									val date = formatter.format(Date(it.lastModified()))
 									val size = "${it.length()}B"
@@ -141,6 +140,6 @@ tasks.githubRelease {
 		|${localProperties.getProperty("github.body") ?: ""}""".trimMargin()
 	prerelease = true
 	releaseAssets.from(genIndex.map { task ->
-		pagesDir.listFiles(FileFilter { it.isFile() && it !in task.outputs.files })?.sorted() ?: listOf()
+		pagesDir.listFiles { it: File -> it.isFile() && it !in task.outputs.files }?.sorted() ?: listOf()
 	})
 }

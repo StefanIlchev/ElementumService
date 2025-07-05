@@ -128,7 +128,7 @@ abstract class BaseDaemonInvoker(
 			val file = File(parent, name)
 			try {
 				assetManager.open(node).use { file.outputStream().use(it::copyTo) }
-			} catch (ignored: FileNotFoundException) {
+			} catch (_: FileNotFoundException) {
 				file.mkdirs()
 			}
 			node = deque.removeFirstOrNull()

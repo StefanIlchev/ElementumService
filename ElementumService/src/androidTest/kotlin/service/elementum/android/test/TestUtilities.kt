@@ -31,7 +31,7 @@ private fun Instrumentation.tryGrantRuntimePermission(
 	permission: String
 ) = try {
 	uiAutomation.grantRuntimePermission(targetContext.packageName, permission)
-} catch (ignored: Throwable) {
+} catch (_: Throwable) {
 }
 
 fun Instrumentation.grantRequestedPermissions() {

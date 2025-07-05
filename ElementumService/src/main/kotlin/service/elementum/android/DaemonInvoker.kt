@@ -53,7 +53,7 @@ class DaemonInvoker(
 			channel = null
 			try {
 				close()
-			} catch (ignored: Throwable) {
+			} catch (_: Throwable) {
 			}
 		}
 	}
@@ -77,7 +77,7 @@ class DaemonInvoker(
 		if (isDestroyed) {
 			try {
 				value.close()
-			} catch (ignored: Throwable) {
+			} catch (_: Throwable) {
 			}
 		} else {
 			channel = value
@@ -104,7 +104,7 @@ class DaemonInvoker(
 		return {
 			try {
 				send(port, consumer)
-			} catch (ignored: Throwable) {
+			} catch (_: Throwable) {
 				-1L
 			}
 		}
