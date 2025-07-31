@@ -287,7 +287,7 @@ System.getProperty("adb.args")?.let {
 		args(*Commandline.translateCommandline(it))
 
 		doFirst {
-			println("adb ${args?.joinToString(" ")}")
+			println("adb ${args.joinToString(" ")}")
 		}
 	}
 }
@@ -298,7 +298,7 @@ tasks.register<Exec>("changeDataLocation") {
 	args("shell", "echo", "xbmc.data=/sdcard$kodiDataDir", ">/sdcard/xbmc_env.properties")
 
 	doFirst {
-		println("adb ${args?.joinToString(" ")}")
+		println("adb ${args.joinToString(" ")}")
 	}
 }
 
