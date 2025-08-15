@@ -15,7 +15,7 @@ pluginManagement {
 		id("com.android.library") version "8.12.0"
 
 		// https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib
-		kotlin("android") version "2.2.0"
+		kotlin("android") version "2.2.10"
 
 		// https://mvnrepository.com/artifact/com.github.breadmoirai.github-release/com.github.breadmoirai.github-release.gradle.plugin
 		id("com.github.breadmoirai.github-release") version "2.5.2"
@@ -48,10 +48,10 @@ dependencyResolutionManagement {
 			version("ndkVersion", "28.2.13676358")
 
 			// https://developer.android.com/ndk/guides/cmake
-			version("cmake", "4.0.3")
+			version("cmake", "4.1.0")
 
-			// https://isocpp.org/std/the-standard
-			version("cpp", "20")
+			// https://developer.android.com/ndk/guides/cpp-support
+			version("cpp", "17")
 
 			// https://mvnrepository.com/artifact/androidx.test/runner
 			library("androidTest.runner", "androidx.test:runner:1.7.0")
