@@ -4,59 +4,83 @@
 	android:height="108dp"
 	android:viewportWidth="108"
 	android:viewportHeight="108">
+
 	<path
-		android:fillColor="@android:color/transparent"
-		android:pathData="M39.09474,31.76842 L45.91579,35.30526 L45.91579,41.62105 L54.75789,46.42105 L59.81052,43.89474 L66.88421,47.43158 L66.88421,55.51579 L52.98947,63.34737 L52.98947,71.93684 L59.81053,75.22105 L66.88421,71.93684 L66.88421,63.34737 L52.98947,55.51579 L52.98947,49.70526 L44.14737,44.90526 L39.09474,47.17895 L32.27368,43.38947 L32.27368,35.30526 Z"
+		android:pathData="
+		M 39.09474 31.76842
+		L 45.91579 35.30526
+		L 45.91579 41.62105
+		L 54.75789 46.42105
+		L 59.81052 43.89474
+		L 66.88421 47.43158
+		L 66.88421 55.51579
+		L 52.98947 63.34737
+		L 52.98947 71.93684
+		L 59.81053 75.22105
+		L 66.88421 71.93684
+		L 66.88421 63.34737
+		L 52.98947 55.51579
+		L 52.98947 49.70526
+		L 44.14737 44.90526
+		L 39.09474 47.17895
+		L 32.27368 43.38947
+		L 32.27368 35.30526
+		Z
+
+		M 36.06316 45.49474
+		L 36.06316 37.83158
+		L 43.42556 34.01404
+
+		M 56.77895 57.65167
+		L 56.77895 49.70526
+		L 63.97206 45.97550
+
+		M 39.09474 52.51053
+		a 2.5 2.5, 0, 0, 0, 0 5
+		a 2.5 2.5, 0, 0, 0, 0 -5
+		L 39.09474 47.17895
+
+		M 59.81053 36.54211
+		a 2.5 2.5, 0, 0, 0, 0 -5
+		a 2.5 2.5, 0, 0, 0, 0 5
+		L 59.81053 43.89474"
 		android:strokeWidth="2"
 		android:strokeColor="@android:color/white" />
-	<path
-		android:fillColor="@android:color/transparent"
-		android:pathData="M36.06316,45.49474 L36.06316,37.83158 L43.42556,34.01404"
-		android:strokeWidth="2"
-		android:strokeColor="@android:color/white" />
-	<path
-		android:fillColor="@android:color/transparent"
-		android:pathData="M56.77895,57.65167 L56.77895,49.70526 L63.97206,45.97550"
-		android:strokeWidth="2"
-		android:strokeColor="@android:color/white" />
+
 	<path
 		android:fillColor="@android:color/white"
-		android:pathData="M40.86316,40.61053 m-1,0 a1,1 0 0,0 2,0 a1,1 0 0,0 -2,0"
-		android:strokeWidth="2"
-		android:strokeColor="@android:color/white" />
-	<path
-		android:fillColor="@android:color/white"
-		android:pathData="M59.81053,67.64211 m-3,0 a3,3 0 0,0 6,0 a3,3 0 0,0 -6,0"
-		android:strokeWidth="2"
-		android:strokeColor="@android:color/white" />
-	<path
-		android:fillColor="@android:color/transparent"
-		android:pathData="M39.09474,55.01053 m0,-2.5 a2.5,2.5 0 0,0 0,5 a2.5,2.5 0 0,0 0,-5 L39.09474,47.17895"
-		android:strokeWidth="2"
-		android:strokeColor="@android:color/white" />
-	<path
-		android:fillColor="@android:color/transparent"
-		android:pathData="M59.81053,34.04211 m0,2.5 a2.5,2.5 0 0,0 0,-5 a2.5,2.5 0 0,0 0,5 L59.81053,43.89474"
-		android:strokeWidth="2"
-		android:strokeColor="@android:color/white" />
-	<path
-		android:fillColor="@android:color/white"
-		android:pathData="M74.21053,43.13684 m-1.5,0 a1.5,1.5 0 0,0 3,0 a1.5,1.5 0 0,0 -3,0 m1.5,0 L66.88421,47.43158"
-		android:strokeWidth="2"
-		android:strokeColor="@android:color/white" />
-	<path
-		android:fillColor="@android:color/white"
-		android:pathData="M45.66316,59.30526 m-1.5,0 a1.5,1.5 0 0,0 3,0 a1.5,1.5 0 0,0 -3,0 m1.5,0 L52.98947,63.34737"
-		android:strokeWidth="2"
-		android:strokeColor="@android:color/white" />
-	<path
-		android:fillColor="@android:color/white"
-		android:pathData="M43.64211,67.13684 m-1.5,0 a1.5,1.5 0 0,0 3,0 a1.5,1.5 0 0,0 -3,0 m1.5,0 L52.98947,67.13684"
-		android:strokeWidth="2"
-		android:strokeColor="@android:color/white" />
-	<path
-		android:fillColor="@android:color/white"
-		android:pathData="M45.91579,75.22105 m-1.5,0 a1.5,1.5 0 0,0 3,0 a1.5,1.5 0 0,0 -3,0 m1.5,0 L52.98947,71.93684"
+		android:pathData="
+		M 40.86316 41.61053
+		a 1 1, 0, 0, 0, 0 -2
+		a 1 1, 0, 0, 0, 0 2
+
+		M 59.81053 70.64211
+		a 3 3, 0, 0, 0, 0 -6
+		a 3 3, 0, 0, 0, 0 6
+
+		M 72.71053 43.13684
+		a 1.5 1.5, 0, 0, 0, 3 0
+		a 1.5 1.5, 0, 0, 0, -3 0
+		m 1.5 0
+		L 66.88421 47.43158
+
+		M 44.16316 59.30526
+		a 1.5 1.5, 0, 0, 0, 3 0
+		a 1.5 1.5, 0, 0, 0, -3 0
+		m 1.5 0
+		L 52.98947 63.34737
+
+		M 42.14211 67.13684
+		a 1.5 1.5, 0, 0, 0, 3 0
+		a 1.5 1.5, 0, 0, 0, -3 0
+		m 1.5 0
+		L 52.98947 67.13684
+
+		M 44.41579 75.22105
+		a 1.5 1.5, 0, 0, 0, 3 0
+		a 1.5 1.5, 0, 0, 0, -3 0
+		m 1.5 0
+		L 52.98947 71.93684"
 		android:strokeWidth="2"
 		android:strokeColor="@android:color/white" />
 </vector>
