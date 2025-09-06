@@ -23,10 +23,10 @@ val pagesDir by extra {
 subprojects {
 
 	repositories {
+		maven("https://jitpack.io")
 		google()
 		mavenCentral()
 		mavenLocal()
-		maven("https://jitpack.io")
 	}
 
 	tasks.withType<JavaCompile>().configureEach {
