@@ -1,6 +1,6 @@
 package service.lt2http.android
 
-import ilchev.stefan.binarywrapper.BaseMainActivity
+import stef40.binarywrapper.BaseMainActivity
 
 class MainActivity : BaseMainActivity() {
 

@@ -11,7 +11,7 @@ kotlin {
 android {
 	buildToolsVersion = libs.versions.buildToolsVersion.get()
 	compileSdk = libs.versions.compileSdk.get().toInt()
-	namespace = "ilchev.stefan.binarywrapper"
+	namespace = "stef40.binarywrapper"
 
 	buildFeatures {
 		buildConfig = true
@@ -46,7 +46,7 @@ publishing {
 	publications {
 
 		register<MavenPublication>("release") {
-			groupId = "ilchev.stefan"
+			groupId = "stef40"
 			artifactId = "binary-wrapper"
 			version = libs.versions.binaryWrapper.version.get()
 

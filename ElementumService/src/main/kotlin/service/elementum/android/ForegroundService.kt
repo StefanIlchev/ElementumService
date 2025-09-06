@@ -2,7 +2,7 @@ package service.elementum.android
 
 import android.net.Uri
 import android.os.Build
-import ilchev.stefan.binarywrapper.BaseForegroundService
+import stef40.binarywrapper.BaseForegroundService
 
 class ForegroundService : BaseForegroundService() {
 

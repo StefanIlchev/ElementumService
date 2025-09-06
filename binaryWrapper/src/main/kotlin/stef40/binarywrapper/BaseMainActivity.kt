@@ -1,4 +1,4 @@
-package ilchev.stefan.binarywrapper
+package stef40.binarywrapper
 
 import android.Manifest
 import android.annotation.SuppressLint

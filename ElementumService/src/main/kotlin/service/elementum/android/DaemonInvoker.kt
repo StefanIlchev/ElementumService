@@ -2,8 +2,8 @@ package service.elementum.android
 
 import android.content.Context
 import android.os.Looper
-import ilchev.stefan.binarywrapper.BaseDaemonInvoker
-import ilchev.stefan.binarywrapper.mainHandler
+import stef40.binarywrapper.BaseDaemonInvoker
+import stef40.binarywrapper.mainHandler
 import java.io.File
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer

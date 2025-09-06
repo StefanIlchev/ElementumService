@@ -1,4 +1,4 @@
-package ilchev.stefan.binarywrapper
+package stef40.binarywrapper
 
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver

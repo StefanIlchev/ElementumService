@@ -7,7 +7,7 @@ import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
-import ilchev.stefan.binarywrapper.getPackageInfo
+import stef40.binarywrapper.getPackageInfo
 import java.util.Scanner
 
 private const val TAG = "TestUtilities"

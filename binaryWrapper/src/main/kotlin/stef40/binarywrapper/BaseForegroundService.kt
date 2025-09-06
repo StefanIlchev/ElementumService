@@ -1,5 +1,6 @@
-package ilchev.stefan.binarywrapper
+package stef40.binarywrapper
 
+import android.annotation.SuppressLint
 import android.app.DownloadManager
 import android.app.Notification
 import android.app.NotificationChannel
@@ -234,7 +235,7 @@ abstract class BaseForegroundService : Service() {
 						file.inputStream().use { it.copyTo(out) }
 						session.fsync(out)
 					}
-					session.commit(statusReceiver)
+					@SuppressLint("RequestInstallPackagesPolicy") session.commit(statusReceiver)
 				}
 			} catch (t: Throwable) {
 				Log.w(TAG, t)
