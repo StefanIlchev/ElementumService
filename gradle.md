@@ -1,0 +1,3 @@
+```
+gradlew clean githubRelease
+```
