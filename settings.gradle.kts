@@ -48,7 +48,7 @@ dependencyResolutionManagement {
 			version("ndkVersion", "28.2.13676358")
 
 			// https://developer.android.com/ndk/guides/cmake
-			version("cmake", "4.1.0")
+			version("cmake", "4.1.1")
 
 			// https://developer.android.com/ndk/guides/cpp-support
 			version("cpp", "17")
