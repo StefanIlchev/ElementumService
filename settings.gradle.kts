@@ -28,9 +28,9 @@ dependencyResolutionManagement {
 
 		create("libs") {
 
-			version("binaryWrapper.version", "1.0.26")
+			version("binaryWrapper.version", "1.0.27")
 
-			version("elementum.versionCode", "98")
+			version("elementum.versionCode", "99")
 
 			version("lt2http.versionCode", "43")
 
