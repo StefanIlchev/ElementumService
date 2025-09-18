@@ -38,7 +38,7 @@ dependencyResolutionManagement {
 			version("jvmToolchain", "21")
 
 			// https://developer.android.com/tools/releases/build-tools
-			version("buildToolsVersion", "36.0.0")
+			version("buildToolsVersion", "36.1.0")
 
 			// https://developer.android.com/tools/releases/platforms
 			version("compileSdk", "36")
