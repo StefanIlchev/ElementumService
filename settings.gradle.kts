@@ -35,7 +35,7 @@ dependencyResolutionManagement {
 			version("lt2http.versionCode", "43")
 
 			// https://developer.android.com/build/jdks
-			version("jvmToolchain", "21")
+			version("jvmToolchain", "25")
 
 			// https://developer.android.com/tools/releases/build-tools
 			version("buildToolsVersion", "36.1.0")
