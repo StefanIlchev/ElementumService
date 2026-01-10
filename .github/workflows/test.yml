@@ -41,3 +41,4 @@ jobs:
 
       - name: Test Summary Action
         uses: jeantessier/test-summary-action@v1
+        if: ${{ always() }}
