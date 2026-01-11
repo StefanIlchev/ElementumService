@@ -44,7 +44,7 @@ jobs:
         if: ${{ !cancelled() }}
         with:
           name: reports
-          path: '**/build/reports/**'
+          path: '**/build/reports'
 
       - name: Delete Old Workflow Runs
         uses: Mattraks/delete-workflow-runs@v2
