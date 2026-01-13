@@ -55,11 +55,9 @@ jobs:
           name: reports
           path: '**/build/reports'
 
-      - name: Test Summary
-        uses: test-summary/action@v2
+      - name: Test Summary Action
+        uses: jeantessier/test-summary-action@v1
         if: ${{ !cancelled() }}
-        with:
-          paths: '**/build/test-results/*/*.xml'
 
       - name: Delete Old Workflow Runs
         uses: Mattraks/delete-workflow-runs@v2
