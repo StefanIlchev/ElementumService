@@ -7,7 +7,7 @@ on:
         description: Android API Level
         required: true
         type: number
-        default: 35
+        default: 36
 
 jobs:
   test:
