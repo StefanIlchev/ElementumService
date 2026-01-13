@@ -12,6 +12,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 1380
 
     steps:
       - name: Checkout
@@ -37,7 +38,15 @@ jobs:
         with:
           api-level: ${{ github.event.inputs.android-api-level }}
           arch: x86_64
-          script: ./gradlew connectedDebugAndroidTest testDebugUnitTest
+          script: ./gradlew connectedDebugAndroidTest
+
+      - name: Android Emulator Runner
+        uses: ReactiveCircus/android-emulator-runner@v2
+        if: ${{ !cancelled() }}
+        with:
+          api-level: ${{ github.event.inputs.android-api-level }}
+          arch: x86_64
+          script: ./gradlew testDebugUnitTest
 
       - name: Upload Reports
         uses: actions/upload-artifact@v6
@@ -45,6 +54,12 @@ jobs:
         with:
           name: reports
           path: '**/build/reports'
+
+      - name: Test Summary
+        uses: test-summary/action@v2
+        if: ${{ !cancelled() }}
+        with:
+          paths: '**/build/test-results/*/*.xml'
 
       - name: Delete Old Workflow Runs
         uses: Mattraks/delete-workflow-runs@v2
