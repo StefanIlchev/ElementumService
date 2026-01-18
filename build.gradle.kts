@@ -9,7 +9,9 @@ import java.util.Date
 import java.util.Properties
 
 plugins {
-	id("com.github.breadmoirai.github-release")
+	alias(libs.plugins.android.application) apply false
+	alias(libs.plugins.android.library) apply false
+	alias(libs.plugins.github.release)
 }
 
 val localProperties by extra {

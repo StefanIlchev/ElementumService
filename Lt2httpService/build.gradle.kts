@@ -12,8 +12,7 @@ import java.io.StringWriter
 import java.util.Properties
 
 plugins {
-	id("com.android.application")
-	kotlin("android")
+	alias(libs.plugins.android.application)
 }
 
 val localProperties: Properties by rootProject.extra
@@ -119,19 +118,14 @@ val repoUrl by extra {
 	localProperties.getProperty("elementum.repo.url") ?: ""
 }
 
-kotlin {
-	jvmToolchain(libs.versions.jvmToolchain.get().toInt())
-}
-
 android {
-	buildToolsVersion = libs.versions.buildToolsVersion.get()
-	compileSdk = libs.versions.compileSdk.get().toInt()
 	namespace = "service.lt2http.android"
 	testNamespace = "$namespace.test"
 	testBuildType = System.getProperty("test.build.type") ?: "debug"
+	buildToolsVersion = libs.versions.buildToolsVersion.get()
 
-	buildFeatures {
-		buildConfig = true
+	compileSdk {
+		version = release(libs.versions.compileSdk.get().toInt())
 	}
 
 	defaultConfig {
@@ -162,7 +156,7 @@ android {
 
 	buildTypes {
 
-		named("release") {
+		release {
 			val isNotTestBuildType = testBuildType != name
 			isMinifyEnabled = isNotTestBuildType
 			isShrinkResources = isNotTestBuildType
@@ -173,16 +167,20 @@ android {
 		}
 	}
 
+	buildFeatures {
+		buildConfig = true
+	}
+
 	sourceSets {
 
 		named("main") {
 
 			assets {
-				srcDir(srcMainAssetsGen)
+				directories += srcMainAssetsGen
 			}
 
 			jniLibs {
-				srcDir(srcMainJniLibsGen)
+				directories += srcMainJniLibsGen
 			}
 		}
 	}
@@ -232,10 +230,10 @@ dependencies {
 System.getProperty("adb.args")?.let {
 	tasks.register<Exec>("adb") {
 		group = project.name
-		executable = android.adbExecutable.path
-		args(*Commandline.translateCommandline(it))
 
 		doFirst {
+			executable(androidComponents.sdkComponents.adb.get())
+			args(*Commandline.translateCommandline(it))
 			println("adb ${args.joinToString(" ")}")
 		}
 	}
@@ -243,10 +241,10 @@ System.getProperty("adb.args")?.let {
 
 tasks.register<Exec>("changeDataLocation") {
 	group = project.name
-	executable = android.adbExecutable.path
-	args("shell", "echo", "xbmc.data=/sdcard$kodiDataDir", ">/sdcard/xbmc_env.properties")
 
 	doFirst {
+		executable(androidComponents.sdkComponents.adb.get())
+		args("shell", "echo", "xbmc.data=/sdcard$kodiDataDir", ">/sdcard/xbmc_env.properties")
 		println("adb ${args.joinToString(" ")}")
 	}
 }
@@ -531,7 +529,7 @@ if (addonZip != null && addonDir != null && addonIdDir != null &&
 
 		doFirst {
 			providers.exec {
-				executable = android.adbExecutable.path
+				executable(androidComponents.sdkComponents.adb.get())
 				args("shell", "rm", "-f", "$destinationDir/${androidClientZip.name}")
 				isIgnoreExitValue = true
 				println("adb ${args.joinToString(" ")}")
@@ -544,7 +542,7 @@ if (addonZip != null && addonDir != null && addonIdDir != null &&
 
 		doLast {
 			providers.exec {
-				executable = android.adbExecutable.path
+				executable(androidComponents.sdkComponents.adb.get())
 				args("push", androidClientZip.path, destinationDir)
 				isIgnoreExitValue = true
 				println("adb ${args.joinToString(" ")}")
