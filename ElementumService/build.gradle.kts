@@ -70,7 +70,7 @@ val addonBinDir by extra {
 	addonIdDir?.let { "$it/resources/bin" }
 }
 
-val androidClientZip by extra {
+val androidClientZip: File by extra {
 	layout.buildDirectory.file("$addonId-$appVersionName.android_client.zip").get().asFile
 }
 

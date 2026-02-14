@@ -69,7 +69,7 @@ val binariesIdDir by extra {
 	binariesDir?.let { "$it/${file(it).name}" }
 }
 
-val androidClientZip by extra {
+val androidClientZip: File by extra {
 	layout.buildDirectory.file("$addonId-$appVersionName.android_client.zip").get().asFile
 }
 

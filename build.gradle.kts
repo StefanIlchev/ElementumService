@@ -36,7 +36,7 @@ subprojects {
 	}
 }
 
-val genPages = tasks.register("genPages") {
+val genPages: TaskProvider<*> = tasks.register("genPages") {
 	group = project.name
 	outputs.dir(pagesDir)
 
@@ -54,7 +54,7 @@ val genPages = tasks.register("genPages") {
 	}
 }
 
-val genIndex = tasks.register("genIndex") {
+val genIndex: TaskProvider<*> = tasks.register("genIndex") {
 	val repoInfo = File(pagesDir, "addons.xml")
 	val repoInfoMd5 = File(pagesDir, "addons.xml.md5")
 	val indexPage = File(pagesDir, "index.html")
