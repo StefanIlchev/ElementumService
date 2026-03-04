@@ -45,8 +45,8 @@ test-junit = { module = "junit:junit", version = "4.13.2" }
 [plugins]
 
 # https://mvnrepository.com/artifact/com.android.tools.build/gradle
-android-application = { id = "com.android.application", version = "9.0.1" }
-android-library = { id = "com.android.library", version = "9.0.1" }
+android-application = { id = "com.android.application", version = "9.1.0" }
+android-library = { id = "com.android.library", version = "9.1.0" }
 
 # https://mvnrepository.com/artifact/com.github.breadmoirai.github-release/com.github.breadmoirai.github-release.gradle.plugin
 github-release = { id = "com.github.breadmoirai.github-release", version = "2.5.2" }
