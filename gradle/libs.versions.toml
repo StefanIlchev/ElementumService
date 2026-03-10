@@ -4,7 +4,7 @@
 binaryWrapper-version = "1.0.27"
 
 #noinspection UnusedVersionCatalogEntry
-elementum-versionCode = "99"
+elementum-versionCode = "100"
 
 #noinspection UnusedVersionCatalogEntry
 lt2http-versionCode = "43"
