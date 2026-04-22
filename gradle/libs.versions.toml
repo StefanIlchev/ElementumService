@@ -11,11 +11,11 @@ lt2http-versionCode = "43"
 
 # https://developer.android.com/tools/releases/build-tools
 #noinspection UnusedVersionCatalogEntry
-buildToolsVersion = "36.1.0"
+buildToolsVersion = "37.0.0"
 
 # https://developer.android.com/tools/releases/platforms
 #noinspection UnusedVersionCatalogEntry
-compileSdk = "36"
+compileSdk = "37"
 #noinspection UnusedVersionCatalogEntry
 minSdk = "26"
 
@@ -45,8 +45,8 @@ test-junit = { module = "junit:junit", version = "4.13.2" }
 [plugins]
 
 # https://mvnrepository.com/artifact/com.android.tools.build/gradle
-android-application = { id = "com.android.application", version = "9.1.0" }
-android-library = { id = "com.android.library", version = "9.1.0" }
+android-application = { id = "com.android.application", version = "9.2.0" }
+android-library = { id = "com.android.library", version = "9.2.0" }
 
 # https://mvnrepository.com/artifact/com.github.breadmoirai.github-release/com.github.breadmoirai.github-release.gradle.plugin
 github-release = { id = "com.github.breadmoirai.github-release", version = "2.5.2" }
