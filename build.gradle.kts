@@ -23,7 +23,6 @@ val pagesDir = file("docs").also { extra["pagesDir"] = it }
 subprojects {
 
 	repositories {
-		maven("https://jitpack.io")
 		google()
 		mavenCentral()
 		mavenLocal()
