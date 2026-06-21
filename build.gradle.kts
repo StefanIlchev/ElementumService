@@ -14,13 +14,11 @@ plugins {
 	alias(libs.plugins.github.release)
 }
 
-val localProperties by extra {
-	Properties().also { file("local.properties").takeIf(File::isFile)?.bufferedReader()?.use(it::load) }
-}
+val localProperties = Properties().also {
+	file("local.properties").takeIf(File::isFile)?.bufferedReader()?.use(it::load)
+}.also { extra["localProperties"] = it }
 
-val pagesDir by extra {
-	file("docs")
-}
+val pagesDir = file("docs").also { extra["pagesDir"] = it }
 
 subprojects {
 

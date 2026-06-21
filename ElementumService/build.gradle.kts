@@ -17,115 +17,71 @@ plugins {
 	alias(libs.plugins.android.application)
 }
 
-val localProperties: Properties by rootProject.extra
+val localProperties = rootProject.extra["localProperties"] as Properties
 
-val pagesDir: File by rootProject.extra
+val pagesDir = rootProject.extra["pagesDir"] as File
 
-val srcGen: String by extra {
-	layout.buildDirectory.file("src").get().asFile.path
-}
+val srcGen: String = layout.buildDirectory.file("src").get().asFile.path
 
-val srcMainGen by extra {
-	"$srcGen/main"
-}
+val srcMainGen = "$srcGen/main"
 
-val srcMainAssetsGen by extra {
-	"$srcMainGen/assets"
-}
+val srcMainAssetsGen = "$srcMainGen/assets"
 
-val srcMainAbiHeadsGen by extra {
-	"$srcMainGen/abiHeads"
-}
+val srcMainAbiHeadsGen = "$srcMainGen/abiHeads"
 
-val srcMainJniLibsGen by extra {
-	"$srcMainGen/jniLibs"
-}
+val srcMainJniLibsGen = "$srcMainGen/jniLibs"
 
-val appVersionCode by extra {
-	System.getProperty("version.code")?.toInt()
-		?: localProperties.getProperty("elementum.version.code")?.toInt()
-		?: libs.versions.elementum.versionCode.get().toInt()
-}
+val appVersionCode = System.getProperty("version.code")?.toInt()
+	?: localProperties.getProperty("elementum.version.code")?.toInt()
+	?: libs.versions.elementum.versionCode.get().toInt()
 
-val appVersionName by extra {
-	System.getProperty("version.name")
-		?: localProperties.getProperty("elementum.version.name")
-		?: "$appVersionCode"
-}
+val appVersionName = System.getProperty("version.name")
+	?: localProperties.getProperty("elementum.version.name")
+	?: "$appVersionCode"
 
-val addonId by extra {
-	"plugin.video.elementum"
-}
+val addonId = "plugin.video.elementum"
 
 val addonZip: String? = System.getProperty("elementum.addon.zip")
 	?: localProperties.getProperty("elementum.addon.zip")
 
 val addonDir = addonZip?.let { layout.buildDirectory.file(file(it).nameWithoutExtension).get().asFile.path }
 
-val addonIdDir by extra {
-	addonDir?.let { "$it/$addonId" }
-}
+val addonIdDir = addonDir?.let { "$it/$addonId" }
 
-val addonBinDir by extra {
-	addonIdDir?.let { "$it/resources/bin" }
-}
+val addonBinDir = addonIdDir?.let { "$it/resources/bin" }
 
-val androidClientZip: File by extra {
-	layout.buildDirectory.file("$addonId-$appVersionName.android_client.zip").get().asFile
-}
+val androidClientZip: File = layout.buildDirectory.file("$addonId-$appVersionName.android_client.zip").get().asFile
 
-val abiBins by extra {
-	mapOf(
-		"arm64-v8a" to "android_arm64",
-		"armeabi-v7a" to "android_arm",
-		"x86" to "android_x86",
-		"x86_64" to "android_x64"
-	)
-}
+val abiBins = mapOf(
+	"arm64-v8a" to "android_arm64",
+	"armeabi-v7a" to "android_arm",
+	"x86" to "android_x86",
+	"x86_64" to "android_x64"
+)
 
-val isAddonBinLib by extra {
-	localProperties.getProperty("is.elementum.addon.bin.lib")?.toBoolean() ?: addonZip?.let {
-		ZipFile(it)
-	}?.use {
-		abiBins.any { (_, bin) -> it.getEntry("$addonId/resources/bin/$bin/elementum")?.isDirectory != false }
-	} ?: false
-}
+val isAddonBinLib = localProperties.getProperty("is.elementum.addon.bin.lib")?.toBoolean() ?: addonZip?.let {
+	ZipFile(it)
+}?.use {
+	abiBins.any { (_, bin) -> it.getEntry("$addonId/resources/bin/$bin/elementum")?.isDirectory != false }
+} ?: false
 
-val mainIntentAction by extra {
-	"android.intent.action.MAIN"
-}
+val mainIntentAction = "android.intent.action.MAIN"
 
-val argAddonInfo by extra {
-	"-addonInfo"
-}
+val argAddonInfo = "-addonInfo"
 
-val argLocalPort by extra {
-	"-localPort"
-}
+val argLocalPort = "-localPort"
 
-val argTranslatePath by extra {
-	"-translatePath"
-}
+val argTranslatePath = "-translatePath"
 
-val localPort by extra {
-	65220
-}
+val localPort = 65220
 
-val kodiId by extra {
-	"org.xbmc.kodi"
-}
+val kodiId = "org.xbmc.kodi"
 
-val dataDir by extra {
-	"/Download"
-}
+val dataDir = "/Download"
 
-val kodiDataDir by extra {
-	"/Android/data/$kodiId/files"
-}
+val kodiDataDir = "/Android/data/$kodiId/files"
 
-val repoUrl by extra {
-	localProperties.getProperty("elementum.repo.url") ?: ""
-}
+val repoUrl = localProperties.getProperty("elementum.repo.url") ?: ""
 
 android {
 	namespace = "service.elementum.android"
