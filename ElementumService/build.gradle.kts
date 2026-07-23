@@ -38,6 +38,7 @@ val appVersionCode = System.getProperty("version.code")?.toInt()
 val appVersionName = System.getProperty("version.name")
 	?: localProperties.getProperty("elementum.version.name")
 	?: "$appVersionCode"
+extra["appVersionName"] = appVersionName
 
 val addonId = "plugin.video.elementum"
 

@@ -34,6 +34,7 @@ val appVersionCode = System.getProperty("version.code")?.toInt()
 val appVersionName = System.getProperty("version.name")
 	?: localProperties.getProperty("lt2http.version.name")
 	?: "$appVersionCode"
+extra["appVersionName"] = appVersionName
 
 val addonId = "service.lt2http"
 
