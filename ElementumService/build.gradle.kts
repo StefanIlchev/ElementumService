@@ -474,6 +474,10 @@ if (addonZip != null && addonDir != null && addonIdDir != null && addonBinDir !=
 				|    if os.path.exists(lockfile):
 				|        os.remove(lockfile)
 				|# END ${project.name}-patched: stop""".trimMargin()
+			val permissionLine = "            ensure_exec_perms(elementum_binary)"
+			val permissionLinePatched = """# BEGIN ${project.name}-patched: permission
+				|#$permissionLine
+				|# END ${project.name}-patched: permission""".trimMargin()
 			val startLine = "            proc = subprocess.Popen(args, **kwargs)"
 			val startLinePatched = """# BEGIN ${project.name}-patched: start
 				|#$startLine
@@ -569,6 +573,7 @@ if (addonZip != null && addonDir != null && addonIdDir != null && addonBinDir !=
 					listOf(versionLine, versionLinePatched),
 					listOf(binaryLine, binaryLinePatched),
 					listOf(stopLine, stopLinePatched),
+					listOf(permissionLine, permissionLinePatched),
 					listOf(startLine, startLinePatched)
 				),
 				file("$addonIdDir/resources/site-packages/elementum/navigation.py") to mutableListOf(
