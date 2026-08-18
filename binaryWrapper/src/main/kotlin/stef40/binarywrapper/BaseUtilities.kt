@@ -50,7 +50,6 @@ fun Context.tryStopService(
 	false
 }
 
-@Suppress("deprecation", "KotlinRedundantDiagnosticSuppress")
 fun Context.getPackageInfo(
 	flags: Int = 0
 ): PackageInfo = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
@@ -59,7 +58,7 @@ fun Context.getPackageInfo(
 	packageManager.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(flags.toLong()))
 }
 
-@Suppress("deprecation")
+@Suppress("deprecation", "RedundantSuppression")
 fun <T : Parcelable> getParcelableExtra(
 	intent: Intent,
 	name: String,
